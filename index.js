@@ -361,11 +361,7 @@ app.get("/", (req, res) => {
 });
 
 // CHANGE THIS WHEN TESTING LOCALLY/ON HEROKU
-<<<<<<< HEAD
 const connection = process.env.MONGODB_LOCAL;
-=======
-const connection = process.env.MONGODB_ATLAS;
->>>>>>> main
 
 mongoose
   .connect(connection, {
@@ -377,13 +373,10 @@ mongoose
 
 app.listen(port, async () => {
   // CHANGE THIS WHEN TESTING LOCALLY/ON HEROKU
-<<<<<<< HEAD
   const local = true; // if testing locally, toggle this to true; else false if deployed on heroku
-=======
-  const local = false; // if testing locally, toggle this to true; else false if deployed on heroku
->>>>>>> main
   const herokuUrl = "https://phl-gs-chatbot-app.herokuapp.com/";
   const webhookUrl = local ? await ngrok() : herokuUrl;
+  console.log("webhookUrl: ", webhookUrl);
 
   try {
     // Setting the webhook will be done by calling the set_webhook API with a valid & certified URL.
