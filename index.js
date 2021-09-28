@@ -371,7 +371,7 @@ mongoose
   .catch((error) => console.log(error));
 
 app.listen(port, async () => {
-  const local = true; // if testing locally, toggle this to true; else false if deployed on heroku
+  const local = false; // if testing locally, toggle this to true; else false if deployed on heroku
   const herokuUrl = "https://phl-gs-chatbot-app.herokuapp.com/";
   const webhookUrl = local ? await ngrok() : herokuUrl;
 
