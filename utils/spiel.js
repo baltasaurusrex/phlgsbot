@@ -1,0 +1,60 @@
+import pkg from "viber-bot";
+const { Message } = pkg;
+
+export const dealerSpiel = [
+  new Message.Text(`For updates on a specific ISIN, please type it's series`),
+  new Message.Text(`E.g. 577`),
+  new Message.Text(`You may also type multiple series with one query`),
+  new Message.Text(`E.g. 577 1061 765`),
+  new Message.Text("For updates on all tracked ISINs, please reply with 'all'"),
+];
+
+export const brokerSpiel = [
+  new Message.Text(
+    `To input a price update on a specific ISIN, please type it's series, followed by it's bid, offer, bid vol, and offer vol`
+  ),
+  new Message.Text(`E.g. 577 3800 3750 50 50`),
+  new Message.Text(
+    `Note: for ease of input, the series is just the shortest way you can identify it`
+  ),
+  new Message.Text(`E.g. 5-77 -> 577`),
+  new Message.Text(`E.g. R513 -> 513`),
+  new Message.Text(`E.g. 10-61 -> 1061`),
+  new Message.Text(`If one data point is missing, fill it with "na"`),
+  new Message.Text(`Ex: If 5-77 has no bids, then type `),
+  new Message.Text(`577 na 3750 na 50`),
+];
+
+export const adminSpiel = [
+  new Message.Text(
+    `Since you're an *admin*, you can perform both dealer (reading pricing data) and broker functions (create pricing data)`
+  ),
+  new Message.Text(`*===DEALER FUNCTIONS===*`),
+  new Message.Text(
+    `To *fetch price updates* on a specific ISIN, please type it's series \n\nE.g. 577`
+  ),
+
+  new Message.Text(
+    `You may also type *multiple* series with one query \n\nE.g. 577 1061 765`
+  ),
+
+  new Message.Text("For updates on all tracked ISINs, please reply with 'all'"),
+  new Message.Text(`*===BROKER FUNCTIONS===*`),
+  new Message.Text(
+    `To *input a price update* on a specific ISIN, please type it's series, followed by it's bid, offer, bid vol, offer vol, and broker \n\nE.g. 577 2900 2750 50 50 p`
+  ),
+
+  new Message.Text(
+    `Note 1: for ease of input, the *series* is just the *shortest way you can identify it* \n\nE.g: \n5-77 -> 577 \nR513 -> 513 \n10-61 -> 1061`
+  ),
+
+  new Message.Text(
+    `Note 2: The *first digit* from the left is understood as the *big fig* \n\nI.e. 3800 -> 3.800`
+  ),
+  new Message.Text(
+    `Note 3: broker shorts \n\np = Prebon, a = Amstel, t = Tradition, g = GFI`
+  ),
+  new Message.Text(
+    `If one *data point is missing*, fill it with *"na"* \n\nE.g. If 5-77 has no bids, then type: \n\n577 na 3750 na 50 p`
+  ),
+];
