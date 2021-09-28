@@ -360,6 +360,7 @@ app.get("/", (req, res) => {
   res.send("BPI app online");
 });
 
+// CHANGE THIS WHEN TESTING LOCALLY/ON HEROKU
 const connection = process.env.MONGODB_LOCAL;
 
 mongoose
@@ -371,6 +372,7 @@ mongoose
   .catch((error) => console.log(error));
 
 app.listen(port, async () => {
+  // CHANGE THIS WHEN TESTING LOCALLY/ON HEROKU
   const local = true; // if testing locally, toggle this to true; else false if deployed on heroku
   const herokuUrl = "https://phl-gs-chatbot-app.herokuapp.com/";
   const webhookUrl = local ? await ngrok() : herokuUrl;
