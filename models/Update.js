@@ -1,14 +1,28 @@
 import mongoose from "mongoose";
+import User from "./User.js";
 
-const UpdateSchema = new mongoose.Schema({
-  isin: { type: mongoose.Schema.Types.ObjectId, ref: "Isin" },
-  creator: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  bid: { type: Number, required: true },
-  bidVol: { type: Number, required: true },
-  offer: { type: Number, required: true },
-  offerVol: { type: Number, required: true },
-  last: { type: Number },
-  direction: { type: String, enum: ["taken", "given", "mapped"] },
+const UpdateSchema = new mongoose.Schema(
+  {
+    series: { type: String, required: true },
+    isin: { type: mongoose.Schema.Types.ObjectId, ref: "Isin" },
+    creator: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    type: { type: String, enum: ["bid_offer", "last_dealt"] },
+    bid: { type: Number },
+    bid_vol: { type: Number },
+    offer: { type: Number },
+    offer_vol: { type: Number },
+    lastDealt: { type: Number },
+    lastDealtVol: { type: Number },
+    direction: { type: String, enum: ["taken", "given", "taken", "mapped"] },
+    broker: { type: String, enum: ["Prebon", "Amstel", "Tradition", "GFI"] },
+  },
+  { timestamps: { createdAt: "created_at" } }
+);
+
+UpdateSchema.pre("save", async function () {
+  console.log("this: ", this);
+  let { creator } = this;
+  console.log("this: ", this);
 });
 
 export default mongoose.model("Update", UpdateSchema);
