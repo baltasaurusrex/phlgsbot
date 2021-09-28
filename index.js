@@ -360,7 +360,7 @@ app.get("/", (req, res) => {
   res.send("BPI app online");
 });
 
-const connection = process.env.MONGODB_ATLAS;
+const connection = process.env.MONGODB_LOCAL;
 
 mongoose
   .connect(connection, {
