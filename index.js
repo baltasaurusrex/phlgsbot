@@ -371,12 +371,14 @@ mongoose
   .catch((error) => console.log(error));
 
 app.listen(port, async () => {
-  const publicUrl = await ngrok();
+  const local = true; // if testing locally, toggle this to true; else false if deployed on heroku
+  const herokuUrl = "https://phl-gs-chatbot-app.herokuapp.com/";
+  const webhookUrl = local ? await ngrok() : herokuUrl;
 
   try {
     // Setting the webhook will be done by calling the set_webhook API with a valid & certified URL.
     // Once a set_webhook request is sent Viber will send a callback to the webhook to check its availability and return a response to the user. (https://developers.viber.com/docs/api/rest-bot-api/#get-started)
-    const res = await bot.setWebhook(`${publicUrl}/viber/webhook`);
+    const res = await bot.setWebhook(`${webhookUrl}/viber/webhook`);
     console.log(`Bot API is now online on port ${port}`);
     console.log("res: ", res);
   } catch (err) {
