@@ -24,7 +24,7 @@ import {
   getFetchPriceInfoRegex,
 } from "./utils/regex.js";
 
-// populate();/
+// populate();
 // getValidIsins().then((res) => console.log(res));
 // getSeries("r513");
 
