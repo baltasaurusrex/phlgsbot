@@ -361,7 +361,7 @@ app.get("/", (req, res) => {
 });
 
 // CHANGE THIS WHEN TESTING LOCALLY/ON HEROKU
-const connection = process.env.MONGODB_LOCAL;
+const connection = process.env.MONGODB_ATLAS;
 
 mongoose
   .connect(connection, {
