@@ -12,7 +12,6 @@ import {
   createPricesUpdate,
   createDealtUpdate,
   fetchPricingData,
-  fetchPricingDatav2,
 } from "./controllers/updates.js";
 import { validCommand } from "./utils/validation.js";
 import { dealerSpiel, brokerSpiel, adminSpiel } from "./utils/spiel.js";
@@ -250,6 +249,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
     }
 
     if (fetchPriceInfoRegex.test(text)) {
+      console.log("fetchPriceInfoRegex triggered");
       // if it matches this format, get the list of series' requested by splitting the original string by spaces
       const list = text.split(" ");
       console.log("list: ", list);
@@ -268,124 +268,98 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
         ),
       ]);
 
-      // let results = await Promise.all(
-      //   formattedList.map(async (series) => await fetchPricingData(series))
-      // );
-
       let results = await Promise.all(
-        formattedList.map(async (series) => await fetchPricingDatav2(series))
+        formattedList.map(async (series) => await fetchPricingData(series))
       );
 
       console.log("results: ", results);
 
-      // send an update for each series
+      for (const result of results) {
+        const { series, quotes, bestBidOffer } = result;
 
-      const v2 = true;
+        const renderBestPrices = () => {
+          if (!bestBidOffer) {
+            return "";
+          }
 
-      if (v2) {
-        for (const result of results) {
-          const { series, quotes, bestBidOffer } = result;
-          const renderBrokers = () => {
-            if (quotes?.length === 0) {
-              return "\nno levels";
+          const renderBid = () => {
+            const totalBidVol = bestBidOffer.bestBidVols.reduce(
+              (acc, a) => acc + a,
+              0
+            );
+            if (bestBidOffer.bestBid && bestBidOffer.bestBidVols.length >= 0) {
+              return `${totalBidVol} Mn ${bestBidOffer.bestBid}`;
             } else {
-              return quotes.map((quote) => {
-                console.log("quote: ", quote);
-                const renderBid = () => {
-                  if (quote.bid && quote.bid_vol) {
-                    const bestBid = bestBidOffer.bestBid === quote.bid;
-                    return `${quote.bid_vol} Mn ${bestBid ? "*" : ""}${
-                      quote.bid
-                    }${bestBid ? "*" : ""}`;
-                  } else {
-                    return "none";
-                  }
-                };
-                const renderOffer = () => {
-                  if (quote.offer && quote.offer_vol) {
-                    const bestOffer = bestBidOffer.bestOffer === quote.offer;
-                    return `${quote.offer_vol} Mn ${bestOffer ? "*" : ""}${
-                      quote.offer
-                    }${bestOffer ? "*" : ""}`;
-                  } else {
-                    return "none";
-                  }
-                };
-
-                const returnString = `\n${
-                  quote.broker
-                }\n${renderBid()} | ${renderOffer()}\n`;
-                console.log("returnString: ", returnString);
-                return returnString;
-              });
+              return "none";
             }
           };
-          bot.sendMessage(userProfile, [
-            new Message.Text(`${result.series}\n${renderBrokers()}`),
-          ]);
-        }
-        return;
-      }
 
-      for (const result of results) {
-        // if there are more than one best bids/offers
-        let bidBreakdown = ``;
-        let offerBreakdown = ``;
+          const renderOffer = () => {
+            const totalOfferVol = bestBidOffer.bestOfferVols.reduce(
+              (acc, a) => acc + a,
+              0
+            );
+            if (
+              bestBidOffer.bestOffer &&
+              bestBidOffer.bestOfferVols.length >= 0
+            ) {
+              return `${bestBidOffer.bestOffer} ${totalOfferVol} Mn`;
+            } else {
+              return "none";
+            }
+          };
+          return `\n\nBest Prices:\n${renderBid()} | ${renderOffer()}`;
+        };
 
-        const multipleBestBids =
-          result.bestBidVols.length > 1 && result.bestBidBrokers.length > 1;
+        const renderBrokers = () => {
+          if (quotes?.length === 0) {
+            return "\n\nno levels";
+          } else {
+            const brokerString = quotes.map((quote) => {
+              console.log("quote: ", quote);
+              const timestamp = `last updated ${dayjs(quote.created_at).format(
+                "h:mm A"
+              )}`;
 
-        if (multipleBestBids) {
-          result.bestBidVols.forEach((bidVol, index) => {
-            bidBreakdown =
-              bidBreakdown +
-              `   ${result.bestBidBrokers[index]} - ${bidVol} Mn \n`;
-          });
-        }
+              console.log("timestamp: ", timestamp);
+              const renderBid = () => {
+                if (quote.bid && quote.bid_vol) {
+                  const bestBid = bestBidOffer.bestBid === quote.bid;
+                  return `${bestBid ? "*" : ""}${quote.bid_vol} Mn ${
+                    quote.bid
+                  }${bestBid ? "*" : ""}`;
+                } else {
+                  return "none";
+                }
+              };
+              const renderOffer = () => {
+                if (quote.offer && quote.offer_vol) {
+                  const bestOffer = bestBidOffer.bestOffer === quote.offer;
+                  return `${bestOffer ? "*" : ""}${quote.offer} ${
+                    quote.offer_vol
+                  } Mn${bestOffer ? "*" : ""}`;
+                } else {
+                  return "none";
+                }
+              };
 
-        const multipleBestOffers =
-          result.bestOfferVols.length > 1 && result.bestOfferBrokers.length > 1;
+              const returnString = `\n\n${
+                quote.broker
+              }\n${renderBid()} | ${renderOffer()}\n${timestamp}`;
+              console.log("returnString: ", returnString);
+              return returnString;
+            });
 
-        if (multipleBestOffers) {
-          result.bestOfferVols.forEach((offerVol, index) => {
-            offerBreakdown =
-              offerBreakdown +
-              `   ${result.bestOfferBrokers[index]} - ${offerVol} Mn \n`;
-          });
-        }
-
-        function add(accumulator, a) {
-          return accumulator + a;
-        }
-
+            return brokerString.join("");
+          }
+        };
         bot.sendMessage(userProfile, [
           new Message.Text(
-            `${result.series}\n\nBest bid: ${
-              !result.bestBid
-                ? "none"
-                : `${result.bestBid} for ${result.bestBidVols.reduce(
-                    add,
-                    0
-                  )} Mn\n${
-                    multipleBestBids
-                      ? bidBreakdown
-                      : `   on ${result.bestBidBrokers[0]}`
-                  }`
-            }\nBest offer: ${
-              !result.bestOffer
-                ? "none"
-                : `${result.bestOffer} for ${result.bestOfferVols.reduce(
-                    add,
-                    0
-                  )} Mn\n${
-                    multipleBestOffers
-                      ? offerBreakdown
-                      : `   on ${result.bestOfferBrokers[0]}`
-                  }`
-            }`
+            `*${result.series}*${renderBestPrices()}${renderBrokers()}`
           ),
         ]);
       }
+      return;
     }
   } else if (user.role === "broker") {
   }
