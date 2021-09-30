@@ -12,6 +12,7 @@ import {
   createPricesUpdate,
   createDealtUpdate,
   fetchPricingData,
+  fetchPricingDatav2,
 } from "./controllers/updates.js";
 import { validCommand } from "./utils/validation.js";
 import { dealerSpiel, brokerSpiel, adminSpiel } from "./utils/spiel.js";
@@ -267,13 +268,64 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
         ),
       ]);
 
+      // let results = await Promise.all(
+      //   formattedList.map(async (series) => await fetchPricingData(series))
+      // );
+
       let results = await Promise.all(
-        formattedList.map(async (series) => await fetchPricingData(series))
+        formattedList.map(async (series) => await fetchPricingDatav2(series))
       );
 
       console.log("results: ", results);
 
       // send an update for each series
+
+      const v2 = true;
+
+      if (v2) {
+        for (const result of results) {
+          const { series, quotes, bestBidOffer } = result;
+          const renderBrokers = () => {
+            if (quotes?.length === 0) {
+              return "\nno levels";
+            } else {
+              return quotes.map((quote) => {
+                console.log("quote: ", quote);
+                const renderBid = () => {
+                  if (quote.bid && quote.bid_vol) {
+                    const bestBid = bestBidOffer.bestBid === quote.bid;
+                    return `${quote.bid_vol} Mn ${bestBid ? "*" : ""}${
+                      quote.bid
+                    }${bestBid ? "*" : ""}`;
+                  } else {
+                    return "none";
+                  }
+                };
+                const renderOffer = () => {
+                  if (quote.offer && quote.offer_vol) {
+                    const bestOffer = bestBidOffer.bestOffer === quote.offer;
+                    return `${quote.offer_vol} Mn ${bestOffer ? "*" : ""}${
+                      quote.offer
+                    }${bestOffer ? "*" : ""}`;
+                  } else {
+                    return "none";
+                  }
+                };
+
+                const returnString = `\n${
+                  quote.broker
+                }\n${renderBid()} | ${renderOffer()}\n`;
+                console.log("returnString: ", returnString);
+                return returnString;
+              });
+            }
+          };
+          bot.sendMessage(userProfile, [
+            new Message.Text(`${result.series}\n${renderBrokers()}`),
+          ]);
+        }
+        return;
+      }
 
       for (const result of results) {
         // if there are more than one best bids/offers
@@ -334,8 +386,6 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
           ),
         ]);
       }
-
-      return;
     }
   } else if (user.role === "broker") {
   }
