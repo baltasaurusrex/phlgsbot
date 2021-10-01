@@ -55,6 +55,6 @@ export const adminSpiel = [
     `Note 3: broker shorts \n\np = Prebon, a = Amstel, t = Tradition, g = GFI`
   ),
   new Message.Text(
-    `If one *data point is missing*, fill it with *"na"* \n\nE.g. If 5-77 has no bids, then type: \n\n577 na 3750 na 50 p`
+    `If either *the bid or the offer is missing*, fill it with *"na"* \n\nE.g. If 5-77 has no bids, then type: \n\n577 na 2750 50 p\n\n(note that the volume doesn't need another "na" as whatever's to the right of the prices is understood to be for the solo price)`
   ),
 ];

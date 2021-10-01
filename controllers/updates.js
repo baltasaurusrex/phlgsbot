@@ -115,6 +115,7 @@ export const fetchPricingData = async (series) => {
       now.getMonth(),
       now.getDate()
     );
+
     const todaysBidOfferUpdates = await Update.find({
       series,
       type: "bid_offer",
@@ -150,7 +151,21 @@ export const fetchPricingData = async (series) => {
 
     console.log("bestBidOffer: ", bestBidOffer);
 
-    return { series, quotes: mostRecentBidOfferUpdates, bestBidOffer };
+    const lastDealt = await Update.findOne({
+      series,
+      type: "last_dealt",
+      // only pick up the ones created today
+      created_at: { $gte: startOfToday },
+    });
+
+    console.log("lastDealt: ", lastDealt);
+
+    return {
+      series,
+      quotes: mostRecentBidOfferUpdates,
+      bestBidOffer,
+      lastDealt,
+    };
   } catch (err) {
     return Promise.reject(err);
   }

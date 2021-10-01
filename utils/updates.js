@@ -1,6 +1,7 @@
 export const formatPrice = (price) => {
   console.log("price: ", price);
-  if (/na/i.test(price)) return null;
+  const regex = new RegExp(`na|\\/`, "i");
+  if (regex.test(price)) return null;
   const decimal = price.slice(0, 1) + "." + price.slice(1);
 
   const float = Number.parseFloat(decimal);

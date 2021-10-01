@@ -1,8 +1,16 @@
+// export const getAdminPricesUpdateRegexOld = (validIsins) =>
+//   new RegExp(
+//     `^(${validIsins.join(
+//       "|"
+//     )})\\s(\\d+|na)\\s(\\d+|na)\\s(\\d+|na)\\s(\\d+|na)\\s(([pPaAtTgG]\\w*))`,
+//     "i"
+//   );
+
 export const getAdminPricesUpdateRegex = (validIsins) =>
   new RegExp(
     `^(${validIsins.join(
       "|"
-    )})\\s(\\d+|na)\\s(\\d+|na)\\s(\\d+|na)\\s(\\d+|na)\\s(([pPaAtTgG]\\w*))`,
+    )})\\s(\\d+|na|\\/)\\s(\\d+|na|\\/)(?:\\s(\\d+))?(?:\\s(\\d+))?\\s([pPaAtTgG]\\w*)`,
     "i"
   );
 

@@ -178,21 +178,25 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
     if (pricesUpdateRegex.test(text)) {
       console.log("text.match: ", text.match(pricesUpdateRegex));
       const match = text.match(pricesUpdateRegex);
-      const [full, series, bid, offer, bidvol, offervol, broker] = match;
+      const [full, series, bid, offer, vol1, vol2, broker] = match;
 
       const formattedSeries = await getSeries(series);
       const formattedBid = formatPrice(bid);
       console.log("formattedBid: ", formattedBid);
       const formattedOffer = formatPrice(offer);
       console.log("formattedOffer: ", formattedOffer);
+      console.log("vol1: ", vol1);
+      console.log("vol2: ", vol2);
+      const bidvol = formattedBid ? vol1 : null;
+      const offervol = formattedOffer ? (formattedBid ? vol2 : vol1) : null;
       const formattedBroker = getBroker(broker);
 
       const update = await createPricesUpdate({
         series: formattedSeries,
         bid: formattedBid,
         offer: formattedOffer,
-        bidvol: bidvol === "na" ? null : bidvol,
-        offervol: offervol === "na" ? null : offervol,
+        bidvol,
+        offervol,
         broker: formattedBroker,
         user,
       });
@@ -237,7 +241,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
       console.log("update: ", update);
 
-      const time = dayjs().format("h:mm:ss A");
+      const time = dayjs().format("h:mm A");
 
       bot.sendMessage(userProfile, [
         new Message.Text(
@@ -272,10 +276,9 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
         formattedList.map(async (series) => await fetchPricingData(series))
       );
 
-      console.log("results: ", results);
-
       for (const result of results) {
-        const { series, quotes, bestBidOffer } = result;
+        const { series, quotes, bestBidOffer, lastDealt } = result;
+        console.log("lastDealt: ", lastDealt);
 
         const renderBestPrices = () => {
           if (!bestBidOffer) {
@@ -311,17 +314,27 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
           return `\n\nBest Prices:\n${renderBid()} | ${renderOffer()}`;
         };
 
+        const renderLastDealt = () => {
+          if (!lastDealt) {
+            return "";
+          }
+
+          const timestamp = `at ${dayjs(lastDealt.created_at).format(
+            "h:mm A"
+          )}`;
+
+          return `\n\nlast ${lastDealt.direction} at ${lastDealt.lastDealt} for ${lastDealt.lastDealtVol} Mn\n${timestamp}`;
+        };
+
         const renderBrokers = () => {
           if (quotes?.length === 0) {
             return "\n\nno levels";
           } else {
             const brokerString = quotes.map((quote) => {
-              console.log("quote: ", quote);
               const timestamp = `last updated ${dayjs(quote.created_at).format(
                 "h:mm A"
               )}`;
 
-              console.log("timestamp: ", timestamp);
               const renderBid = () => {
                 if (quote.bid && quote.bid_vol) {
                   const bestBid = bestBidOffer.bestBid === quote.bid;
@@ -346,16 +359,19 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
               const returnString = `\n\n${
                 quote.broker
               }\n${renderBid()} | ${renderOffer()}\n${timestamp}`;
-              console.log("returnString: ", returnString);
+
               return returnString;
             });
 
             return brokerString.join("");
           }
         };
+
         bot.sendMessage(userProfile, [
           new Message.Text(
-            `*${result.series}*${renderBestPrices()}${renderBrokers()}`
+            `*${
+              result.series
+            }*${renderBestPrices()}${renderLastDealt()}${renderBrokers()}`
           ),
         ]);
       }
