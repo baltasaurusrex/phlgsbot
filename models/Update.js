@@ -13,7 +13,10 @@ const UpdateSchema = new mongoose.Schema(
     offer_vol: { type: Number },
     lastDealt: { type: Number },
     lastDealtVol: { type: Number },
-    direction: { type: String, enum: ["taken", "given", "taken", "mapped"] },
+    direction: {
+      type: String,
+      enum: ["taken", "given", "taken", "lifted", "mapped"],
+    },
     broker: { type: String, enum: ["Prebon", "Amstel", "Tradition", "GFI"] },
   },
   { timestamps: { createdAt: "created_at" } }

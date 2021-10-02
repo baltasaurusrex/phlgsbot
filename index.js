@@ -319,11 +319,11 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
             return "";
           }
 
-          const timestamp = `at ${dayjs(lastDealt.created_at).format(
-            "h:mm A"
-          )}`;
+          const timestamp = `on ${lastDealt.broker} at ${dayjs(
+            lastDealt.created_at
+          ).format("h:mm A")}`;
 
-          return `\n\nlast ${lastDealt.direction} at ${lastDealt.lastDealt} for ${lastDealt.lastDealtVol} Mn\n${timestamp}`;
+          return `\n\nlast *${lastDealt.direction}* at *${lastDealt.lastDealt}* for ${lastDealt.lastDealtVol} Mn\n${timestamp}`;
         };
 
         const renderBrokers = () => {
