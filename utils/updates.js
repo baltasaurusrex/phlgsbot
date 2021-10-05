@@ -1,3 +1,7 @@
+import dayjs from "dayjs";
+import CustomParseFormat from "dayjs/plugin/customParseFormat.js";
+dayjs.extend(CustomParseFormat);
+
 export const formatPrice = (price) => {
   console.log("price: ", price);
   const regex = new RegExp(`na|\\/`, "i");
@@ -12,6 +16,7 @@ export const formatPrice = (price) => {
 };
 
 export const getBroker = (code) => {
+  if (!code) return "MOSB";
   switch (code.toLowerCase()) {
     case "p":
       return "Prebon";
@@ -22,6 +27,24 @@ export const getBroker = (code) => {
     case "g":
       return "GFI";
     default:
-      return "error";
+      return "MOSB";
   }
+};
+
+export const formatTime = (timeString, timePeriod) => {
+  let formattedTimeString = timeString;
+  if (timeString.length === 3) {
+    const hour = timeString.slice(0, 1);
+    const minutes = timeString.slice(1);
+
+    if (hour <= 9 && hour >= 1) {
+      formattedTimeString = "0" + hour + minutes;
+    }
+  }
+  const before = formattedTimeString + timePeriod;
+
+  const dayjsObj = dayjs(before, ["hhmma", "ha"]);
+
+  console.log(dayjs(dayjsObj).format());
+  return dayjs(dayjsObj).format();
 };
