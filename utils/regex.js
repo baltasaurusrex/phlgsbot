@@ -18,9 +18,9 @@ export const getAdminDealtUpdateRegex = (validIsins) =>
   new RegExp(
     `^(${validIsins.join(
       "|"
-    )})\\s(given|lifted|taken|mapped)\\s(\\d+)\\s(\\d+)\\s(([pPaAtTgG]\\w*))`,
+    )})\\s(given|lifted|taken|mapped)\\s(\\d+)\\s(\\d+)\\s?([pPaAtTgG]\\w*)?(?:\\s*)(?:(\\d{1,4})(am|pm))?`,
     "i"
   );
 
 export const getFetchPriceInfoRegex = (validIsins) =>
-  new RegExp(`^(${validIsins.join("|")}(\\s|$))+`, "i");
+  new RegExp(`^(?:(577|1061)\\s*?)+$`, "i");

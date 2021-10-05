@@ -6,7 +6,6 @@ export const dealerSpiel = [
   new Message.Text(`E.g. 577`),
   new Message.Text(`You may also type multiple series with one query`),
   new Message.Text(`E.g. 577 1061 765`),
-  new Message.Text("For updates on all tracked ISINs, please reply with 'all'"),
 ];
 
 export const brokerSpiel = [
@@ -38,7 +37,6 @@ export const adminSpiel = [
     `You may also type *multiple* series with one query \n\nE.g. 577 1061 765`
   ),
 
-  new Message.Text("For updates on all tracked ISINs, please reply with 'all'"),
   new Message.Text(`*===BROKER FUNCTIONS===*`),
   new Message.Text(
     `To *input a price update* on a specific ISIN, please type it's series, followed by it's bid, offer, bid vol, offer vol, and broker \n\nE.g. 577 2900 2750 50 50 p`

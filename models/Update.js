@@ -17,7 +17,11 @@ const UpdateSchema = new mongoose.Schema(
       type: String,
       enum: ["taken", "given", "taken", "lifted", "mapped"],
     },
-    broker: { type: String, enum: ["Prebon", "Amstel", "Tradition", "GFI"] },
+    broker: {
+      type: String,
+      enum: ["Prebon", "Amstel", "Tradition", "GFI", "MOSB"],
+    },
+    time: { type: Date, default: new Date() },
   },
   { timestamps: { createdAt: "created_at" } }
 );

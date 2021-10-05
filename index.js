@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import ngrok from "./utils/getPublicUrl.js";
 import pkg from "viber-bot";
 import dayjs from "dayjs";
+import CustomParseFormat from "dayjs/plugin/customParseFormat.js";
+dayjs.extend(CustomParseFormat);
 const { Bot, Events, Message } = pkg;
 dotenv.config();
 
@@ -17,7 +19,7 @@ import { validCommand } from "./utils/validation.js";
 import { dealerSpiel, brokerSpiel, adminSpiel } from "./utils/spiel.js";
 import { populate } from "./populators/isins.js";
 import { getValidIsins, getSeries } from "./controllers/isins.js";
-import { formatPrice, getBroker } from "./utils/updates.js";
+import { formatPrice, getBroker, formatTime } from "./utils/updates.js";
 import {
   getAdminDealtUpdateRegex,
   getAdminPricesUpdateRegex,
@@ -25,8 +27,6 @@ import {
 } from "./utils/regex.js";
 
 // populate();
-// getValidIsins().then((res) => console.log(res));
-// getSeries("r513");
 
 export const bot = new Bot({
   authToken: process.env.AUTH_TOKEN,
@@ -173,9 +173,10 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
     const dealtUpdateRegex = getAdminDealtUpdateRegex(validIsins);
 
     const fetchPriceInfoRegex = getFetchPriceInfoRegex(validIsins);
-    console.log("fetchPriceInfoRegex: ", fetchPriceInfoRegex);
 
     if (pricesUpdateRegex.test(text)) {
+      console.log(`regex triggered: pricesUpdateRegex.test(text)`);
+
       console.log("text.match: ", text.match(pricesUpdateRegex));
       const match = text.match(pricesUpdateRegex);
       const [full, series, bid, offer, vol1, vol2, broker] = match;
@@ -217,18 +218,35 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
     }
 
     if (dealtUpdateRegex.test(text)) {
+      console.log(`regex triggered: dealtUpdateRegex.test(text)`);
       console.log("text.match: ", text.match(dealtUpdateRegex));
       const match = text.match(dealtUpdateRegex);
-      const [full, series, action, price, volume, broker] = match;
+      const [
+        full,
+        series,
+        action,
+        price,
+        volume,
+        broker,
+        timeString,
+        timePeriod,
+      ] = match;
+
+      console.log("match: ", match);
 
       const formattedSeries = await getSeries(series);
       const formattedPrice = formatPrice(price);
-      const formattedBroker = getBroker(broker);
+      const formattedBroker = broker ? getBroker(broker) : "MOSB";
+      const formattedTime =
+        timeString && timePeriod
+          ? formatTime(timeString, timePeriod)
+          : dayjs().format();
 
       console.log("series: ", formattedSeries);
       console.log("action: ", action);
       console.log("price: ", formattedPrice);
       console.log("broker: ", formattedBroker);
+      console.log("time: ", formattedTime);
 
       const update = await createDealtUpdate({
         series: formattedSeries,
@@ -237,11 +255,12 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
         volume,
         broker: formattedBroker,
         user,
+        time: formattedTime,
       });
 
       console.log("update: ", update);
 
-      const time = dayjs().format("h:mm A");
+      const time = dayjs(update.time).format("h:mm A");
 
       bot.sendMessage(userProfile, [
         new Message.Text(
@@ -251,6 +270,139 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
       return;
     }
+
+    if (fetchPriceInfoRegex.test(text)) {
+      console.log("regex triggered: fetchPriceInfoRegex");
+      // if it matches this format, get the list of series' requested by splitting the original string by spaces
+      const string = text.match(fetchPriceInfoRegex)[0];
+      console.log("string: ", string);
+      const list = text.split(/\s+/);
+      console.log("list: ", list);
+
+      const formattedList = await Promise.all(
+        list.map(
+          async (unformattedSeries) => await getSeries(unformattedSeries)
+        )
+      );
+
+      console.log("formattedList: ", formattedList);
+
+      bot.sendMessage(userProfile, [
+        new Message.Text(
+          `Requesting for pricing data on ${formattedList.join(", ")}...`
+        ),
+      ]);
+
+      let results = await Promise.all(
+        formattedList.map(async (series) => await fetchPricingData(series))
+      );
+
+      for (const result of results) {
+        const { series, quotes, bestBidOffer, lastDealt } = result;
+        console.log("lastDealt: ", lastDealt);
+
+        const renderBestPrices = () => {
+          if (!bestBidOffer) {
+            return "";
+          }
+
+          const renderBid = () => {
+            const totalBidVol = bestBidOffer.bestBidVols.reduce(
+              (acc, a) => acc + a,
+              0
+            );
+            if (bestBidOffer.bestBid && bestBidOffer.bestBidVols.length >= 0) {
+              return `${totalBidVol} Mn ${bestBidOffer.bestBid}`;
+            } else {
+              return "none";
+            }
+          };
+
+          const renderOffer = () => {
+            const totalOfferVol = bestBidOffer.bestOfferVols.reduce(
+              (acc, a) => acc + a,
+              0
+            );
+            if (
+              bestBidOffer.bestOffer &&
+              bestBidOffer.bestOfferVols.length >= 0
+            ) {
+              return `${bestBidOffer.bestOffer} ${totalOfferVol} Mn`;
+            } else {
+              return "none";
+            }
+          };
+          return `\n\nBest Prices:\n${renderBid()} | ${renderOffer()}`;
+        };
+
+        const renderLastDealt = () => {
+          if (!lastDealt) {
+            return "";
+          }
+
+          const timestamp = `on ${lastDealt.broker} at ${dayjs(
+            lastDealt.created_at
+          ).format("h:mm A")}`;
+
+          return `\n\nlast *${lastDealt.direction}* at *${lastDealt.lastDealt}* for ${lastDealt.lastDealtVol} Mn\n${timestamp}`;
+        };
+
+        const renderBrokers = () => {
+          if (quotes?.length === 0) {
+            return "\n\nno levels";
+          } else {
+            const brokerString = quotes.map((quote) => {
+              const timestamp = `last updated ${dayjs(quote.created_at).format(
+                "h:mm A"
+              )}`;
+
+              const renderBid = () => {
+                if (quote.bid && quote.bid_vol) {
+                  const bestBid = bestBidOffer.bestBid === quote.bid;
+                  return `${bestBid ? "*" : ""}${quote.bid_vol} Mn ${
+                    quote.bid
+                  }${bestBid ? "*" : ""}`;
+                } else {
+                  return "none";
+                }
+              };
+              const renderOffer = () => {
+                if (quote.offer && quote.offer_vol) {
+                  const bestOffer = bestBidOffer.bestOffer === quote.offer;
+                  return `${bestOffer ? "*" : ""}${quote.offer} ${
+                    quote.offer_vol
+                  } Mn${bestOffer ? "*" : ""}`;
+                } else {
+                  return "none";
+                }
+              };
+
+              const returnString = `\n\n${
+                quote.broker
+              }\n${renderBid()} | ${renderOffer()}\n${timestamp}`;
+
+              return returnString;
+            });
+
+            return brokerString.join("");
+          }
+        };
+
+        bot.sendMessage(userProfile, [
+          new Message.Text(
+            `*${
+              result.series
+            }*${renderBestPrices()}${renderLastDealt()}${renderBrokers()}`
+          ),
+        ]);
+      }
+      return;
+    }
+  }
+
+  if (user.role === "dealer") {
+    const fetchPriceInfoRegex = getFetchPriceInfoRegex(validIsins);
+    console.log("fetchPriceInfoRegex: ", fetchPriceInfoRegex);
 
     if (fetchPriceInfoRegex.test(text)) {
       console.log("fetchPriceInfoRegex triggered");
@@ -377,7 +529,9 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       }
       return;
     }
-  } else if (user.role === "broker") {
+  }
+
+  if (user.role === "broker") {
   }
 
   // Logic for reading price updates

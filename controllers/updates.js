@@ -29,7 +29,7 @@ export const createPricesUpdate = async (data) => {
 
 export const createDealtUpdate = async (data) => {
   try {
-    const { series, action, price, volume, broker, user } = data;
+    const { series, action, price, volume, broker, user, time } = data;
 
     const newUpdate = new Update({
       type: "last_dealt",
@@ -38,6 +38,7 @@ export const createDealtUpdate = async (data) => {
       direction: action,
       lastDealt: price,
       lastDealtVol: volume,
+      time,
       broker,
     });
 
@@ -120,8 +121,8 @@ export const fetchPricingData = async (series) => {
       series,
       type: "bid_offer",
       // only pick up the ones created today
-      created_at: { $gte: startOfToday },
-    }).sort({ created_at: "desc" });
+      time: { $gte: startOfToday },
+    }).sort({ time: "desc" });
 
     console.log("todaysBidOfferUpdates: ", todaysBidOfferUpdates);
 
@@ -151,20 +152,20 @@ export const fetchPricingData = async (series) => {
 
     console.log("bestBidOffer: ", bestBidOffer);
 
-    const lastDealt = await Update.findOne({
+    const lastDealt = await Update.find({
       series,
       type: "last_dealt",
       // only pick up the ones created today
-      created_at: { $gte: startOfToday },
-    });
+      time: { $gte: startOfToday },
+    }).sort({ time: "desc" });
 
-    console.log("lastDealt: ", lastDealt);
+    console.log("lastDealt[0]: ", lastDealt[0]);
 
     return {
       series,
       quotes: mostRecentBidOfferUpdates,
       bestBidOffer,
-      lastDealt,
+      lastDealt: lastDealt[0],
     };
   } catch (err) {
     return Promise.reject(err);
