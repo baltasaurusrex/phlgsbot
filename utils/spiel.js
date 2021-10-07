@@ -39,20 +39,21 @@ export const adminSpiel = [
 
   new Message.Text(`*===BROKER FUNCTIONS===*`),
   new Message.Text(
-    `To *input a price update* on a specific ISIN, please type it's series, followed by it's bid, offer, bid vol, offer vol, and broker \n\nE.g. 577 2900 2750 50 50 p`
-  ),
-
-  new Message.Text(
-    `Note 1: for ease of input, the *series* is just the *shortest way you can identify it* \n\nE.g: \n5-77 -> 577 \nR513 -> 513 \n10-61 -> 1061`
-  ),
-
-  new Message.Text(
-    `Note 2: The *first digit* from the left is understood as the *big fig* \n\nI.e. 3800 -> 3.800`
+    `To *input a price update* on a specific ISIN, please type it's series, followed by it's bid, offer, bid vol (optional), offer vol (optional), and broker \n\nE.g. 577 2900 2750 100 100 p`
   ),
   new Message.Text(
-    `Note 3: broker shorts \n\np = Prebon, a = Amstel, t = Tradition, g = GFI`
+    `Note 1: As a shortcut, if volume isn't specified, but a corresponding bid or offer is, then the volume for that bid or offer is understood to be 50 Mn\n\nE.g: 577 2900 2750 p === 577 2900 2750 50 50 p`
   ),
   new Message.Text(
-    `If either *the bid or the offer is missing*, fill it with *"na"* \n\nE.g. If 5-77 has no bids, then type: \n\n577 na 2750 50 p\n\n(note that the volume doesn't need another "na" as whatever's to the right of the prices is understood to be for the solo price)`
+    `Note 2: For ease of input, the *series* is just the *shortest way you can identify it* \n\nE.g: \n5-77 -> 577 \nR513 -> 513 \n10-61 -> 1061`
+  ),
+  new Message.Text(
+    `Note 3: The *first digit* from the left is understood as the *big fig* \n\nI.e. 3800 -> 3.800`
+  ),
+  new Message.Text(
+    `Note 4: If either *the bid or the offer is missing*, fill it with *"na"* \n\nE.g. If 5-77 has no bids, then type: \n\n577 na 2750 p\n\nNote that the volume here is assumed to be 50 (see Note 1)`
+  ),
+  new Message.Text(
+    `Note 5: broker shorts \n\np = Prebon, a = Amstel, t = Tradition, g = GFI`
   ),
 ];

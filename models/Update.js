@@ -21,7 +21,7 @@ const UpdateSchema = new mongoose.Schema(
       type: String,
       enum: ["Prebon", "Amstel", "Tradition", "GFI", "MOSB"],
     },
-    time: { type: Date, default: new Date() },
+    time: { type: Date, default: Date.now },
   },
   { timestamps: { createdAt: "created_at" } }
 );

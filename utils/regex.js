@@ -23,4 +23,4 @@ export const getAdminDealtUpdateRegex = (validIsins) =>
   );
 
 export const getFetchPriceInfoRegex = (validIsins) =>
-  new RegExp(`^(?:(577|1061)\\s*?)+$`, "i");
+  new RegExp(`^(?:(${validIsins.join("|")})\\s*?)+$`, "i");
