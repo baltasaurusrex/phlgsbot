@@ -188,8 +188,16 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       console.log("formattedOffer: ", formattedOffer);
       console.log("vol1: ", vol1);
       console.log("vol2: ", vol2);
-      const bidvol = formattedBid ? vol1 : null;
-      const offervol = formattedOffer ? (formattedBid ? vol2 : vol1) : null;
+      const bidvol = formattedBid ? (vol1 ? vol1 : 50) : null;
+      const offervol = formattedOffer
+        ? formattedBid
+          ? vol2
+            ? vol2
+            : 50
+          : vol1
+          ? vol1
+          : 50
+        : null;
       const formattedBroker = getBroker(broker);
 
       const update = await createPricesUpdate({

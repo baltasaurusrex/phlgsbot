@@ -126,27 +126,21 @@ export const fetchPricingData = async (series) => {
 
     console.log("todaysBidOfferUpdates: ", todaysBidOfferUpdates);
 
-    if (todaysBidOfferUpdates.length === 0) {
-      return {
-        series,
-        quotes: [],
-      };
-    }
-
     let mostRecentBidOfferUpdates = [];
     let currentBrokers = [];
 
-    todaysBidOfferUpdates.forEach((quote) => {
-      // if broker already in the mostRecentBidOfferUpdates array, since the first one is assumed to be the most recent, don't include
-      console.log("quote: ", quote);
-      if (!currentBrokers.includes(quote.broker)) {
-        console.log("!currentBrokers.includes(quote.broker)");
-        mostRecentBidOfferUpdates.push(quote);
-        currentBrokers.push(quote.broker);
-      }
-    });
-
-    console.log("mostRecentBidOfferUpdates: ", mostRecentBidOfferUpdates);
+    if (todaysBidOfferUpdates.length > 0) {
+      todaysBidOfferUpdates.forEach((quote) => {
+        // if broker already in the mostRecentBidOfferUpdates array, since the first one is assumed to be the most recent, don't include
+        console.log("quote: ", quote);
+        if (!currentBrokers.includes(quote.broker)) {
+          console.log("!currentBrokers.includes(quote.broker)");
+          mostRecentBidOfferUpdates.push(quote);
+          currentBrokers.push(quote.broker);
+        }
+      });
+      console.log("mostRecentBidOfferUpdates: ", mostRecentBidOfferUpdates);
+    }
 
     const bestBidOffer = getBestBidOffer(mostRecentBidOfferUpdates);
 
