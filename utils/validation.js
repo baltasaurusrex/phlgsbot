@@ -1,12 +1,13 @@
-import { getValidIsins } from "../controllers/isins.js";
 import {
   getAdminDealtUpdateRegex,
   getAdminPricesUpdateRegex,
   getFetchPriceInfoRegex,
+  getCreateOrderRegex,
 } from "./regex.js";
 
-export const validCommand = (text, validIsins) => {
+export const validCommand = (text, validIsins, validNicknames) => {
   let flag = false;
+  // if the flag is toggled to true, that means a valid command was hit
 
   if (/^help/gi.test(text)) flag = true;
   if (/^((admin)|(broker)|(dealer))/gi.test(text)) flag = true;
@@ -23,6 +24,10 @@ export const validCommand = (text, validIsins) => {
   const fetchPriceInfoRegex = getFetchPriceInfoRegex(validIsins);
 
   if (fetchPriceInfoRegex.test(text)) flag = true;
+
+  const createOrderRegex = getCreateOrderRegex(validIsins, validNicknames);
+
+  if (createOrderRegex.test(text)) flag = true;
 
   return flag;
 };

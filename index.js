@@ -19,11 +19,13 @@ import { validCommand } from "./utils/validation.js";
 import { dealerSpiel, brokerSpiel, adminSpiel } from "./utils/spiel.js";
 import { populate } from "./populators/isins.js";
 import { getValidIsins, getSeries } from "./controllers/isins.js";
+import { getValidNicknames, getDesk } from "./controllers/desks.js";
 import { formatPrice, getBroker, formatTime } from "./utils/updates.js";
 import {
   getAdminDealtUpdateRegex,
   getAdminPricesUpdateRegex,
   getFetchPriceInfoRegex,
+  getCreateOrderRegex,
 } from "./utils/regex.js";
 
 // populate();
@@ -94,8 +96,11 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
   const validIsins = await getValidIsins();
   console.log("validIsins: ", validIsins);
 
+  const validNicknames = await getValidNicknames();
+  console.log("validNicknames: ", validNicknames);
+
   // check if valid command
-  if (!validCommand(text, validIsins)) {
+  if (!validCommand(text, validIsins, validNicknames)) {
     const reply = new Message.Text(
       `Sorry, I don't recognize that command. Please type "help" for available commands`
     );
@@ -166,13 +171,15 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
     return;
   }
 
-  // Logic for creating price updates
+  // Admin functions
   if (user.role === "admin") {
     const pricesUpdateRegex = getAdminPricesUpdateRegex(validIsins);
 
     const dealtUpdateRegex = getAdminDealtUpdateRegex(validIsins);
 
     const fetchPriceInfoRegex = getFetchPriceInfoRegex(validIsins);
+
+    const createOrderRegex = getCreateOrderRegex(validIsins, validNicknames);
 
     if (pricesUpdateRegex.test(text)) {
       console.log(`regex triggered: pricesUpdateRegex.test(text)`);
@@ -244,6 +251,8 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
       const formattedSeries = await getSeries(series);
       const formattedPrice = formatPrice(price);
+      const formattedVol = volume ? volume : 50;
+      console.log("formattedVol: ", formattedVol);
       const formattedBroker = broker ? getBroker(broker) : "MOSB";
       const formattedTime =
         timeString && timePeriod
@@ -260,7 +269,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
         series: formattedSeries,
         price: formattedPrice,
         action,
-        volume,
+        volume: formattedVol,
         broker: formattedBroker,
         user,
         time: formattedTime,
@@ -272,7 +281,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
       bot.sendMessage(userProfile, [
         new Message.Text(
-          `${formattedSeries} was ${action} at ${formattedPrice} for ${volume} Mn \n\non ${formattedBroker} at ${time}`
+          `${formattedSeries} was ${action} at ${formattedPrice} for ${formattedVol} Mn \n\non ${formattedBroker} at ${time}`
         ),
       ]);
 
@@ -406,8 +415,32 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       }
       return;
     }
+
+    if (createOrderRegex.test(text)) {
+      console.log("regex triggered: createOrderRegex");
+      console.log("text.match: ", text.match(createOrderRegex));
+      const match = text.match(createOrderRegex);
+      const [full, series, nickname, orderType, rate, volume, broker] = match;
+
+      const formattedSeries = await getSeries(series);
+      const aliasOrId = nickname === "i" ? user._id : nickname.toLowerCase();
+      const formattedOrderType = orderType.toLowerCase();
+      const formattedRate = formatPrice(rate);
+      const formattedVol = volume ? volume : 50;
+      const formattedBroker = getBroker(broker);
+
+      const desk = await getDesk(aliasOrId);
+
+      bot.sendMessage(userProfile, [
+        new Message.Text(
+          `Order created for ${desk}\n\n${formattedSeries} ${orderType}ing at ${formattedRate} for ${formattedVol} Mn on ${formattedBroker}`
+        ),
+      ]);
+      return;
+    }
   }
 
+  // Dealer functions
   if (user.role === "dealer") {
     const fetchPriceInfoRegex = getFetchPriceInfoRegex(validIsins);
     console.log("fetchPriceInfoRegex: ", fetchPriceInfoRegex);
@@ -542,7 +575,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
   if (user.role === "broker") {
   }
 
-  // Logic for reading price updates
+  // Logic for creating orders
 
   // Temporary catch all
   const reply = new Message.Text(

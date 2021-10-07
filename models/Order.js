@@ -1,22 +1,17 @@
 import mongoose from "mongoose";
 import User from "./User.js";
 
-const UpdateSchema = new mongoose.Schema(
+const OrderSchema = new mongoose.Schema(
   {
+    creator: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    for: { type: String },
     series: { type: String, required: true },
     isin: { type: mongoose.Schema.Types.ObjectId, ref: "Isin" },
-    creator: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    type: { type: String, enum: ["bid_offer", "last_dealt"] },
+    orderType: { type: String, enum: ["bid", "offer"] },
     bid: { type: Number },
     bid_vol: { type: Number },
     offer: { type: Number },
     offer_vol: { type: Number },
-    lastDealt: { type: Number },
-    lastDealtVol: { type: Number },
-    direction: {
-      type: String,
-      enum: ["taken", "given", "taken", "lifted", "mapped"],
-    },
     broker: {
       type: String,
       enum: ["Prebon", "Amstel", "Tradition", "GFI", "MOSB"],
@@ -26,4 +21,4 @@ const UpdateSchema = new mongoose.Schema(
   { timestamps: { createdAt: "created_at" } }
 );
 
-export default mongoose.model("Update", UpdateSchema);
+export default mongoose.model("Order", OrderSchema);
