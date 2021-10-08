@@ -17,6 +17,7 @@ import {
 } from "./controllers/updates.js";
 import { validCommand } from "./utils/validation.js";
 import { dealerSpiel, brokerSpiel, adminSpiel } from "./utils/spiel.js";
+import { broadcastMessage } from "./utils/sendMessage.js";
 import { populate } from "./populators/isins.js";
 import { getValidIsins, getSeries } from "./controllers/isins.js";
 import { getValidNicknames, getDesk } from "./controllers/desks.js";
@@ -438,6 +439,13 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       ]);
       return;
     }
+
+    if (text === "test message") {
+      console.log("testing message");
+      const baltieViberId = "GLFVU5NMrftatUawMgsJug==";
+      broadcastMessage([baltieViberId], "test message");
+      return;
+    }
   }
 
   // Dealer functions
@@ -574,8 +582,6 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
   if (user.role === "broker") {
   }
-
-  // Logic for creating orders
 
   // Temporary catch all
   const reply = new Message.Text(
