@@ -17,7 +17,7 @@ import {
 } from "./controllers/updates.js";
 import { validCommand } from "./utils/validation.js";
 import { dealerSpiel, brokerSpiel, adminSpiel } from "./utils/spiel.js";
-import { broadcastMessage } from "./utils/sendMessage.js";
+import { broadcastMessage } from "./utils/messages.js";
 import { populate } from "./populators/isins.js";
 import { getValidIsins, getSeries } from "./controllers/isins.js";
 import { getValidNicknames, getDesk } from "./controllers/desks.js";

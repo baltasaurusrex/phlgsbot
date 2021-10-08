@@ -1,7 +1,10 @@
 import axios from "axios";
+import dotenv from "dotenv";
+dotenv.config();
 
 const API = axios.create({
   baseURL: `https://chatapi.viber.com/pa`,
+  headers: { "X-Viber-Auth-Token": process.env.AUTH_TOKEN },
 });
 
 export const broadcastMessage = async (receiverViberIdList, text) => {
