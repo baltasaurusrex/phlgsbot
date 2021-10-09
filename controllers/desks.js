@@ -15,27 +15,30 @@ export const getValidNicknames = async () => {
   }
 };
 
-export const getDesk = async (aliasOrId) => {
-  console.log("aliasOrId: ", aliasOrId);
-  console.log("typeof aliasOrId: ", typeof aliasOrId);
-  const isObjectId = mongoose.Types.ObjectId.isValid(aliasOrId);
-  console.log("isObjectId: ", isObjectId);
+export const getValidDesks = async () => {
   try {
-    let desk = null;
+    const desks = await Desk.find();
+    return desks.map((desk) => desk.name);
+  } catch (err) {
+    return err;
+  }
+};
 
+export const getDesk = async (aliasOrId) => {
+  const isObjectId = mongoose.Types.ObjectId.isValid(aliasOrId);
+
+  try {
     if (isObjectId) {
-      desk = await Desk.findOne({
+      const desk = await Desk.findOne({
         userIds: aliasOrId,
       });
+      return desk?.name;
     } else {
-      desk = await Desk.findOne({
+      const desk = await Desk.findOne({
         aliases: { $regex: `${aliasOrId}`, $options: "gi" },
       });
+      return desk?.name;
     }
-
-    console.log("desk: ", desk);
-
-    return desk.name;
   } catch (err) {
     return err;
   }

@@ -34,3 +34,11 @@ export const getCreateOrderRegex = (validIsins, nicknames) => {
     "i"
   );
 };
+
+export const getShowOrdersRegex = (validIsins, validDesks) => {
+  return new RegExp(
+    `^[Ss]how orders(?:\\s*)(${validIsins.join(
+      "|"
+    )})?(?:\\s*)(${validDesks.join("|")})?(?:\\s*)([pPaAtTgG]\\w*)?(?:\\s*)$`
+  );
+};

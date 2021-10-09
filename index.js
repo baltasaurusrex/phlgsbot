@@ -20,13 +20,20 @@ import { dealerSpiel, brokerSpiel, adminSpiel } from "./utils/spiel.js";
 import { broadcastMessage } from "./utils/messages.js";
 import { populate } from "./populators/isins.js";
 import { getValidIsins, getSeries } from "./controllers/isins.js";
-import { getValidNicknames, getDesk } from "./controllers/desks.js";
+import {
+  getValidNicknames,
+  getDesk,
+  getValidDesks,
+} from "./controllers/desks.js";
+import { createOrder, fetchOrders } from "./controllers/orders.js";
 import { formatPrice, getBroker, formatTime } from "./utils/updates.js";
+
 import {
   getAdminDealtUpdateRegex,
   getAdminPricesUpdateRegex,
   getFetchPriceInfoRegex,
   getCreateOrderRegex,
+  getShowOrdersRegex,
 } from "./utils/regex.js";
 
 // populate();
@@ -100,8 +107,11 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
   const validNicknames = await getValidNicknames();
   console.log("validNicknames: ", validNicknames);
 
+  const validDesks = await getValidDesks();
+  console.log("validDesks: ", validDesks);
+
   // check if valid command
-  if (!validCommand(text, validIsins, validNicknames)) {
+  if (!validCommand(text, validIsins, validNicknames, validDesks)) {
     const reply = new Message.Text(
       `Sorry, I don't recognize that command. Please type "help" for available commands`
     );
@@ -181,6 +191,8 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
     const fetchPriceInfoRegex = getFetchPriceInfoRegex(validIsins);
 
     const createOrderRegex = getCreateOrderRegex(validIsins, validNicknames);
+
+    const showOrdersRegex = getShowOrdersRegex(validIsins, validDesks);
 
     if (pricesUpdateRegex.test(text)) {
       console.log(`regex triggered: pricesUpdateRegex.test(text)`);
@@ -424,26 +436,59 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const [full, series, nickname, orderType, rate, volume, broker] = match;
 
       const formattedSeries = await getSeries(series);
-      const aliasOrId = nickname === "i" ? user._id : nickname.toLowerCase();
-      const formattedOrderType = orderType.toLowerCase();
+      console.log("formattedSeries: ", formattedSeries);
+      const aliasOrId =
+        nickname.toLowerCase() === "i" ? user._id : nickname.toLowerCase();
+      const formattedOrderType =
+        orderType.toLowerCase() === "pay" ? "bid" : "offer";
       const formattedRate = formatPrice(rate);
       const formattedVol = volume ? volume : 50;
       const formattedBroker = getBroker(broker);
 
       const desk = await getDesk(aliasOrId);
 
+      const details = {
+        creator: user._id,
+        for: desk,
+        series: formattedSeries,
+        orderType: formattedOrderType,
+        rate: formattedRate,
+        vol: formattedVol,
+        broker: formattedBroker,
+      };
+
+      console.log("details: ", details);
+
+      const order = await createOrder(details);
+
+      console.log("order: ", order);
+
       bot.sendMessage(userProfile, [
         new Message.Text(
           `Order created for ${desk}\n\n${formattedSeries} ${orderType}ing at ${formattedRate} for ${formattedVol} Mn on ${formattedBroker}`
         ),
       ]);
+
+      // if an order is created, broadcast it to every other desk
+      return;
+    }
+
+    if (showOrdersRegex.test(text)) {
+      console.log("regex triggered: showOrdersRegex");
+      console.log("text.match: ", text.match(showOrdersRegex));
+      const match = text.match(showOrdersRegex);
+      const [full, series, desk, broker] = match;
+
+      const orders = await fetchOrders(series, desk, broker);
+      console.log("orders: ", orders);
+
       return;
     }
 
     if (text === "test message") {
       console.log("testing message");
       const baltieViberId = "GLFVU5NMrftatUawMgsJug==";
-      broadcastMessage([baltieViberId], "test message");
+      broadcastMessage([baltieViberId], "");
       return;
     }
   }
@@ -576,6 +621,51 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
           ),
         ]);
       }
+      return;
+    }
+
+    if (createOrderRegex.test(text)) {
+      console.log("regex triggered: createOrderRegex");
+      console.log("text.match: ", text.match(createOrderRegex));
+      const match = text.match(createOrderRegex);
+      const [full, series, nickname, orderType, rate, volume, broker] = match;
+
+      const formattedSeries = await getSeries(series);
+      console.log("formattedSeries: ", formattedSeries);
+      const aliasOrId =
+        nickname.toLowerCase() === "i" ? user._id : nickname.toLowerCase();
+      const formattedOrderType = orderType.toLowerCase();
+      const formattedRate = formatPrice(rate);
+      const formattedVol = volume ? volume : 50;
+      const formattedBroker = getBroker(broker);
+
+      console.log("before", formattedBroker);
+      const desk = await getDesk(aliasOrId);
+      console.log("after");
+
+      // const details = {
+      //   creator: user._id,
+      //   for: desk,
+      //   series: formattedSeries,
+      //   orderType: formattedOrderType,
+      //   rate: formattedRate,
+      //   vol: formattedVol,
+      //   broker: formattedBroker,
+      // };
+
+      // console.log("details: ", details);
+
+      // const order = await createOrder(details);
+
+      // console.log("order: ", order);
+
+      bot.sendMessage(userProfile, [
+        new Message.Text(
+          `Order created for ${desk}\n\n${formattedSeries} ${formattedOrderType}ing at ${formattedRate} for ${formattedVol} Mn on ${formattedBroker}`
+        ),
+      ]);
+
+      // if an order is created, broadcast it to every other desk
       return;
     }
   }

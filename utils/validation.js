@@ -3,9 +3,10 @@ import {
   getAdminPricesUpdateRegex,
   getFetchPriceInfoRegex,
   getCreateOrderRegex,
+  getShowOrdersRegex,
 } from "./regex.js";
 
-export const validCommand = (text, validIsins, validNicknames) => {
+export const validCommand = (text, validIsins, validNicknames, validDesks) => {
   let flag = false;
   // if the flag is toggled to true, that means a valid command was hit
 
@@ -28,6 +29,10 @@ export const validCommand = (text, validIsins, validNicknames) => {
   const createOrderRegex = getCreateOrderRegex(validIsins, validNicknames);
 
   if (createOrderRegex.test(text)) flag = true;
+
+  const showOrdersRegex = getShowOrdersRegex(validIsins, validDesks);
+
+  if (showOrdersRegex.test(text)) flag = true;
 
   return flag;
 };
