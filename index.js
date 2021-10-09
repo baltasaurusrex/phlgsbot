@@ -482,6 +482,9 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const orders = await fetchOrders(series, desk, broker);
       console.log("orders: ", orders);
 
+      bot.sendMessage(userProfile, [
+        new Message.Text(`${orders.map((order) => `${order}`)}`),
+      ]);
       return;
     }
 
