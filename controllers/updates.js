@@ -1,9 +1,10 @@
 import Update from "../models/Update.js";
 import { getSeries } from "./isins.js";
+import dayjs from "dayjs";
 
 export const createPricesUpdate = async (data) => {
   try {
-    const { series, user, bid, bidvol, offer, offervol, broker } = data;
+    const { series, user, bid, bid_vol, offer, offer_vol, broker } = data;
 
     console.log("user: ", user);
 
@@ -12,9 +13,9 @@ export const createPricesUpdate = async (data) => {
       type: "bid_offer",
       creator: user,
       bid,
-      bid_vol: bidvol,
+      bid_vol,
       offer,
-      offer_vol: offervol,
+      offer_vol,
       broker,
     });
 
@@ -110,12 +111,7 @@ export const fetchPricingData = async (series) => {
   try {
     // find all bid offer updates related to that series
 
-    const now = new Date();
-    const startOfToday = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate()
-    );
+    const startOfToday = dayjs().startOf("day").toDate();
 
     const todaysBidOfferUpdates = await Update.find({
       series,
