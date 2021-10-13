@@ -17,7 +17,9 @@ export const formatPrice = (price) => {
 
 export const getBroker = (code) => {
   if (!code) return "MOSB";
-  switch (code.toLowerCase()) {
+
+  const firstLetter = code.slice(0, 1);
+  switch (firstLetter.toLowerCase()) {
     case "p":
       return "Prebon";
     case "a":

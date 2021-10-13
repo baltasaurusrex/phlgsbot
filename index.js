@@ -15,6 +15,7 @@ import {
   createDealtUpdate,
   fetchPricingData,
 } from "./controllers/updates.js";
+import { createOrder, fetchOrders, offOrders } from "./controllers/orders.js";
 import { validCommand } from "./utils/validation.js";
 import { dealerSpiel, brokerSpiel, adminSpiel } from "./utils/spiel.js";
 import { broadcastMessage } from "./utils/messages.js";
@@ -25,7 +26,6 @@ import {
   getDesk,
   getValidDesks,
 } from "./controllers/desks.js";
-import { createOrder, fetchOrders } from "./controllers/orders.js";
 import { formatPrice, getBroker, formatTime } from "./utils/updates.js";
 
 import {
@@ -34,6 +34,7 @@ import {
   getFetchPriceInfoRegex,
   getCreateOrderRegex,
   getShowOrdersRegex,
+  getOffOrdersRegex,
 } from "./utils/regex.js";
 
 // populate();
@@ -192,7 +193,17 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
     const createOrderRegex = getCreateOrderRegex(validIsins, validNicknames);
 
-    const showOrdersRegex = getShowOrdersRegex(validIsins, validDesks);
+    const showOrdersRegex = getShowOrdersRegex(
+      validIsins,
+      validDesks,
+      validNicknames
+    );
+
+    const offOrdersRegex = getOffOrdersRegex(
+      validIsins,
+      validDesks,
+      validNicknames
+    );
 
     if (pricesUpdateRegex.test(text)) {
       console.log(`regex triggered: pricesUpdateRegex.test(text)`);
@@ -224,8 +235,8 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
         series: formattedSeries,
         bid: formattedBid,
         offer: formattedOffer,
-        bidvol,
-        offervol,
+        bid_vol: bidvol,
+        offer_vol: offervol,
         broker: formattedBroker,
         user,
       });
@@ -371,7 +382,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
           }
 
           const timestamp = `on ${lastDealt.broker} at ${dayjs(
-            lastDealt.created_at
+            lastDealt.time
           ).format("h:mm A")}`;
 
           return `\n\nlast *${lastDealt.direction}* at *${lastDealt.lastDealt}* for ${lastDealt.lastDealtVol} Mn\n${timestamp}`;
@@ -449,7 +460,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
       const details = {
         creator: user._id,
-        for: desk,
+        forDesk: desk,
         series: formattedSeries,
         orderType: formattedOrderType,
         rate: formattedRate,
@@ -477,13 +488,66 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       console.log("regex triggered: showOrdersRegex");
       console.log("text.match: ", text.match(showOrdersRegex));
       const match = text.match(showOrdersRegex);
-      const [full, series, desk, broker] = match;
+      const [full, series, deskOrAliasOrId, brokerInput] = match;
+      console.log("series: ", series);
+      console.log("deskOrAliasOrId: ", deskOrAliasOrId);
+      const desk = validDesks.includes(deskOrAliasOrId)
+        ? deskOrAliasOrId
+        : await getDesk(deskOrAliasOrId);
+      console.log("desk: ", desk);
+      const broker = brokerInput ? getBroker(brokerInput) : undefined;
+      console.log("broker: ", broker);
 
       const orders = await fetchOrders(series, desk, broker);
       console.log("orders: ", orders);
 
+      const renderOrder = (order) => {
+        const { series, orderType, rate, vol, broker, forDesk } = order;
+        return `${series} ${orderType} ${rate} for ${vol} on ${broker} | ${forDesk}\n`;
+      };
+
       bot.sendMessage(userProfile, [
-        new Message.Text(`${orders.map((order) => `${order}`)}`),
+        new Message.Text(
+          `${
+            orders.length > 0
+              ? orders?.map((order) => renderOrder(order)).join("")
+              : "No orders"
+          }`
+        ),
+      ]);
+      return;
+    }
+
+    if (offOrdersRegex.test(text)) {
+      console.log("regex triggered: offOrdersRegex");
+      console.log("text.match: ", text.match(offOrdersRegex));
+      const match = text.match(offOrdersRegex);
+      const [full, series, deskOrAliasOrId, brokerInput] = match;
+      console.log("series: ", series);
+      console.log("deskOrAliasOrId: ", deskOrAliasOrId);
+      const desk = validDesks.includes(deskOrAliasOrId)
+        ? deskOrAliasOrId
+        : await getDesk(deskOrAliasOrId);
+      console.log("desk: ", desk);
+      const broker = brokerInput ? getBroker(brokerInput) : undefined;
+      console.log("broker: ", broker);
+
+      const { ordersFound: ordersOffed, ordersDeleted: deleteManyReturnVal } =
+        await offOrders(series, desk, broker);
+      console.log("ordersOffed: ", ordersOffed);
+      console.log("deleteManyReturnVal: ", deleteManyReturnVal);
+
+      const renderOrder = (order) => {
+        const { series, orderType, rate, vol, broker, forDesk } = order;
+        return `${series} ${orderType} ${rate} for ${vol} on ${broker} | ${forDesk}\n`;
+      };
+
+      bot.sendMessage(userProfile, [
+        new Message.Text(
+          `Orders taken out\n\n${ordersOffed
+            ?.map((order) => renderOrder(order))
+            .join("")}`
+        ),
       ]);
       return;
     }

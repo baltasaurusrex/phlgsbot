@@ -35,10 +35,26 @@ export const getCreateOrderRegex = (validIsins, nicknames) => {
   );
 };
 
-export const getShowOrdersRegex = (validIsins, validDesks) => {
+export const getShowOrdersRegex = (validIsins, validDesks, validNicknames) => {
+  const validDesksAndNicknames = validDesks.concat(validNicknames);
   return new RegExp(
     `^[Ss]how orders(?:\\s*)(${validIsins.join(
       "|"
-    )})?(?:\\s*)(${validDesks.join("|")})?(?:\\s*)([pPaAtTgG]\\w*)?(?:\\s*)$`
+    )})?(?:\\s*)(${validDesksAndNicknames.join(
+      "|"
+    )})?(?:\\s*)([pPaAtTgG]\\w*)?(?:\\s*)$`,
+    "i"
+  );
+};
+
+export const getOffOrdersRegex = (validIsins, validDesks, validNicknames) => {
+  const validDesksAndNicknames = validDesks.concat(validNicknames);
+  return new RegExp(
+    `^[Oo]ff orders(?:\\s*)(${validIsins.join(
+      "|"
+    )})?(?:\\s*)(${validDesksAndNicknames.join(
+      "|"
+    )})?(?:\\s*)([pPaAtTgG]\\w*)?(?:\\s*)$`,
+    "i"
   );
 };

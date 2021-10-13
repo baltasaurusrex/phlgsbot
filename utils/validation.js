@@ -4,6 +4,7 @@ import {
   getFetchPriceInfoRegex,
   getCreateOrderRegex,
   getShowOrdersRegex,
+  getOffOrdersRegex,
 } from "./regex.js";
 
 export const validCommand = (text, validIsins, validNicknames, validDesks) => {
@@ -30,9 +31,21 @@ export const validCommand = (text, validIsins, validNicknames, validDesks) => {
 
   if (createOrderRegex.test(text)) flag = true;
 
-  const showOrdersRegex = getShowOrdersRegex(validIsins, validDesks);
+  const showOrdersRegex = getShowOrdersRegex(
+    validIsins,
+    validDesks,
+    validNicknames
+  );
 
   if (showOrdersRegex.test(text)) flag = true;
+
+  const offOrdersRegex = getOffOrdersRegex(
+    validIsins,
+    validDesks,
+    validNicknames
+  );
+
+  if (offOrdersRegex.test(text)) flag = true;
 
   return flag;
 };
