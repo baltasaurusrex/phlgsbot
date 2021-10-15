@@ -30,12 +30,12 @@ export const createPricesUpdate = async (data) => {
 
 export const createDealtUpdate = async (data) => {
   try {
-    const { series, action, price, volume, broker, user, time } = data;
+    const { series, action, price, volume, broker, creator, time } = data;
 
     const newUpdate = new Update({
       type: "last_dealt",
       series,
-      creator: user,
+      creator,
       direction: action,
       lastDealt: price,
       lastDealtVol: volume,
@@ -43,11 +43,7 @@ export const createDealtUpdate = async (data) => {
       broker,
     });
 
-    console.log("newUpdate: ", newUpdate);
-
     const savedUpdate = await newUpdate.save();
-
-    console.log("savedUpdate: ", savedUpdate);
 
     return savedUpdate;
   } catch (err) {
@@ -145,6 +141,7 @@ export const fetchPricingData = async (series) => {
     const lastDealt = await Update.find({
       series,
       type: "last_dealt",
+      lastDealVol: { $gte: 50 },
       // only pick up the ones created today
       time: { $gte: startOfToday },
     }).sort({ time: "desc" });

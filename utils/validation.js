@@ -7,7 +7,7 @@ import {
   getOffOrdersRegex,
 } from "./regex.js";
 
-export const validCommand = (text, validIsins, validNicknames, validDesks) => {
+export const validCommand = (text, validSeries, validNicknames, validDesks) => {
   let flag = false;
   // if the flag is toggled to true, that means a valid command was hit
 
@@ -15,24 +15,24 @@ export const validCommand = (text, validIsins, validNicknames, validDesks) => {
   if (/^((admin)|(broker)|(dealer))/gi.test(text)) flag = true;
   if (/^test/gi.test(text)) flag = true;
 
-  const adminPricesUpdateRegex = getAdminPricesUpdateRegex(validIsins);
+  const adminPricesUpdateRegex = getAdminPricesUpdateRegex(validSeries);
 
   if (adminPricesUpdateRegex.test(text)) flag = true;
 
-  const adminDealtUpdateRegex = getAdminDealtUpdateRegex(validIsins);
+  const adminDealtUpdateRegex = getAdminDealtUpdateRegex(validSeries);
 
   if (adminDealtUpdateRegex.test(text)) flag = true;
 
-  const fetchPriceInfoRegex = getFetchPriceInfoRegex(validIsins);
+  const fetchPriceInfoRegex = getFetchPriceInfoRegex(validSeries);
 
   if (fetchPriceInfoRegex.test(text)) flag = true;
 
-  const createOrderRegex = getCreateOrderRegex(validIsins, validNicknames);
+  const createOrderRegex = getCreateOrderRegex(validSeries, validNicknames);
 
   if (createOrderRegex.test(text)) flag = true;
 
   const showOrdersRegex = getShowOrdersRegex(
-    validIsins,
+    validSeries,
     validDesks,
     validNicknames
   );
@@ -40,7 +40,7 @@ export const validCommand = (text, validIsins, validNicknames, validDesks) => {
   if (showOrdersRegex.test(text)) flag = true;
 
   const offOrdersRegex = getOffOrdersRegex(
-    validIsins,
+    validSeries,
     validDesks,
     validNicknames
   );

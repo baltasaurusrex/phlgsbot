@@ -37,7 +37,7 @@ export const createIsin = async (data) => {
   }
 };
 
-export const getValidIsins = async () => {
+export const getValidSeries = async () => {
   try {
     const allIsins = await Isin.find({ aliases: { $exists: true } });
 
@@ -51,13 +51,38 @@ export const getValidIsins = async () => {
   }
 };
 
+export const getValidIsins = async () => {
+  try {
+    const all = await Isin.find({});
+
+    let validIsins = [];
+
+    all.forEach(({ isin }) => validIsins.push(isin));
+
+    return validIsins;
+  } catch (err) {
+    return err;
+  }
+};
+
 export const getSeries = async (alias) => {
   try {
-    const isin = await Isin.findOne({
+    const instrument = await Isin.findOne({
       aliases: { $regex: `${alias}`, $options: "gi" },
     }).exec();
-    console.log("isin: ", isin);
-    return isin?.series;
+    console.log("instrument: ", instrument);
+    return instrument?.series;
+  } catch (err) {
+    return err;
+  }
+};
+
+export const getSeriesWithIsin = async (isin) => {
+  try {
+    const instrument = await Isin.findOne({
+      isin: { $regex: `${isin}`, $options: "gi" },
+    }).exec();
+    return instrument?.series;
   } catch (err) {
     return err;
   }

@@ -5,7 +5,10 @@ const UpdateSchema = new mongoose.Schema(
   {
     series: { type: String, required: true },
     isin: { type: mongoose.Schema.Types.ObjectId, ref: "Isin" },
-    creator: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    creator: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
     type: { type: String, enum: ["bid_offer", "last_dealt"] },
     bid: { type: Number },
     bid_vol: { type: Number },
@@ -20,6 +23,7 @@ const UpdateSchema = new mongoose.Schema(
     broker: {
       type: String,
       enum: ["Prebon", "Amstel", "Tradition", "GFI", "MOSB"],
+      default: "MOSB",
     },
     time: { type: Date, default: Date.now },
   },

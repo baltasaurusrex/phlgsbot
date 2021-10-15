@@ -27,7 +27,7 @@ function ExcelDateToJSDate(serial) {
   );
 }
 
-export const populate = async () => {
+export const populateIsins = async () => {
   const workbook = xlsx.readFile("isinData/isinData.xlsx");
   // console.log("workbook: ", workbook);
   const worksheet = workbook.Sheets["Sheet1"];
