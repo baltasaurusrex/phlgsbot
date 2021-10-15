@@ -1,44 +1,52 @@
-// export const getAdminPricesUpdateRegexOld = (validIsins) =>
+// export const getAdminPricesUpdateRegexOld = (validSeries) =>
 //   new RegExp(
-//     `^(${validIsins.join(
+//     `^(${validSeries.join(
 //       "|"
 //     )})\\s(\\d+|na)\\s(\\d+|na)\\s(\\d+|na)\\s(\\d+|na)\\s(([pPaAtTgG]\\w*))`,
 //     "i"
 //   );
 
-export const getAdminPricesUpdateRegex = (validIsins) =>
+export const getAdminPricesUpdateRegexOld = (validSeries) =>
   new RegExp(
-    `^(${validIsins.join(
+    `^(${validSeries.join(
       "|"
     )})\\s(\\d+|na|\\/)\\s(\\d+|na|\\/)(?:\\s(\\d+))?(?:\\s(\\d+))?\\s([pPaAtTgG]\\w*)`,
     "i"
   );
 
-export const getAdminDealtUpdateRegex = (validIsins) =>
+export const getAdminPricesUpdateRegex = (validSeries) =>
   new RegExp(
-    `^(${validIsins.join(
+    `^(${validSeries.join(
       "|"
-    )})\\s(given|lifted|taken|mapped)\\s(\\d+)\\s(\\d+)?\\s?([pPaAtTgG]\\w*)?(?:\\s*)(?:(\\d{1,4})(am|pm))?`,
+    )})(?:\\s+)?(\\d+)(?:\\s+)?(?:(\\d+)|(bid|offer))?(?:\\s+)?(\\d+)?(?:\\s+)?(\\d+)?(?:\\s+)?([pPaAtTgG]\\w*)`,
     "i"
   );
 
-export const getFetchPriceInfoRegex = (validIsins) =>
-  new RegExp(`^(?:(${validIsins.join("|")})\\s*?)+$`, "i");
+export const getAdminDealtUpdateRegex = (validSeries) =>
+  new RegExp(
+    `^(${validSeries.join(
+      "|"
+    )})\\s(given|lifted|taken|mapped)\\s(\\d+)(?:\\s*)?([\\d.]+)?(?:\\s*)?(?:\\s([pPaAtTgG]\\w*))?(?:\\s*)?(?:(\\d{1,4})(am|pm))?(?:\\s*)$`,
+    "i"
+  );
 
-export const getCreateOrderRegex = (validIsins, nicknames) => {
+export const getFetchPriceInfoRegex = (validSeries) =>
+  new RegExp(`^(?:(${validSeries.join("|")})\\s*?)+$`, "i");
+
+export const getCreateOrderRegex = (validSeries, nicknames) => {
   const validNicknames = [...nicknames, "i"];
   return new RegExp(
-    `^(${validIsins.join("|")})(?:\\s*)(${validNicknames.join(
+    `^(${validSeries.join("|")})(?:\\s*)(${validNicknames.join(
       "|"
     )})(?:\\s*)(pay|offer)s?(?:\\s*)(\\d+)(?:\\s*)(\\d+)?(?:\\s*)([pPaAtTgG]\\w*)(?:\\s*)$`,
     "i"
   );
 };
 
-export const getShowOrdersRegex = (validIsins, validDesks, validNicknames) => {
+export const getShowOrdersRegex = (validSeries, validDesks, validNicknames) => {
   const validDesksAndNicknames = validDesks.concat(validNicknames);
   return new RegExp(
-    `^[Ss]how orders(?:\\s*)(${validIsins.join(
+    `^[Ss]how orders(?:\\s*)(${validSeries.join(
       "|"
     )})?(?:\\s*)(${validDesksAndNicknames.join(
       "|"
@@ -47,10 +55,10 @@ export const getShowOrdersRegex = (validIsins, validDesks, validNicknames) => {
   );
 };
 
-export const getOffOrdersRegex = (validIsins, validDesks, validNicknames) => {
+export const getOffOrdersRegex = (validSeries, validDesks, validNicknames) => {
   const validDesksAndNicknames = validDesks.concat(validNicknames);
   return new RegExp(
-    `^[Oo]ff orders(?:\\s*)(${validIsins.join(
+    `^[Oo]ff orders(?:\\s*)(${validSeries.join(
       "|"
     )})?(?:\\s*)(${validDesksAndNicknames.join(
       "|"

@@ -19,8 +19,9 @@ import { createOrder, fetchOrders, offOrders } from "./controllers/orders.js";
 import { validCommand } from "./utils/validation.js";
 import { dealerSpiel, brokerSpiel, adminSpiel } from "./utils/spiel.js";
 import { broadcastMessage } from "./utils/messages.js";
-import { populate } from "./populators/isins.js";
-import { getValidIsins, getSeries } from "./controllers/isins.js";
+import { populateIsins } from "./populators/isins.js";
+import { uploadTimeAndSales } from "./populators/timeAndSales.js";
+import { getValidSeries, getSeries } from "./controllers/isins.js";
 import {
   getValidNicknames,
   getDesk,
@@ -37,7 +38,8 @@ import {
   getOffOrdersRegex,
 } from "./utils/regex.js";
 
-// populate();
+// populateIsins();
+uploadTimeAndSales("10-14-2021").then((res) => console.log(res));
 
 export const bot = new Bot({
   authToken: process.env.AUTH_TOKEN,
@@ -102,8 +104,8 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
   const user = await findUser(userProfile.id);
   console.log("user: ", user);
 
-  const validIsins = await getValidIsins();
-  console.log("validIsins: ", validIsins);
+  const validSeries = await getValidSeries();
+  console.log("validSeries: ", validSeries);
 
   const validNicknames = await getValidNicknames();
   console.log("validNicknames: ", validNicknames);
@@ -112,7 +114,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
   console.log("validDesks: ", validDesks);
 
   // check if valid command
-  if (!validCommand(text, validIsins, validNicknames, validDesks)) {
+  if (!validCommand(text, validSeries, validNicknames, validDesks)) {
     const reply = new Message.Text(
       `Sorry, I don't recognize that command. Please type "help" for available commands`
     );
@@ -185,22 +187,22 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
   // Admin functions
   if (user.role === "admin") {
-    const pricesUpdateRegex = getAdminPricesUpdateRegex(validIsins);
+    const pricesUpdateRegex = getAdminPricesUpdateRegex(validSeries);
 
-    const dealtUpdateRegex = getAdminDealtUpdateRegex(validIsins);
+    const dealtUpdateRegex = getAdminDealtUpdateRegex(validSeries);
 
-    const fetchPriceInfoRegex = getFetchPriceInfoRegex(validIsins);
+    const fetchPriceInfoRegex = getFetchPriceInfoRegex(validSeries);
 
-    const createOrderRegex = getCreateOrderRegex(validIsins, validNicknames);
+    const createOrderRegex = getCreateOrderRegex(validSeries, validNicknames);
 
     const showOrdersRegex = getShowOrdersRegex(
-      validIsins,
+      validSeries,
       validDesks,
       validNicknames
     );
 
     const offOrdersRegex = getOffOrdersRegex(
-      validIsins,
+      validSeries,
       validDesks,
       validNicknames
     );
@@ -210,34 +212,57 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
       console.log("text.match: ", text.match(pricesUpdateRegex));
       const match = text.match(pricesUpdateRegex);
-      const [full, series, bid, offer, vol1, vol2, broker] = match;
+      const [
+        full,
+        seriesInput,
+        bidInput,
+        offerInput,
+        bidOrOfferInput,
+        vol1,
+        vol2,
+        brokerInput,
+      ] = match;
 
-      const formattedSeries = await getSeries(series);
-      const formattedBid = formatPrice(bid);
-      console.log("formattedBid: ", formattedBid);
-      const formattedOffer = formatPrice(offer);
-      console.log("formattedOffer: ", formattedOffer);
-      console.log("vol1: ", vol1);
-      console.log("vol2: ", vol2);
-      const bidvol = formattedBid ? (vol1 ? vol1 : 50) : null;
-      const offervol = formattedOffer
-        ? formattedBid
+      let series = await getSeries(seriesInput);
+      let bid = null;
+      let offer = null;
+      if (!offerInput) {
+        if (bidOrOfferInput === "bid") bid = formatPrice(bidInput);
+        if (bidOrOfferInput === "offer") offer = formatPrice(bidInput);
+      } else {
+        bid = formatPrice(bidInput);
+        offer = formatPrice(offerInput);
+      }
+
+      console.log("bid: ", bid);
+      console.log("offer: ", offer);
+
+      const bid_vol = bid ? (vol1 ? Number.parseFloat(vol1) : 50) : null;
+
+      const offer_vol = offer
+        ? bid
           ? vol2
-            ? vol2
+            ? Number.parseFloat(vol2)
             : 50
           : vol1
-          ? vol1
+          ? Number.parseFloat(vol1)
           : 50
         : null;
-      const formattedBroker = getBroker(broker);
+
+      console.log("bid_vol: ", bid_vol);
+      console.log("offer_vol: ", offer_vol);
+
+      const broker = getBroker(brokerInput);
+
+      console.log("broker: ", broker);
 
       const update = await createPricesUpdate({
-        series: formattedSeries,
-        bid: formattedBid,
-        offer: formattedOffer,
-        bid_vol: bidvol,
-        offer_vol: offervol,
-        broker: formattedBroker,
+        series,
+        bid,
+        offer,
+        bid_vol,
+        offer_vol,
+        broker,
         user,
       });
 
@@ -245,11 +270,13 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
       bot.sendMessage(userProfile, [
         new Message.Text(
-          `${formattedSeries} prices created\n\nBid: ${
-            !formattedBid ? "none" : `${formattedBid} for ${bidvol} Mn`
+          `${update.series} prices created\n\nBid: ${
+            !update.bid ? "none" : `${update.bid} for ${update.bid_vol} Mn`
           } \nOffer: ${
-            !formattedOffer ? "none" : `${formattedOffer} for ${offervol} Mn`
-          }\non ${formattedBroker}`
+            !update.offer
+              ? "none"
+              : `${update.offer} for ${update.offer_vol} Mn`
+          }\non ${update.broker}`
         ),
       ]);
 
@@ -275,7 +302,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
       const formattedSeries = await getSeries(series);
       const formattedPrice = formatPrice(price);
-      const formattedVol = volume ? volume : 50;
+      const formattedVol = volume ? Number.parseFloat(volume) : 50;
       console.log("formattedVol: ", formattedVol);
       const formattedBroker = broker ? getBroker(broker) : "MOSB";
       const formattedTime =
@@ -295,7 +322,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
         action,
         volume: formattedVol,
         broker: formattedBroker,
-        user,
+        creator: user,
         time: formattedTime,
       });
 
@@ -562,7 +589,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
   // Dealer functions
   if (user.role === "dealer") {
-    const fetchPriceInfoRegex = getFetchPriceInfoRegex(validIsins);
+    const fetchPriceInfoRegex = getFetchPriceInfoRegex(validSeries);
     console.log("fetchPriceInfoRegex: ", fetchPriceInfoRegex);
 
     if (fetchPriceInfoRegex.test(text)) {
