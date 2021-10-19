@@ -37,7 +37,7 @@ export const uploadTimeAndSales = async (filename) => {
           if (!validIsins.includes(deal.isin)) return null;
 
           let time = dayjs(deal.time, "h:mm:ss A")
-            .set("month", month)
+            .set("month", month - 1) //gotta be zero indexed
             .set("date", day)
             .set("year", year)
             .format();
