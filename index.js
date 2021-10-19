@@ -6,6 +6,8 @@ import pkg from "viber-bot";
 import dayjs from "dayjs";
 import CustomParseFormat from "dayjs/plugin/customParseFormat.js";
 dayjs.extend(CustomParseFormat);
+import RelativeTime from "dayjs/plugin/relativeTime.js";
+dayjs.extend(RelativeTime);
 const { Bot, Events, Message } = pkg;
 dotenv.config();
 
@@ -39,7 +41,7 @@ import {
 } from "./utils/regex.js";
 
 // populateIsins();
-uploadTimeAndSales("10-14-2021").then((res) => console.log(res));
+// uploadTimeAndSales("10-19-2021").then((res) => console.log(res));
 
 export const bot = new Bot({
   authToken: process.env.AUTH_TOKEN,
@@ -366,8 +368,10 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       );
 
       for (const result of results) {
-        const { series, quotes, bestBidOffer, lastDealt } = result;
+        const { series, quotes, bestBidOffer, lastDealt, prevLastDealt, vwap } =
+          result;
         console.log("lastDealt: ", lastDealt);
+        console.log("prevLastDealt: ", prevLastDealt);
 
         const renderBestPrices = () => {
           if (!bestBidOffer) {
@@ -415,6 +419,46 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
           return `\n\nlast *${lastDealt.direction}* at *${lastDealt.lastDealt}* for ${lastDealt.lastDealtVol} Mn\n${timestamp}`;
         };
 
+        const renderPrevLastDealt = () => {
+          if (!prevLastDealt && !lastDealt) return "";
+
+          if (prevLastDealt && !lastDealt) {
+            const { time: timePrev } = prevLastDealt;
+            const timeFrom = dayjs().to(dayjs(timePrev));
+
+            return `\n\nlast *${prevLastDealt.direction}* at *${prevLastDealt.lastDealt}* for ${prevLastDealt.lastDealtVol} Mn\n${timeFrom}`;
+          }
+
+          const { lastDealt: lastDealtNow, time: timeNow } = lastDealt;
+          const { time: timePrev, lastDealt: lastDealtPrev } = prevLastDealt;
+
+          const bpsDiff = ((lastDealtNow - lastDealtPrev) * 100).toFixed(3);
+
+          const sign = Math.sign(lastDealtNow - lastDealtPrev);
+          let signToShow = null;
+
+          if (sign === -1) {
+            signToShow = "-";
+          } else {
+            signToShow = "+";
+          }
+
+          console.log("timeNow: ", timeNow);
+          console.log("timePrev: ", timePrev);
+
+          const timeFrom = dayjs(timeNow).to(dayjs(timePrev));
+
+          return `\n${
+            signToShow ? signToShow : ""
+          }${bpsDiff} bps from ${timeFrom}`;
+        };
+
+        const renderVWAP = () => {
+          if (!lastDealt) return "";
+
+          return `\n\nVWAP today: ${vwap}`;
+        };
+
         const renderBrokers = () => {
           if (quotes?.length === 0) {
             return "\n\nno levels";
@@ -460,7 +504,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
           new Message.Text(
             `*${
               result.series
-            }*${renderBestPrices()}${renderLastDealt()}${renderBrokers()}`
+            }*${renderBestPrices()}${renderLastDealt()}${renderPrevLastDealt()}${renderVWAP()}${renderBrokers()}`
           ),
         ]);
       }

@@ -53,8 +53,6 @@ export const createDealtUpdate = async (data) => {
 };
 
 const getBestBidOffer = (updateArray) => {
-  console.log("in getBestBidOffer: ", updateArray);
-
   const result = {
     bestBid: null,
     bestBidVols: [],
@@ -69,9 +67,8 @@ const getBestBidOffer = (updateArray) => {
       return update.bid;
     })
     .filter((bid) => bid !== null);
-  console.log("arrayOfBids: ", arrayOfBids);
+
   result.bestBid = arrayOfBids.length > 0 ? Math.min(...arrayOfBids) : null;
-  console.log("result.bestBid: ", result.bestBid);
 
   const arrayOfOffers = updateArray
     .map((update) => {
@@ -102,8 +99,22 @@ const getBestBidOffer = (updateArray) => {
   return result;
 };
 
+export const getVWAP = (array) => {
+  let num = 0;
+  let den = 0;
+
+  if (array.length === 0) return null;
+
+  array.forEach((deal) => {
+    console.log("deal: ", deal);
+    num += deal.lastDealt * deal.lastDealtVol;
+    den += deal.lastDealtVol;
+  });
+
+  return (num / den).toPrecision(4);
+};
+
 export const fetchPricingData = async (series) => {
-  console.log("in fetchPricingData: ", series);
   try {
     // find all bid offer updates related to that series
 
@@ -116,43 +127,49 @@ export const fetchPricingData = async (series) => {
       time: { $gte: startOfToday },
     }).sort({ time: "desc" });
 
-    console.log("todaysBidOfferUpdates: ", todaysBidOfferUpdates);
-
     let mostRecentBidOfferUpdates = [];
     let currentBrokers = [];
 
     if (todaysBidOfferUpdates.length > 0) {
       todaysBidOfferUpdates.forEach((quote) => {
         // if broker already in the mostRecentBidOfferUpdates array, since the first one is assumed to be the most recent, don't include
-        console.log("quote: ", quote);
+
         if (!currentBrokers.includes(quote.broker)) {
-          console.log("!currentBrokers.includes(quote.broker)");
           mostRecentBidOfferUpdates.push(quote);
           currentBrokers.push(quote.broker);
         }
       });
-      console.log("mostRecentBidOfferUpdates: ", mostRecentBidOfferUpdates);
     }
 
     const bestBidOffer = getBestBidOffer(mostRecentBidOfferUpdates);
 
-    console.log("bestBidOffer: ", bestBidOffer);
-
-    const lastDealt = await Update.find({
+    const dealtToday = await Update.find({
       series,
       type: "last_dealt",
-      lastDealVol: { $gte: 50 },
+      lastDealtVol: { $gte: 50 },
       // only pick up the ones created today
       time: { $gte: startOfToday },
     }).sort({ time: "desc" });
 
-    console.log("lastDealt[0]: ", lastDealt[0]);
+    const lastDealt = dealtToday[0];
+
+    const vwap = getVWAP(dealtToday);
+
+    const prevLastDealt = await Update.findOne({
+      series,
+      type: "last_dealt",
+      lastDealtVol: { $gte: 50 },
+      // only pick up the ones created today
+      time: { $lt: startOfToday },
+    }).sort({ time: "desc" });
 
     return {
       series,
       quotes: mostRecentBidOfferUpdates,
       bestBidOffer,
-      lastDealt: lastDealt[0],
+      lastDealt,
+      prevLastDealt,
+      vwap,
     };
   } catch (err) {
     return Promise.reject(err);
