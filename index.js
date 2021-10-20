@@ -41,7 +41,7 @@ import {
 } from "./utils/regex.js";
 
 // populateIsins();
-// uploadTimeAndSales("10-19-2021").then((res) => console.log(res));
+// uploadTimeAndSales("10-20-2021").then((res) => console.log(res));
 
 export const bot = new Bot({
   authToken: process.env.AUTH_TOKEN,
@@ -368,8 +368,15 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       );
 
       for (const result of results) {
-        const { series, quotes, bestBidOffer, lastDealt, prevLastDealt, vwap } =
-          result;
+        const {
+          series,
+          quotes,
+          bestBidOffer,
+          lastDealt,
+          prevLastDealt,
+          vwap,
+          totalVol,
+        } = result;
         console.log("lastDealt: ", lastDealt);
         console.log("prevLastDealt: ", prevLastDealt);
 
@@ -416,7 +423,9 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
             lastDealt.time
           ).format("h:mm A")}`;
 
-          return `\n\nlast *${lastDealt.direction}* at *${lastDealt.lastDealt}* for ${lastDealt.lastDealtVol} Mn\n${timestamp}`;
+          const fromNow = `${dayjs(lastDealt.time).fromNow()}`;
+
+          return `\n\nlast *${lastDealt.direction}* at *${lastDealt.lastDealt}* for ${lastDealt.lastDealtVol} Mn\n${timestamp} ${fromNow}`;
         };
 
         const renderPrevLastDealt = () => {
@@ -430,7 +439,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
           }
 
           const { lastDealt: lastDealtNow, time: timeNow } = lastDealt;
-          const { time: timePrev, lastDealt: lastDealtPrev } = prevLastDealt;
+          const { lastDealt: lastDealtPrev, time: timePrev } = prevLastDealt;
 
           const bpsDiff = ((lastDealtNow - lastDealtPrev) * 100).toFixed(3);
 
@@ -447,16 +456,17 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
           console.log("timePrev: ", timePrev);
 
           const timeFrom = dayjs(timeNow).to(dayjs(timePrev));
+          const fromNow = `${dayjs(timePrev).fromNow()}`;
 
           return `\n${
             signToShow ? signToShow : ""
-          }${bpsDiff} bps from ${timeFrom}`;
+          }${bpsDiff} bps from ${fromNow}`;
         };
 
         const renderVWAP = () => {
           if (!lastDealt) return "";
 
-          return `\n\nVWAP today: ${vwap}`;
+          return `\n\nVWAP: ${vwap}\nVolume: ${totalVol} Mn`;
         };
 
         const renderBrokers = () => {
