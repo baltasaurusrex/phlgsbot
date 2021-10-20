@@ -111,7 +111,12 @@ export const getVWAP = (array) => {
     den += deal.lastDealtVol;
   });
 
-  return (num / den).toPrecision(4);
+  const returnObj = {
+    vwap: (num / den).toPrecision(4),
+    totalVol: den,
+  };
+
+  return returnObj;
 };
 
 export const fetchPricingData = async (series) => {
@@ -119,6 +124,7 @@ export const fetchPricingData = async (series) => {
     // find all bid offer updates related to that series
 
     const startOfToday = dayjs().startOf("day").toDate();
+    console.log("startOfToday: ", startOfToday);
 
     const todaysBidOfferUpdates = await Update.find({
       series,
@@ -143,24 +149,37 @@ export const fetchPricingData = async (series) => {
 
     const bestBidOffer = getBestBidOffer(mostRecentBidOfferUpdates);
 
+    const mostRecentDate = (
+      await Update.findOne({
+        series,
+        type: "last_dealt",
+        lastDealtVol: { $gte: 50 },
+      }).sort({ time: "desc" })
+    ).time;
+
+    console.log("mostRecentDate: ", mostRecentDate);
+
+    const startOfMostRecentDate = dayjs(mostRecentDate).startOf("day").toDate();
+    console.log("startOfMostRecentDate: ", startOfMostRecentDate);
+
     const dealtToday = await Update.find({
       series,
       type: "last_dealt",
       lastDealtVol: { $gte: 50 },
       // only pick up the ones created today
-      time: { $gte: startOfToday },
+      time: { $gte: startOfMostRecentDate },
     }).sort({ time: "desc" });
 
     const lastDealt = dealtToday[0];
 
-    const vwap = getVWAP(dealtToday);
+    const { vwap, totalVol } = getVWAP(dealtToday);
 
     const prevLastDealt = await Update.findOne({
       series,
       type: "last_dealt",
       lastDealtVol: { $gte: 50 },
       // only pick up the ones created today
-      time: { $lt: startOfToday },
+      time: { $lt: startOfMostRecentDate },
     }).sort({ time: "desc" });
 
     return {
@@ -170,6 +189,7 @@ export const fetchPricingData = async (series) => {
       lastDealt,
       prevLastDealt,
       vwap,
+      totalVol,
     };
   } catch (err) {
     return Promise.reject(err);
