@@ -53,7 +53,7 @@ import {
 } from "./utils/regex.js";
 
 // populateIsins();
-// uploadTimeAndSales("10-21-2021").then((res) => console.log(res));
+// uploadTimeAndSales("10-25-2021").then((res) => console.log(res));
 
 export const bot = new Bot({
   authToken: process.env.AUTH_TOKEN,
