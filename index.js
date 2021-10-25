@@ -17,10 +17,21 @@ import {
   createDealtUpdate,
   fetchPricingData,
 } from "./controllers/updates.js";
-import { createOrder, fetchOrders, offOrders } from "./controllers/orders.js";
+import {
+  createOrder,
+  fetchOrders,
+  offOrders,
+  fillOrder,
+} from "./controllers/orders.js";
+import {
+  checkPendingQueries,
+  completePendingQuery,
+  createPendingQuery,
+} from "./controllers/pendingQueries.js";
 import { validCommand } from "./utils/validation.js";
 import { dealerSpiel, brokerSpiel, adminSpiel } from "./utils/spiel.js";
 import { broadcastMessage } from "./utils/messages.js";
+import { renderOrder } from "./utils/orders.js";
 import { populateIsins } from "./populators/isins.js";
 import { uploadTimeAndSales } from "./populators/timeAndSales.js";
 import { getValidSeries, getSeries } from "./controllers/isins.js";
@@ -38,10 +49,11 @@ import {
   getCreateOrderRegex,
   getShowOrdersRegex,
   getOffOrdersRegex,
+  getPendingDealtOrderRegex,
 } from "./utils/regex.js";
 
 // populateIsins();
-// uploadTimeAndSales("10-20-2021").then((res) => console.log(res));
+// uploadTimeAndSales("10-25-2021").then((res) => console.log(res));
 
 export const bot = new Bot({
   authToken: process.env.AUTH_TOKEN,
@@ -115,8 +127,12 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
   const validDesks = await getValidDesks();
   console.log("validDesks: ", validDesks);
 
+  // Check if there are PendingQueries tied to that user
+  // While there are PendingQueries, those queries have to be answered before normal functions can be carried out
+  const pending = await checkPendingQueries(user);
+
   // check if valid command
-  if (!validCommand(text, validSeries, validNicknames, validDesks)) {
+  if (!validCommand(text, validSeries, validNicknames, validDesks, pending)) {
     const reply = new Message.Text(
       `Sorry, I don't recognize that command. Please type "help" for available commands`
     );
@@ -153,8 +169,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
   }
 
   // Step 2: when initially registering and the user responds w/ the correct response (admin/dealer/broker)
-  if (/^((admin)|(broker)|(dealer))/gi.test(text)) {
-    console.log("text: ", text);
+  if (!user && /^((admin)|(broker)|(dealer))/gi.test(text)) {
     const role = text.toLowerCase();
     const reply = new Message.Text(
       `Got it ${userProfile.name}, you're a${
@@ -187,6 +202,95 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
     return;
   }
 
+  console.log("pending: ", pending);
+
+  // If there are PendingQueries, answer them first:
+  if (pending.length > 0) {
+    const pendingDealtOrderRegex = getPendingDealtOrderRegex();
+
+    // if the user has already responded to a pending query with yes/no etc:
+    if (pendingDealtOrderRegex.test(text)) {
+      console.log(`regex triggered: pendingDealtOrderRegex.test(text)`);
+      const match = text.match(pendingDealtOrderRegex);
+      console.log("match: ", match);
+      const [fullInput, yesOrNoInput, volumeInput] = match;
+
+      const yn = yesOrNoInput.slice(0, 1).toLowerCase();
+
+      // if "y", update orders by the vol
+      // note, a "last_dealt" update was already created at this point, so only need to update the Orders collection
+      if (yn === "y") {
+        const update = await fillOrder(pending[0].attachment, volumeInput);
+
+        const renderCompleted = (pendingQuery) => {
+          if (pendingQuery.type === "dealt_order") {
+            console.log("pendingQuery: ", pendingQuery);
+            const attachment = pendingQuery.attachment;
+            const argObj = {
+              series: attachment.series,
+              orderType: attachment.orderType,
+              rate: attachment.rate,
+              broker: attachment.broker,
+              forDesk: attachment.forDesk,
+              vol: volumeInput,
+            };
+            console.log("argObj: ", argObj);
+            return `Order filled: \n\n${renderOrder(argObj)}\n`;
+          }
+        };
+
+        bot.sendMessage(userProfile, [
+          new Message.Text(`${renderCompleted(pending[0])}`),
+        ]);
+      } else if (yn === "n" && pending.length > 1) {
+        // if "no", and if there is a next one, render it
+        const renderPending = (item) => {
+          if (item.type === "dealt_order") {
+            return `Has this order been dealt?\n\n${renderOrder(
+              item.attachment
+            )}`;
+          }
+        };
+
+        bot.sendMessage(userProfile, [
+          new Message.Text(`${renderPending(pending[1])}`),
+        ]);
+        return;
+      } else {
+        // just show the orders
+
+        const orders = await fetchOrders();
+        console.log("orders: ", orders);
+
+        bot.sendMessage(userProfile, [
+          new Message.Text(
+            `Outstanding orders: \n\n${
+              orders.length > 0
+                ? orders?.map((order) => renderOrder(order)).join("")
+                : "No orders"
+            }`
+          ),
+        ]);
+      }
+
+      const completedQuery = await completePendingQuery(pending[0]);
+      console.log("completedQuery: ", completedQuery);
+
+      return;
+    }
+
+    const renderPending = (item) => {
+      if (item.type === "dealt_order") {
+        return `Has this order been dealt?\n\n${renderOrder(item.attachment)}`;
+      }
+    };
+
+    bot.sendMessage(userProfile, [
+      new Message.Text(`${renderPending(pending[0])}`),
+    ]);
+    return;
+  }
+
   // Admin functions
   if (user.role === "admin") {
     const pricesUpdateRegex = getAdminPricesUpdateRegex(validSeries);
@@ -211,8 +315,6 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
     if (pricesUpdateRegex.test(text)) {
       console.log(`regex triggered: pricesUpdateRegex.test(text)`);
-
-      console.log("text.match: ", text.match(pricesUpdateRegex));
       const match = text.match(pricesUpdateRegex);
       const [
         full,
@@ -285,56 +387,92 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       return;
     }
 
+    // Last dealt
     if (dealtUpdateRegex.test(text)) {
       console.log(`regex triggered: dealtUpdateRegex.test(text)`);
       console.log("text.match: ", text.match(dealtUpdateRegex));
       const match = text.match(dealtUpdateRegex);
       const [
         full,
-        series,
+        seriesInput,
         action,
-        price,
-        volume,
-        broker,
+        priceInput,
+        volInput,
+        brokerInput,
         timeString,
         timePeriod,
       ] = match;
 
       console.log("match: ", match);
 
-      const formattedSeries = await getSeries(series);
-      const formattedPrice = formatPrice(price);
-      const formattedVol = volume ? Number.parseFloat(volume) : 50;
-      console.log("formattedVol: ", formattedVol);
-      const formattedBroker = broker ? getBroker(broker) : "MOSB";
-      const formattedTime =
+      const series = await getSeries(seriesInput);
+      const price = formatPrice(priceInput);
+      const volume = volInput ? Number.parseFloat(volInput) : 50;
+      console.log("volume: ", volume);
+      const broker = brokerInput ? getBroker(brokerInput) : "MOSB";
+      const time =
         timeString && timePeriod
           ? formatTime(timeString, timePeriod)
           : dayjs().format();
 
-      console.log("series: ", formattedSeries);
+      console.log("series: ", series);
       console.log("action: ", action);
-      console.log("price: ", formattedPrice);
-      console.log("broker: ", formattedBroker);
-      console.log("time: ", formattedTime);
+      console.log("price: ", price);
+      console.log("broker: ", broker);
+      console.log("time: ", time);
+
+      // Look for possible existing orders on that series, at that price, and on that broker (across all desks)
+      const desk = undefined;
+      const possibleOrders = await fetchOrders(series, price, desk, broker);
+      console.log("possibleOrders: ", possibleOrders);
+
+      // If possible orders exist
+      if (possibleOrders.length > 0) {
+        // create PendingQueries for each of them
+        const results = await Promise.allSettled(
+          possibleOrders.map(
+            async (order) => await createPendingQuery(user, order)
+          )
+        );
+
+        let fulfilled = results.filter((el) => el.status === "fulfilled");
+        let rejected = results.filter((el) => el.status === "rejected");
+        console.log("fulfilled: ", fulfilled);
+        console.log("rejected: ", rejected);
+
+        bot.sendMessage(userProfile, [
+          new Message.Text(
+            `Has this order been dealt?\n\n${renderOrder(possibleOrders[0])}`
+          ),
+        ]);
+        // bot.sendMessage(userProfile, [
+        //   new Message.Text(
+        //     `Has this order been dealt?\n\n${possibleOrders
+        //       ?.map((order) => renderOrder(order))
+        //       .join("")}`
+        //   ),
+        // ]);
+
+        return;
+      }
 
       const update = await createDealtUpdate({
-        series: formattedSeries,
-        price: formattedPrice,
+        series,
+        price,
         action,
-        volume: formattedVol,
-        broker: formattedBroker,
+        volume,
+        broker,
         creator: user,
-        time: formattedTime,
+        time,
       });
 
       console.log("update: ", update);
 
-      const time = dayjs(update.time).format("h:mm A");
+      const formattedTime = dayjs(update.time).format("h:mm A");
 
       bot.sendMessage(userProfile, [
         new Message.Text(
-          `${formattedSeries} was ${action} at ${formattedPrice} for ${formattedVol} Mn \n\non ${formattedBroker} at ${time}`
+          `${series} was ${action} at ${price} for ${volume} Mn \n\non ${broker} at ${formattedTime}`
         ),
       ]);
 
@@ -425,7 +563,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
           const fromNow = `${dayjs(lastDealt.time).fromNow()}`;
 
-          return `\n\nlast *${lastDealt.direction}* at *${lastDealt.lastDealt}* for ${lastDealt.lastDealtVol} Mn\n${timestamp} ${fromNow}`;
+          return `\n\nlast ${lastDealt.direction} at ${lastDealt.lastDealt} for ${lastDealt.lastDealtVol} Mn\n${timestamp} ${fromNow}`;
         };
 
         const renderPrevLastDealt = () => {
@@ -435,7 +573,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
             const { time: timePrev } = prevLastDealt;
             const timeFrom = dayjs().to(dayjs(timePrev));
 
-            return `\n\nlast *${prevLastDealt.direction}* at *${prevLastDealt.lastDealt}* for ${prevLastDealt.lastDealtVol} Mn\n${timeFrom}`;
+            return `\n\nlast ${prevLastDealt.direction} at ${prevLastDealt.lastDealt} for ${prevLastDealt.lastDealtVol} Mn\n${timeFrom}`;
           }
 
           const { lastDealt: lastDealtNow, time: timeNow } = lastDealt;
@@ -443,13 +581,15 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
           const bpsDiff = ((lastDealtNow - lastDealtPrev) * 100).toFixed(3);
 
+          console.log();
+
           const sign = Math.sign(lastDealtNow - lastDealtPrev);
           let signToShow = null;
 
-          if (sign === -1) {
-            signToShow = "-";
-          } else {
+          if (sign === 1) {
             signToShow = "+";
+          } else {
+            signToShow = "";
           }
 
           console.log("timeNow: ", timeNow);
@@ -466,7 +606,17 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
         const renderVWAP = () => {
           if (!lastDealt) return "";
 
-          return `\n\nVWAP: ${vwap}\nVolume: ${totalVol} Mn`;
+          const { time: timeNow } = lastDealt;
+          const fromNowDay = `${dayjs(timeNow).format("ddd")}`;
+
+          const getDay = () => {
+            const today = dayjs().format("ddd");
+            const fromNowDay = dayjs(timeNow).format("ddd");
+
+            return today === fromNowDay ? "today" : `last ${fromNowDay}`;
+          };
+
+          return `\n\nVWAP ${getDay()}: ${vwap}\nVolume ${getDay()}: ${totalVol} Mn`;
         };
 
         const renderBrokers = () => {
@@ -565,11 +715,13 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       return;
     }
 
+    // Show orders
     if (showOrdersRegex.test(text)) {
       console.log("regex triggered: showOrdersRegex");
       console.log("text.match: ", text.match(showOrdersRegex));
       const match = text.match(showOrdersRegex);
-      const [full, series, deskOrAliasOrId, brokerInput] = match;
+      const [full, seriesInput, deskOrAliasOrId, brokerInput] = match;
+      const series = await getSeries(seriesInput);
       console.log("series: ", series);
       console.log("deskOrAliasOrId: ", deskOrAliasOrId);
       const desk = validDesks.includes(deskOrAliasOrId)
@@ -579,13 +731,9 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const broker = brokerInput ? getBroker(brokerInput) : undefined;
       console.log("broker: ", broker);
 
-      const orders = await fetchOrders(series, desk, broker);
+      const rate = undefined;
+      const orders = await fetchOrders(series, rate, desk, broker);
       console.log("orders: ", orders);
-
-      const renderOrder = (order) => {
-        const { series, orderType, rate, vol, broker, forDesk } = order;
-        return `${series} ${orderType} ${rate} for ${vol} on ${broker} | ${forDesk}\n`;
-      };
 
       bot.sendMessage(userProfile, [
         new Message.Text(
@@ -613,15 +761,11 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const broker = brokerInput ? getBroker(brokerInput) : undefined;
       console.log("broker: ", broker);
 
+      const rate = undefined;
       const { ordersFound: ordersOffed, ordersDeleted: deleteManyReturnVal } =
-        await offOrders(series, desk, broker);
+        await offOrders(series, rate, desk, broker);
       console.log("ordersOffed: ", ordersOffed);
       console.log("deleteManyReturnVal: ", deleteManyReturnVal);
-
-      const renderOrder = (order) => {
-        const { series, orderType, rate, vol, broker, forDesk } = order;
-        return `${series} ${orderType} ${rate} for ${vol} on ${broker} | ${forDesk}\n`;
-      };
 
       bot.sendMessage(userProfile, [
         new Message.Text(

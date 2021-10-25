@@ -22,13 +22,14 @@ export const getAdminPricesUpdateRegex = (validSeries) =>
     "i"
   );
 
-export const getAdminDealtUpdateRegex = (validSeries) =>
-  new RegExp(
+export const getAdminDealtUpdateRegex = (validSeries) => {
+  return new RegExp(
     `^(${validSeries.join(
       "|"
     )})\\s(given|lifted|taken|mapped)\\s(\\d+)(?:\\s*)?([\\d.]+)?(?:\\s*)?(?:\\s([pPaAtTgG]\\w*))?(?:\\s*)?(?:(\\d{1,4})(am|pm))?(?:\\s*)$`,
     "i"
   );
+};
 
 export const getFetchPriceInfoRegex = (validSeries) =>
   new RegExp(`^(?:(${validSeries.join("|")})\\s*?)+$`, "i");
@@ -55,6 +56,20 @@ export const getShowOrdersRegex = (validSeries, validDesks, validNicknames) => {
   );
 };
 
+export const getOrderDealtUpdateRegex = (
+  validSeries,
+  validDesks,
+  validNicknames
+) => {
+  const validDesksAndNicknames = validDesks.concat(validNicknames);
+  return new RegExp(
+    `^(${validSeries.join(
+      "|"
+    )})\\s(given|lifted|taken|mapped)\\s(\\d+)(?:\\s*)?([\\d.]+)?(?:\\s*)?(?:\\s([pPaAtTgG]\\w*))?(?:\\s*)?(?:(\\d{1,4})(am|pm))?(?:\\s*)$`,
+    "i"
+  );
+};
+
 export const getOffOrdersRegex = (validSeries, validDesks, validNicknames) => {
   const validDesksAndNicknames = validDesks.concat(validNicknames);
   return new RegExp(
@@ -63,6 +78,13 @@ export const getOffOrdersRegex = (validSeries, validDesks, validNicknames) => {
     )})?(?:\\s*)(${validDesksAndNicknames.join(
       "|"
     )})?(?:\\s*)([pPaAtTgG]\\w*)?(?:\\s*)$`,
+    "i"
+  );
+};
+
+export const getPendingDealtOrderRegex = () => {
+  return new RegExp(
+    `(yes|y|no|n)(?:\\sfor)?(?:(?:\\s+)(\\d+))?(?:\\s+)?$`,
     "i"
   );
 };

@@ -1,5 +1,6 @@
 import Order from "../models/Order.js";
 import dayjs from "dayjs";
+import { dealerSpiel } from "../utils/spiel.js";
 
 export const createOrder = async (details) => {
   try {
@@ -9,11 +10,11 @@ export const createOrder = async (details) => {
     // check if there is an existing order of that isin on that broker
     // if there is, just update that order
     let existingOrder = await Order.findOne({
-      forDesk,
-      orderType,
-      broker,
-      series,
+      ...details,
+      status: "active",
     });
+
+    console.log("existingOrder: ", existingOrder);
 
     if (existingOrder) {
       // update existing order
@@ -40,13 +41,74 @@ export const createOrder = async (details) => {
   }
 };
 
-export const offOrders = async (series, desk, broker) => {
+export const fetchOrders = async (series, rate, desk, broker) => {
+  console.log("in fetchOrders");
+  console.log("series: ", series);
+  console.log("rate: ", rate);
+  console.log("desk: ", desk);
+  console.log("broker: ", broker);
+
   const startOfToday = dayjs().startOf("day").toDate();
   try {
     const mongoQuery = {
       status: "active",
       time: { $gte: startOfToday },
     };
+
+    rate !== undefined ? (mongoQuery.rate = rate) : null;
+    series !== undefined
+      ? (mongoQuery.series = { $regex: `${series}`, $options: "gi" })
+      : null;
+    desk !== undefined
+      ? (mongoQuery.forDesk = { $regex: `${desk}`, $options: "gi" })
+      : null;
+    broker !== undefined ? (mongoQuery.broker = broker) : null;
+
+    console.log("mongoQuery: ", mongoQuery);
+    const orders = await Order.find(mongoQuery);
+
+    return orders;
+  } catch (err) {
+    return err;
+  }
+};
+
+export const fillOrder = async (order, volInput) => {
+  try {
+    console.log("in fillOrder");
+    console.log("order: ", order);
+
+    const filledVol = volInput ? Math.abs(volInput) : Math.abs(order.vol);
+    const doc = await Order.findById(order);
+    console.log("doc before: ", doc);
+    if (!volInput) {
+      console.log("!vol");
+      doc.vol = doc.vol - filledVol;
+      doc.status = "dealt";
+    } else {
+      console.log("has vol");
+      doc.vol = doc.vol - filledVol;
+    }
+    console.log("doc after: ", doc);
+
+    const update = await doc.save();
+
+    console.log("update: ", update);
+
+    return update;
+  } catch (err) {
+    return err;
+  }
+};
+
+export const offOrders = async (series, rate, desk, broker) => {
+  const startOfToday = dayjs().startOf("day").toDate();
+  try {
+    const mongoQuery = {
+      status: "active",
+      time: { $gte: startOfToday },
+    };
+    rate !== undefined ? (mongoQuery.rate = rate) : null;
     series !== undefined ? (mongoQuery.series = `/${series}/i`) : null;
     desk !== undefined
       ? (mongoQuery.forDesk = { $regex: `${desk}`, $options: "gi" })
@@ -58,27 +120,6 @@ export const offOrders = async (series, desk, broker) => {
     const ordersDeleted = await Order.deleteMany(mongoQuery);
 
     return { ordersFound, ordersDeleted };
-  } catch (err) {
-    return err;
-  }
-};
-export const fetchOrders = async (series, desk, broker) => {
-  const startOfToday = dayjs().startOf("day").toDate();
-  try {
-    const mongoQuery = {
-      status: "active",
-      time: { $gte: startOfToday },
-    };
-    series !== undefined ? (mongoQuery.series = `/${series}/i`) : null;
-    desk !== undefined
-      ? (mongoQuery.forDesk = { $regex: `${desk}`, $options: "gi" })
-      : null;
-    broker !== undefined ? (mongoQuery.broker = broker) : null;
-
-    console.log("mongoQuery: ", mongoQuery);
-    const orders = await Order.find(mongoQuery);
-
-    return orders;
   } catch (err) {
     return err;
   }
