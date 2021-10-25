@@ -5,9 +5,16 @@ import {
   getCreateOrderRegex,
   getShowOrdersRegex,
   getOffOrdersRegex,
+  getPendingDealtOrderRegex,
 } from "./regex.js";
 
-export const validCommand = (text, validSeries, validNicknames, validDesks) => {
+export const validCommand = (
+  text,
+  validSeries,
+  validNicknames,
+  validDesks,
+  pending
+) => {
   let flag = false;
   // if the flag is toggled to true, that means a valid command was hit
 
@@ -46,6 +53,11 @@ export const validCommand = (text, validSeries, validNicknames, validDesks) => {
   );
 
   if (offOrdersRegex.test(text)) flag = true;
+
+  if (pending.length > 0) {
+    const pendingDealtOrderRegex = getPendingDealtOrderRegex();
+    if (pendingDealtOrderRegex.test(text)) flag = true;
+  }
 
   return flag;
 };
