@@ -81,15 +81,25 @@ export const fillOrder = async (order, volInput) => {
     const filledVol = volInput ? Math.abs(volInput) : Math.abs(order.vol);
     const doc = await Order.findById(order);
     console.log("doc before: ", doc);
+
     if (!volInput) {
-      console.log("!vol");
-      doc.vol = doc.vol - filledVol;
+      console.log("!volInput -> doc.filledVol = doc.vol");
+      doc.filledVol = doc.vol;
+      console.log("doc.status = dealt");
       doc.status = "dealt";
     } else {
-      console.log("has vol");
-      doc.vol = doc.vol - filledVol;
+      console.log("has indicated vol");
+      console.log("doc.filledVol = doc.filledVol + filledVol");
+      doc.filledVol = doc.filledVol + filledVol;
     }
+
     console.log("doc after: ", doc);
+
+    if (doc.vol === doc.filledVol) {
+      console.log("doc.vol === doc.filledVol");
+      console.log("doc.status = dealt");
+      doc.status = "dealt";
+    }
 
     const update = await doc.save();
 

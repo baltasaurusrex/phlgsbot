@@ -12,6 +12,7 @@ const OrderSchema = new mongoose.Schema(
     orderType: { type: String, enum: ["bid", "offer"], required: true },
     rate: { type: Number },
     vol: { type: Number },
+    filledVol: { type: Number, default: 0 },
     broker: {
       type: String,
       enum: ["Prebon", "Amstel", "Tradition", "GFI", "MOSB"],
@@ -22,7 +23,7 @@ const OrderSchema = new mongoose.Schema(
   { timestamps: { createdAt: "created_at" } }
 );
 
-// there should be a middleware that updates the most recent bid offer (or creates one) of that broker if this is created
+// there should be a middleware that creates/updates the most recent bid offer of that broker if this is created
 OrderSchema.post("save", async function (doc) {
   const startOfToday = dayjs().startOf("day").toDate();
   const bidOfferUpdate = (
