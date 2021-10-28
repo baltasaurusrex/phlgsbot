@@ -79,7 +79,7 @@ export const getOrderDealtUpdateRegex = (
 export const getOffOrdersRegex = (validSeries, validDesks, validNicknames) => {
   const validDesksAndNicknames = validDesks.concat(validNicknames);
   return new RegExp(
-    `^[Oo]ff orders(?:\\s*)(${validSeries.join(
+    `^[Oo]ff orders?(?:\\s*)(${validSeries.join(
       "|"
     )})?(?:\\s*)(${validDesksAndNicknames.join(
       "|"

@@ -251,3 +251,25 @@ export const fetchHistoricalPrices = async (series, period) => {
     return err;
   }
 };
+
+export const deleteLastDealts = async (date) => {
+  try {
+    console.log("in deleteLastDealts");
+    if (!date) return "no date supplied";
+
+    const startOfDay = dayjs(date).startOf("day").toDate();
+    console.log("startOfDay: ", startOfDay);
+
+    const endOfDay = dayjs(startOfDay).add(1, "days").toDate();
+    console.log("endOfDay: ", endOfDay);
+
+    const deleted = await Update.deleteMany({
+      type: "last_dealt",
+      time: { $gte: startOfDay, $lt: endOfDay },
+    });
+
+    return deleted;
+  } catch (err) {
+    return err;
+  }
+};

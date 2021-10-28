@@ -119,7 +119,9 @@ export const offOrders = async (series, rate, desk, broker) => {
       time: { $gte: startOfToday },
     };
     rate !== undefined ? (mongoQuery.rate = rate) : null;
-    series !== undefined ? (mongoQuery.series = `/${series}/i`) : null;
+    series !== undefined
+      ? (mongoQuery.series = { $regex: `${series}`, $options: "gi" })
+      : null;
     desk !== undefined
       ? (mongoQuery.forDesk = { $regex: `${desk}`, $options: "gi" })
       : null;

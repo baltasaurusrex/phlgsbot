@@ -7,7 +7,7 @@ import {
   getSeriesWithIsin,
   getSeries,
 } from "../controllers/isins.js";
-import { createDealtUpdate } from "../controllers/updates.js";
+import { createDealtUpdate, deleteLastDealts } from "../controllers/updates.js";
 import Update from "../models/Update.js";
 
 import { getBBAId } from "../utils/admin.js";
@@ -24,7 +24,12 @@ export const uploadTimeAndSales = async (filename) => {
       /^(\d{2})-(\d{2})-(\d{4})$/
     );
 
-    const date = dayjs(filename, "MM-DD-YYYY");
+    const date = dayjs(filename, "MM-DD-YYYY").toDate();
+    console.log("date: ", date);
+
+    const deletedLastDealts = await deleteLastDealts(date);
+    console.log("deletedLastDealts: ", deletedLastDealts);
+
     const workbook = xlsx.readFile(`timeAndSalesData/${filename}.csv`);
     const worksheet = workbook.Sheets["Sheet1"];
     const parsed = xlsx.utils.sheet_to_json(worksheet);

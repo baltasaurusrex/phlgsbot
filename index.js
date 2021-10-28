@@ -55,7 +55,7 @@ import {
 } from "./utils/regex.js";
 
 // populateIsins();
-// uploadTimeAndSales("10-27-2021").then((res) => console.log(res));
+// uploadTimeAndSales("10-28-2021").then((res) => console.log(res));
 // fetchHistoricalPrices("5-77", "weekly");
 
 export const bot = new Bot({
@@ -794,7 +794,8 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       console.log("regex triggered: offOrdersRegex");
       console.log("text.match: ", text.match(offOrdersRegex));
       const match = text.match(offOrdersRegex);
-      const [full, series, deskOrAliasOrId, brokerInput] = match;
+      const [full, seriesInput, deskOrAliasOrId, brokerInput] = match;
+      const series = await getSeries(seriesInput);
       console.log("series: ", series);
       console.log("deskOrAliasOrId: ", deskOrAliasOrId);
       const desk = validDesks.includes(deskOrAliasOrId)
