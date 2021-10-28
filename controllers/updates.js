@@ -1,6 +1,7 @@
 import Update from "../models/Update.js";
 import { getSeries } from "./isins.js";
 import dayjs from "dayjs";
+import { getBestBidOffer, getVWAP, getOHLC } from "../utils/updates.js";
 
 export const createPricesUpdate = async (data) => {
   try {
@@ -50,73 +51,6 @@ export const createDealtUpdate = async (data) => {
     console.log("createPricesUpdate err: ", err);
     return err;
   }
-};
-
-const getBestBidOffer = (updateArray) => {
-  const result = {
-    bestBid: null,
-    bestBidVols: [],
-    bestBidBrokers: [],
-    bestOffer: null,
-    bestOfferVols: [],
-    bestOfferBrokers: [],
-  };
-
-  const arrayOfBids = updateArray
-    .map((update) => {
-      return update.bid;
-    })
-    .filter((bid) => bid !== null);
-
-  result.bestBid = arrayOfBids.length > 0 ? Math.min(...arrayOfBids) : null;
-
-  const arrayOfOffers = updateArray
-    .map((update) => {
-      return update.offer;
-    })
-    .filter((offer) => offer !== null);
-  result.bestOffer =
-    arrayOfOffers.length > 0 ? Math.max(...arrayOfOffers) : null;
-
-  // listing the  brokers of the best bids and offers and their volumes
-  updateArray.forEach((update) => {
-    if (update.bid === result.bestBid) {
-      // if broker already in the best(Bid|Offer)Brokers array, since the first one is assumed to be the most recent, don't include
-      if (!result.bestBidBrokers.includes(update.broker)) {
-        result.bestBidVols.push(update.bid_vol);
-        result.bestBidBrokers.push(update.broker);
-      }
-    }
-    if (update.offer === result.bestOffer) {
-      // if broker already in the best(Bid|Offer)Brokers array, since the first one is assumed to be the most recent, don't include
-      if (!result.bestOfferBrokers.includes(update.broker)) {
-        result.bestOfferVols.push(update.offer_vol);
-        result.bestOfferBrokers.push(update.broker);
-      }
-    }
-  });
-
-  return result;
-};
-
-export const getVWAP = (array) => {
-  let num = 0;
-  let den = 0;
-
-  if (array.length === 0) return null;
-
-  array.forEach((deal) => {
-    console.log("deal: ", deal);
-    num += deal.lastDealt * deal.lastDealtVol;
-    den += deal.lastDealtVol;
-  });
-
-  const returnObj = {
-    vwap: (num / den).toPrecision(4),
-    totalVol: den,
-  };
-
-  return returnObj;
 };
 
 export const fetchPricingData = async (series) => {
@@ -193,5 +127,149 @@ export const fetchPricingData = async (series) => {
     };
   } catch (err) {
     return Promise.reject(err);
+  }
+};
+
+export const fetchHistoricalPrices = async (series, period) => {
+  try {
+    // get series of days
+    // if weekly, get the past 7 days, excluding weekends
+    const array = [];
+    if (period === "weekly") {
+      const startOfToday = dayjs().startOf("day").toDate();
+
+      for (let daysAgo = 0; daysAgo <= 7; daysAgo++) {
+        const date = dayjs(startOfToday).subtract(daysAgo, "days").toDate();
+
+        const daysEnd = dayjs(startOfToday)
+          .subtract(daysAgo - 1, "days")
+          .toDate();
+
+        const dayOfTheWeek = dayjs(date).day();
+
+        const weekend = [0, 6].includes(dayOfTheWeek);
+
+        if (!weekend) {
+          const dealsThatDay = await Update.find({
+            series,
+            type: "last_dealt",
+            lastDealtVol: { $gte: 50 },
+            time: {
+              $gte: date,
+              $lt: daysEnd,
+            },
+          });
+          const trades = dealsThatDay.length;
+
+          let dayObj = { date, day: dayOfTheWeek };
+
+          if (trades > 0) {
+            const { vwap, totalVol } = getVWAP(dealsThatDay);
+            const { open, high, low, close } = getOHLC(dealsThatDay);
+
+            dayObj = {
+              ...dayObj,
+              open,
+              high,
+              low,
+              close,
+              vwap,
+              totalVol,
+              trades,
+            };
+          } else {
+            dayObj = {
+              ...dayObj,
+              trades,
+            };
+          }
+
+          console.log("dayObj: ", dayObj);
+
+          array.push(dayObj);
+        }
+      }
+    } else if (period === "2 weeks") {
+      const startOfToday = dayjs().startOf("day").toDate();
+
+      for (let daysAgo = 0; daysAgo <= 14; daysAgo++) {
+        const date = dayjs(startOfToday).subtract(daysAgo, "days").toDate();
+
+        const daysEnd = dayjs(startOfToday)
+          .subtract(daysAgo - 1, "days")
+          .toDate();
+
+        const dayOfTheWeek = dayjs(date).day();
+
+        const weekend = [0, 6].includes(dayOfTheWeek);
+
+        if (!weekend) {
+          const dealsThatDay = await Update.find({
+            series,
+            type: "last_dealt",
+            lastDealtVol: { $gte: 50 },
+            time: {
+              $gte: date,
+              $lt: daysEnd,
+            },
+          });
+          const trades = dealsThatDay.length;
+
+          let dayObj = { date, day: dayOfTheWeek };
+
+          if (trades > 0) {
+            const { vwap, totalVol } = getVWAP(dealsThatDay);
+            const { open, high, low, close } = getOHLC(dealsThatDay);
+
+            dayObj = {
+              ...dayObj,
+              open,
+              high,
+              low,
+              close,
+              vwap,
+              totalVol,
+              trades,
+            };
+          } else {
+            dayObj = {
+              ...dayObj,
+              trades,
+            };
+          }
+
+          console.log("dayObj: ", dayObj);
+
+          array.push(dayObj);
+        }
+      }
+    }
+
+    return array;
+    // return a sorted array of objects {date, vwap, vol, lastDealt} representing each day
+  } catch (err) {
+    return err;
+  }
+};
+
+export const deleteLastDealts = async (date) => {
+  try {
+    console.log("in deleteLastDealts");
+    if (!date) return "no date supplied";
+
+    const startOfDay = dayjs(date).startOf("day").toDate();
+    console.log("startOfDay: ", startOfDay);
+
+    const endOfDay = dayjs(startOfDay).add(1, "days").toDate();
+    console.log("endOfDay: ", endOfDay);
+
+    const deleted = await Update.deleteMany({
+      type: "last_dealt",
+      time: { $gte: startOfDay, $lt: endOfDay },
+    });
+
+    return deleted;
+  } catch (err) {
+    return err;
   }
 };

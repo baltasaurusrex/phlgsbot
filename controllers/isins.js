@@ -70,7 +70,6 @@ export const getSeries = async (alias) => {
     const instrument = await Isin.findOne({
       aliases: { $regex: `${alias}`, $options: "gi" },
     }).exec();
-    console.log("instrument: ", instrument);
     return instrument?.series;
   } catch (err) {
     return err;

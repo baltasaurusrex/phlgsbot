@@ -16,6 +16,7 @@ import {
   createPricesUpdate,
   createDealtUpdate,
   fetchPricingData,
+  fetchHistoricalPrices,
 } from "./controllers/updates.js";
 import {
   createOrder,
@@ -50,10 +51,12 @@ import {
   getShowOrdersRegex,
   getOffOrdersRegex,
   getPendingDealtOrderRegex,
+  getFetchHistoricalPricesRegex,
 } from "./utils/regex.js";
 
 // populateIsins();
-// uploadTimeAndSales("10-25-2021").then((res) => console.log(res));
+// uploadTimeAndSales("10-28-2021").then((res) => console.log(res));
+// fetchHistoricalPrices("5-77", "weekly");
 
 export const bot = new Bot({
   authToken: process.env.AUTH_TOKEN,
@@ -291,28 +294,31 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
     return;
   }
 
+  const pricesUpdateRegex = getAdminPricesUpdateRegex(validSeries);
+
+  const dealtUpdateRegex = getAdminDealtUpdateRegex(validSeries);
+
+  const fetchPriceInfoRegex = getFetchPriceInfoRegex(validSeries);
+
+  const fetchHistoricalPricesRegex = getFetchHistoricalPricesRegex(validSeries);
+
+  const createOrderRegex = getCreateOrderRegex(validSeries, validNicknames);
+
+  const showOrdersRegex = getShowOrdersRegex(
+    validSeries,
+    validDesks,
+    validNicknames
+  );
+
+  const offOrdersRegex = getOffOrdersRegex(
+    validSeries,
+    validDesks,
+    validNicknames
+  );
+
   // Admin functions
   if (user.role === "admin") {
-    const pricesUpdateRegex = getAdminPricesUpdateRegex(validSeries);
-
-    const dealtUpdateRegex = getAdminDealtUpdateRegex(validSeries);
-
-    const fetchPriceInfoRegex = getFetchPriceInfoRegex(validSeries);
-
-    const createOrderRegex = getCreateOrderRegex(validSeries, validNicknames);
-
-    const showOrdersRegex = getShowOrdersRegex(
-      validSeries,
-      validDesks,
-      validNicknames
-    );
-
-    const offOrdersRegex = getOffOrdersRegex(
-      validSeries,
-      validDesks,
-      validNicknames
-    );
-
+    // Create bid offer update
     if (pricesUpdateRegex.test(text)) {
       console.log(`regex triggered: pricesUpdateRegex.test(text)`);
       const match = text.match(pricesUpdateRegex);
@@ -387,7 +393,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       return;
     }
 
-    // Last dealt
+    // Create last dealt update
     if (dealtUpdateRegex.test(text)) {
       console.log(`regex triggered: dealtUpdateRegex.test(text)`);
       console.log("text.match: ", text.match(dealtUpdateRegex));
@@ -421,6 +427,27 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       console.log("broker: ", broker);
       console.log("time: ", time);
 
+      // Create the "last_dealt" update
+      const update = await createDealtUpdate({
+        series,
+        price,
+        action,
+        volume,
+        broker,
+        creator: user,
+        time,
+      });
+
+      console.log("update: ", update);
+
+      const formattedTime = dayjs(update.time).format("h:mm A");
+
+      bot.sendMessage(userProfile, [
+        new Message.Text(
+          `${series} was ${action} at ${price} for ${volume} Mn \n\non ${broker} at ${formattedTime}`
+        ),
+      ]);
+
       // Look for possible existing orders on that series, at that price, and on that broker (across all desks)
       const desk = undefined;
       const possibleOrders = await fetchOrders(series, price, desk, broker);
@@ -445,40 +472,12 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
             `Has this order been dealt?\n\n${renderOrder(possibleOrders[0])}`
           ),
         ]);
-        // bot.sendMessage(userProfile, [
-        //   new Message.Text(
-        //     `Has this order been dealt?\n\n${possibleOrders
-        //       ?.map((order) => renderOrder(order))
-        //       .join("")}`
-        //   ),
-        // ]);
-
-        return;
       }
-
-      const update = await createDealtUpdate({
-        series,
-        price,
-        action,
-        volume,
-        broker,
-        creator: user,
-        time,
-      });
-
-      console.log("update: ", update);
-
-      const formattedTime = dayjs(update.time).format("h:mm A");
-
-      bot.sendMessage(userProfile, [
-        new Message.Text(
-          `${series} was ${action} at ${price} for ${volume} Mn \n\non ${broker} at ${formattedTime}`
-        ),
-      ]);
 
       return;
     }
 
+    // Fetch price info
     if (fetchPriceInfoRegex.test(text)) {
       console.log("regex triggered: fetchPriceInfoRegex");
       // if it matches this format, get the list of series' requested by splitting the original string by spaces
@@ -567,7 +566,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
         };
 
         const renderPrevLastDealt = () => {
-          if (!prevLastDealt && !lastDealt) return "";
+          if (!prevLastDealt || (!prevLastDealt && !lastDealt)) return "";
 
           if (prevLastDealt && !lastDealt) {
             const { time: timePrev } = prevLastDealt;
@@ -671,14 +670,57 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       return;
     }
 
+    // Fetch historical prices
+    if (fetchHistoricalPricesRegex.test(text)) {
+      console.log(`regex triggered: fetchHistoricalPricesRegex.test(text)`);
+      const match = text.match(fetchHistoricalPricesRegex);
+      console.log("match: ", match);
+      const [full, seriesInput, periodInput] = match;
+      const series = await getSeries(seriesInput);
+      const period = periodInput.toLowerCase();
+      const data = await fetchHistoricalPrices(series, period);
+
+      const toDayOfWeek = (num) => {
+        if (num === 0) return "Sun";
+        if (num === 1) return "Mon";
+        if (num === 2) return "Tue";
+        if (num === 3) return "Wed";
+        if (num === 4) return "Thu";
+        if (num === 5) return "Fri";
+        if (num === 6) return "Sat";
+
+        return null;
+      };
+
+      const renderData = (days) => {
+        return days.map((day) => {
+          const dayOfWeek = dayjs(day.date).format("ddd");
+          const shortDate = dayjs(day.date).format("MM/DD");
+          if (day.trades === 0) {
+            return `${dayOfWeek}, ${shortDate}: No good vol trades\n\n`;
+          } else {
+            return `${dayOfWeek}, ${shortDate}:\nOpen: ${day.open}\nHigh: ${day.high}\nLow: ${day.low}\nClose: ${day.close}\nVWAP: ${day.vwap}\nTotal vol: ${day.totalVol} Mn\nTrades: ${day.trades}\n\n`;
+          }
+        });
+      };
+
+      bot.sendMessage(userProfile, [
+        new Message.Text(`${renderData(data).join("")}`),
+      ]);
+
+      return;
+    }
+
+    // Creating orders
     if (createOrderRegex.test(text)) {
       console.log("regex triggered: createOrderRegex");
       console.log("text.match: ", text.match(createOrderRegex));
       const match = text.match(createOrderRegex);
-      const [full, series, nickname, orderType, rate, volume, broker] = match;
+      const [full, seriesInput, nickname, orderType, rate, volume, broker] =
+        match;
 
-      const formattedSeries = await getSeries(series);
-      console.log("formattedSeries: ", formattedSeries);
+      const series = await getSeries(seriesInput);
+      console.log("series: ", series);
       const aliasOrId =
         nickname.toLowerCase() === "i" ? user._id : nickname.toLowerCase();
       const formattedOrderType =
@@ -692,7 +734,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const details = {
         creator: user._id,
         forDesk: desk,
-        series: formattedSeries,
+        series,
         orderType: formattedOrderType,
         rate: formattedRate,
         vol: formattedVol,
@@ -707,7 +749,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
       bot.sendMessage(userProfile, [
         new Message.Text(
-          `Order created for ${desk}\n\n${formattedSeries} ${orderType}ing at ${formattedRate} for ${formattedVol} Mn on ${formattedBroker}`
+          `Order created for ${desk}\n\n${series} ${orderType}ing at ${formattedRate} for ${formattedVol} Mn on ${formattedBroker}`
         ),
       ]);
 
@@ -747,11 +789,13 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       return;
     }
 
+    // Offing orders
     if (offOrdersRegex.test(text)) {
       console.log("regex triggered: offOrdersRegex");
       console.log("text.match: ", text.match(offOrdersRegex));
       const match = text.match(offOrdersRegex);
-      const [full, series, deskOrAliasOrId, brokerInput] = match;
+      const [full, seriesInput, deskOrAliasOrId, brokerInput] = match;
+      const series = await getSeries(seriesInput);
       console.log("series: ", series);
       console.log("deskOrAliasOrId: ", deskOrAliasOrId);
       const desk = validDesks.includes(deskOrAliasOrId)
@@ -790,10 +834,13 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
     const fetchPriceInfoRegex = getFetchPriceInfoRegex(validSeries);
     console.log("fetchPriceInfoRegex: ", fetchPriceInfoRegex);
 
+    // Fetch price info
     if (fetchPriceInfoRegex.test(text)) {
-      console.log("fetchPriceInfoRegex triggered");
+      console.log("regex triggered: fetchPriceInfoRegex");
       // if it matches this format, get the list of series' requested by splitting the original string by spaces
-      const list = text.split(" ");
+      const string = text.match(fetchPriceInfoRegex)[0];
+      console.log("string: ", string);
+      const list = text.split(/\s+/);
       console.log("list: ", list);
 
       const formattedList = await Promise.all(
@@ -815,8 +862,17 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       );
 
       for (const result of results) {
-        const { series, quotes, bestBidOffer, lastDealt } = result;
+        const {
+          series,
+          quotes,
+          bestBidOffer,
+          lastDealt,
+          prevLastDealt,
+          vwap,
+          totalVol,
+        } = result;
         console.log("lastDealt: ", lastDealt);
+        console.log("prevLastDealt: ", prevLastDealt);
 
         const renderBestPrices = () => {
           if (!bestBidOffer) {
@@ -858,10 +914,65 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
           }
 
           const timestamp = `on ${lastDealt.broker} at ${dayjs(
-            lastDealt.created_at
+            lastDealt.time
           ).format("h:mm A")}`;
 
-          return `\n\nlast *${lastDealt.direction}* at *${lastDealt.lastDealt}* for ${lastDealt.lastDealtVol} Mn\n${timestamp}`;
+          const fromNow = `${dayjs(lastDealt.time).fromNow()}`;
+
+          return `\n\nlast ${lastDealt.direction} at ${lastDealt.lastDealt} for ${lastDealt.lastDealtVol} Mn\n${timestamp} ${fromNow}`;
+        };
+
+        const renderPrevLastDealt = () => {
+          if (!prevLastDealt || (!prevLastDealt && !lastDealt)) return "";
+
+          if (prevLastDealt && !lastDealt) {
+            const { time: timePrev } = prevLastDealt;
+            const timeFrom = dayjs().to(dayjs(timePrev));
+
+            return `\n\nlast ${prevLastDealt.direction} at ${prevLastDealt.lastDealt} for ${prevLastDealt.lastDealtVol} Mn\n${timeFrom}`;
+          }
+
+          const { lastDealt: lastDealtNow, time: timeNow } = lastDealt;
+          const { lastDealt: lastDealtPrev, time: timePrev } = prevLastDealt;
+
+          const bpsDiff = ((lastDealtNow - lastDealtPrev) * 100).toFixed(3);
+
+          console.log();
+
+          const sign = Math.sign(lastDealtNow - lastDealtPrev);
+          let signToShow = null;
+
+          if (sign === 1) {
+            signToShow = "+";
+          } else {
+            signToShow = "";
+          }
+
+          console.log("timeNow: ", timeNow);
+          console.log("timePrev: ", timePrev);
+
+          const timeFrom = dayjs(timeNow).to(dayjs(timePrev));
+          const fromNow = `${dayjs(timePrev).fromNow()}`;
+
+          return `\n${
+            signToShow ? signToShow : ""
+          }${bpsDiff} bps from ${fromNow}`;
+        };
+
+        const renderVWAP = () => {
+          if (!lastDealt) return "";
+
+          const { time: timeNow } = lastDealt;
+          const fromNowDay = `${dayjs(timeNow).format("ddd")}`;
+
+          const getDay = () => {
+            const today = dayjs().format("ddd");
+            const fromNowDay = dayjs(timeNow).format("ddd");
+
+            return today === fromNowDay ? "today" : `last ${fromNowDay}`;
+          };
+
+          return `\n\nVWAP ${getDay()}: ${vwap}\nVolume ${getDay()}: ${totalVol} Mn`;
         };
 
         const renderBrokers = () => {
@@ -909,10 +1020,51 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
           new Message.Text(
             `*${
               result.series
-            }*${renderBestPrices()}${renderLastDealt()}${renderBrokers()}`
+            }*${renderBestPrices()}${renderLastDealt()}${renderPrevLastDealt()}${renderVWAP()}${renderBrokers()}`
           ),
         ]);
       }
+      return;
+    }
+
+    // Fetch historical prices
+    if (fetchHistoricalPricesRegex.test(text)) {
+      console.log(`regex triggered: fetchHistoricalPricesRegex.test(text)`);
+      const match = text.match(fetchHistoricalPricesRegex);
+      console.log("match: ", match);
+      const [full, seriesInput, periodInput] = match;
+      const series = await getSeries(seriesInput);
+      const period = periodInput.toLowerCase();
+      const data = await fetchHistoricalPrices(series, period);
+
+      const toDayOfWeek = (num) => {
+        if (num === 0) return "Sun";
+        if (num === 1) return "Mon";
+        if (num === 2) return "Tue";
+        if (num === 3) return "Wed";
+        if (num === 4) return "Thu";
+        if (num === 5) return "Fri";
+        if (num === 6) return "Sat";
+
+        return null;
+      };
+
+      const renderData = (days) => {
+        return days.map((day) => {
+          const dayOfWeek = dayjs(day.date).format("ddd");
+          const shortDate = dayjs(day.date).format("MM/DD");
+          if (day.trades === 0) {
+            return `${dayOfWeek}, ${shortDate}: No good trades\n\n`;
+          } else {
+            return `${dayOfWeek}, ${shortDate}:\nOpen: ${day.open}\nHigh: ${day.high}\nLow: ${day.low}\nClose: ${day.close}\nVWAP: ${day.vwap}\nTotal vol: ${day.totalVol} Mn\nTrades: ${day.trades}\n\n`;
+          }
+        });
+      };
+
+      bot.sendMessage(userProfile, [
+        new Message.Text(`${renderData(data).join("")}`),
+      ]);
+
       return;
     }
 

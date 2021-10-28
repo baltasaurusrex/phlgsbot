@@ -34,6 +34,12 @@ export const getAdminDealtUpdateRegex = (validSeries) => {
 export const getFetchPriceInfoRegex = (validSeries) =>
   new RegExp(`^(?:(${validSeries.join("|")})\\s*?)+$`, "i");
 
+export const getFetchHistoricalPricesRegex = (validSeries) =>
+  new RegExp(
+    `^(${validSeries.join("|")})(?:\\s+)?(weekly|2 weeks)(?:\\s+)?$`,
+    "i"
+  );
+
 export const getCreateOrderRegex = (validSeries, nicknames) => {
   const validNicknames = [...nicknames, "i"];
   return new RegExp(
@@ -73,7 +79,7 @@ export const getOrderDealtUpdateRegex = (
 export const getOffOrdersRegex = (validSeries, validDesks, validNicknames) => {
   const validDesksAndNicknames = validDesks.concat(validNicknames);
   return new RegExp(
-    `^[Oo]ff orders(?:\\s*)(${validSeries.join(
+    `^[Oo]ff orders?(?:\\s*)(${validSeries.join(
       "|"
     )})?(?:\\s*)(${validDesksAndNicknames.join(
       "|"
