@@ -189,6 +189,60 @@ export const fetchHistoricalPrices = async (series, period) => {
           array.push(dayObj);
         }
       }
+    } else if (period === "2 weeks") {
+      const startOfToday = dayjs().startOf("day").toDate();
+
+      for (let daysAgo = 0; daysAgo <= 14; daysAgo++) {
+        const date = dayjs(startOfToday).subtract(daysAgo, "days").toDate();
+
+        const daysEnd = dayjs(startOfToday)
+          .subtract(daysAgo - 1, "days")
+          .toDate();
+
+        const dayOfTheWeek = dayjs(date).day();
+
+        const weekend = [0, 6].includes(dayOfTheWeek);
+
+        if (!weekend) {
+          const dealsThatDay = await Update.find({
+            series,
+            type: "last_dealt",
+            lastDealtVol: { $gte: 50 },
+            time: {
+              $gte: date,
+              $lt: daysEnd,
+            },
+          });
+          const trades = dealsThatDay.length;
+
+          let dayObj = { date, day: dayOfTheWeek };
+
+          if (trades > 0) {
+            const { vwap, totalVol } = getVWAP(dealsThatDay);
+            const { open, high, low, close } = getOHLC(dealsThatDay);
+
+            dayObj = {
+              ...dayObj,
+              open,
+              high,
+              low,
+              close,
+              vwap,
+              totalVol,
+              trades,
+            };
+          } else {
+            dayObj = {
+              ...dayObj,
+              trades,
+            };
+          }
+
+          console.log("dayObj: ", dayObj);
+
+          array.push(dayObj);
+        }
+      }
     }
 
     return array;

@@ -294,31 +294,30 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
     return;
   }
 
+  const pricesUpdateRegex = getAdminPricesUpdateRegex(validSeries);
+
+  const dealtUpdateRegex = getAdminDealtUpdateRegex(validSeries);
+
+  const fetchPriceInfoRegex = getFetchPriceInfoRegex(validSeries);
+
+  const fetchHistoricalPricesRegex = getFetchHistoricalPricesRegex(validSeries);
+
+  const createOrderRegex = getCreateOrderRegex(validSeries, validNicknames);
+
+  const showOrdersRegex = getShowOrdersRegex(
+    validSeries,
+    validDesks,
+    validNicknames
+  );
+
+  const offOrdersRegex = getOffOrdersRegex(
+    validSeries,
+    validDesks,
+    validNicknames
+  );
+
   // Admin functions
   if (user.role === "admin") {
-    const pricesUpdateRegex = getAdminPricesUpdateRegex(validSeries);
-
-    const dealtUpdateRegex = getAdminDealtUpdateRegex(validSeries);
-
-    const fetchPriceInfoRegex = getFetchPriceInfoRegex(validSeries);
-
-    const fetchHistoricalPricesRegex =
-      getFetchHistoricalPricesRegex(validSeries);
-
-    const createOrderRegex = getCreateOrderRegex(validSeries, validNicknames);
-
-    const showOrdersRegex = getShowOrdersRegex(
-      validSeries,
-      validDesks,
-      validNicknames
-    );
-
-    const offOrdersRegex = getOffOrdersRegex(
-      validSeries,
-      validDesks,
-      validNicknames
-    );
-
     // Create bid offer update
     if (pricesUpdateRegex.test(text)) {
       console.log(`regex triggered: pricesUpdateRegex.test(text)`);
@@ -428,6 +427,27 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       console.log("broker: ", broker);
       console.log("time: ", time);
 
+      // Create the "last_dealt" update
+      const update = await createDealtUpdate({
+        series,
+        price,
+        action,
+        volume,
+        broker,
+        creator: user,
+        time,
+      });
+
+      console.log("update: ", update);
+
+      const formattedTime = dayjs(update.time).format("h:mm A");
+
+      bot.sendMessage(userProfile, [
+        new Message.Text(
+          `${series} was ${action} at ${price} for ${volume} Mn \n\non ${broker} at ${formattedTime}`
+        ),
+      ]);
+
       // Look for possible existing orders on that series, at that price, and on that broker (across all desks)
       const desk = undefined;
       const possibleOrders = await fetchOrders(series, price, desk, broker);
@@ -452,36 +472,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
             `Has this order been dealt?\n\n${renderOrder(possibleOrders[0])}`
           ),
         ]);
-        // bot.sendMessage(userProfile, [
-        //   new Message.Text(
-        //     `Has this order been dealt?\n\n${possibleOrders
-        //       ?.map((order) => renderOrder(order))
-        //       .join("")}`
-        //   ),
-        // ]);
-
-        return;
       }
-
-      const update = await createDealtUpdate({
-        series,
-        price,
-        action,
-        volume,
-        broker,
-        creator: user,
-        time,
-      });
-
-      console.log("update: ", update);
-
-      const formattedTime = dayjs(update.time).format("h:mm A");
-
-      bot.sendMessage(userProfile, [
-        new Message.Text(
-          `${series} was ${action} at ${price} for ${volume} Mn \n\non ${broker} at ${formattedTime}`
-        ),
-      ]);
 
       return;
     }
@@ -575,7 +566,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
         };
 
         const renderPrevLastDealt = () => {
-          if (!prevLastDealt && !lastDealt) return "";
+          if (!prevLastDealt || (!prevLastDealt && !lastDealt)) return "";
 
           if (prevLastDealt && !lastDealt) {
             const { time: timePrev } = prevLastDealt;
@@ -689,9 +680,33 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const period = periodInput.toLowerCase();
       const data = await fetchHistoricalPrices(series, period);
 
-      console.log("data: ", data);
+      const toDayOfWeek = (num) => {
+        if (num === 0) return "Sun";
+        if (num === 1) return "Mon";
+        if (num === 2) return "Tue";
+        if (num === 3) return "Wed";
+        if (num === 4) return "Thu";
+        if (num === 5) return "Fri";
+        if (num === 6) return "Sat";
 
-      bot.sendMessage(userProfile, [new Message.Text(`here`)]);
+        return null;
+      };
+
+      const renderData = (days) => {
+        return days.map((day) => {
+          const dayOfWeek = dayjs(day.date).format("ddd");
+          const shortDate = dayjs(day.date).format("MM/DD");
+          if (day.trades === 0) {
+            return `${dayOfWeek}, ${shortDate}: No good vol trades\n\n`;
+          } else {
+            return `${dayOfWeek}, ${shortDate}:\nOpen: ${day.open}\nHigh: ${day.high}\nLow: ${day.low}\nClose: ${day.close}\nVWAP: ${day.vwap}\nTotal vol: ${day.totalVol} Mn\nTrades: ${day.trades}\n\n`;
+          }
+        });
+      };
+
+      bot.sendMessage(userProfile, [
+        new Message.Text(`${renderData(data).join("")}`),
+      ]);
 
       return;
     }
@@ -907,7 +922,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
         };
 
         const renderPrevLastDealt = () => {
-          if (!prevLastDealt && !lastDealt) return "";
+          if (!prevLastDealt || (!prevLastDealt && !lastDealt)) return "";
 
           if (prevLastDealt && !lastDealt) {
             const { time: timePrev } = prevLastDealt;
@@ -1008,6 +1023,47 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
           ),
         ]);
       }
+      return;
+    }
+
+    // Fetch historical prices
+    if (fetchHistoricalPricesRegex.test(text)) {
+      console.log(`regex triggered: fetchHistoricalPricesRegex.test(text)`);
+      const match = text.match(fetchHistoricalPricesRegex);
+      console.log("match: ", match);
+      const [full, seriesInput, periodInput] = match;
+      const series = await getSeries(seriesInput);
+      const period = periodInput.toLowerCase();
+      const data = await fetchHistoricalPrices(series, period);
+
+      const toDayOfWeek = (num) => {
+        if (num === 0) return "Sun";
+        if (num === 1) return "Mon";
+        if (num === 2) return "Tue";
+        if (num === 3) return "Wed";
+        if (num === 4) return "Thu";
+        if (num === 5) return "Fri";
+        if (num === 6) return "Sat";
+
+        return null;
+      };
+
+      const renderData = (days) => {
+        return days.map((day) => {
+          const dayOfWeek = dayjs(day.date).format("ddd");
+          const shortDate = dayjs(day.date).format("MM/DD");
+          if (day.trades === 0) {
+            return `${dayOfWeek}, ${shortDate}: No good trades\n\n`;
+          } else {
+            return `${dayOfWeek}, ${shortDate}:\nOpen: ${day.open}\nHigh: ${day.high}\nLow: ${day.low}\nClose: ${day.close}\nVWAP: ${day.vwap}\nTotal vol: ${day.totalVol} Mn\nTrades: ${day.trades}\n\n`;
+          }
+        });
+      };
+
+      bot.sendMessage(userProfile, [
+        new Message.Text(`${renderData(data).join("")}`),
+      ]);
+
       return;
     }
 
