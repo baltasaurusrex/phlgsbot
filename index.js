@@ -17,6 +17,8 @@ import {
   createDealtUpdate,
   fetchPricingData,
   fetchHistoricalPrices,
+  fetchTimeAndSales,
+  deleteLastDealts,
 } from "./controllers/updates.js";
 import {
   createOrder,
@@ -52,6 +54,7 @@ import {
   getOffOrdersRegex,
   getPendingDealtOrderRegex,
   getFetchHistoricalPricesRegex,
+  getFetchTimeAndSalesRegex,
 } from "./utils/regex.js";
 
 // populateIsins();
@@ -294,6 +297,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
     return;
   }
 
+  // REGEX
   const pricesUpdateRegex = getAdminPricesUpdateRegex(validSeries);
 
   const dealtUpdateRegex = getAdminDealtUpdateRegex(validSeries);
@@ -315,6 +319,8 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
     validDesks,
     validNicknames
   );
+
+  const fetchTimeAndSalesRegex = getFetchTimeAndSalesRegex(validSeries);
 
   // Admin functions
   if (user.role === "admin") {
@@ -680,18 +686,6 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const period = periodInput.toLowerCase();
       const data = await fetchHistoricalPrices(series, period);
 
-      const toDayOfWeek = (num) => {
-        if (num === 0) return "Sun";
-        if (num === 1) return "Mon";
-        if (num === 2) return "Tue";
-        if (num === 3) return "Wed";
-        if (num === 4) return "Thu";
-        if (num === 5) return "Fri";
-        if (num === 6) return "Sat";
-
-        return null;
-      };
-
       const renderData = (days) => {
         return days.map((day) => {
           const dayOfWeek = dayjs(day.date).format("ddd");
@@ -706,6 +700,50 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
       bot.sendMessage(userProfile, [
         new Message.Text(`${renderData(data).join("")}`),
+      ]);
+
+      return;
+    }
+
+    if (fetchTimeAndSalesRegex.test(text)) {
+      console.log(`regex triggered: fetchTimeAndSalesRegex.test(text)`);
+      const match = text.match(fetchTimeAndSalesRegex);
+      console.log("match: ", match);
+      const [full, seriesInput, period] = match;
+      const series = await getSeries(seriesInput);
+
+      const data = await fetchTimeAndSales(series, period);
+      console.log("data: ", data);
+
+      const renderData = (deals) => {
+        if (deals.length > 0) {
+          return deals
+            .map((deal) => {
+              const time = dayjs(deal.time).format("h:mm A");
+              return `${deal.lastDealt} | ${deal.lastDealtVol} | ${time}`;
+            })
+            .join("\n");
+        } else {
+          return "No deals";
+        }
+      };
+
+      let day = null;
+      if (period) {
+        day = dayjs(period, "MM/DD").toDate();
+      } else {
+        day = dayjs().toDate();
+      }
+
+      const dayOfWeek = dayjs(day).format("ddd");
+      const shortDate = dayjs(day).format("MM/DD");
+
+      bot.sendMessage(userProfile, [
+        new Message.Text(
+          `${series} time and sales data for ${dayOfWeek}, ${shortDate}: \n\n${renderData(
+            data
+          )}`
+        ),
       ]);
 
       return;
@@ -1036,18 +1074,6 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const series = await getSeries(seriesInput);
       const period = periodInput.toLowerCase();
       const data = await fetchHistoricalPrices(series, period);
-
-      const toDayOfWeek = (num) => {
-        if (num === 0) return "Sun";
-        if (num === 1) return "Mon";
-        if (num === 2) return "Tue";
-        if (num === 3) return "Wed";
-        if (num === 4) return "Thu";
-        if (num === 5) return "Fri";
-        if (num === 6) return "Sat";
-
-        return null;
-      };
 
       const renderData = (days) => {
         return days.map((day) => {

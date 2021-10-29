@@ -252,6 +252,37 @@ export const fetchHistoricalPrices = async (series, period) => {
   }
 };
 
+// Gets the most recent time and sales of that series for most recent trading day
+export const fetchTimeAndSales = async (series, period) => {
+  try {
+    let date = null;
+
+    console.log("period: ", period);
+    if (period) {
+      date = dayjs(period, "MM/DD").toDate();
+    } else {
+      date = dayjs().toDate();
+    }
+
+    console.log("date: ", date);
+
+    const startOfDay = dayjs(date).startOf("day").toDate();
+    const endOfDay = dayjs(date).add(1, "day");
+
+    const mongoQuery = {
+      series,
+      type: "last_dealt",
+      time: { $gte: startOfDay, $lt: endOfDay },
+    };
+
+    const dealsThatDay = await Update.find(mongoQuery).sort({ time: "desc" });
+
+    return dealsThatDay;
+  } catch (err) {
+    return err;
+  }
+};
+
 export const deleteLastDealts = async (date) => {
   try {
     console.log("in deleteLastDealts");
