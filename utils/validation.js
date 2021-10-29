@@ -7,6 +7,7 @@ import {
   getOffOrdersRegex,
   getPendingDealtOrderRegex,
   getFetchHistoricalPricesRegex,
+  getFetchTimeAndSalesRegex,
 } from "./regex.js";
 
 export const validCommand = (
@@ -38,6 +39,10 @@ export const validCommand = (
   const fetchHistoricalPricesRegex = getFetchHistoricalPricesRegex(validSeries);
 
   if (fetchHistoricalPricesRegex.test(text)) flag = true;
+
+  const fetchTimeAndSalesRegex = getFetchTimeAndSalesRegex(validSeries);
+
+  if (fetchTimeAndSalesRegex.test(text)) flag = true;
 
   const createOrderRegex = getCreateOrderRegex(validSeries, validNicknames);
 

@@ -1,19 +1,3 @@
-// export const getAdminPricesUpdateRegexOld = (validSeries) =>
-//   new RegExp(
-//     `^(${validSeries.join(
-//       "|"
-//     )})\\s(\\d+|na)\\s(\\d+|na)\\s(\\d+|na)\\s(\\d+|na)\\s(([pPaAtTgG]\\w*))`,
-//     "i"
-//   );
-
-export const getAdminPricesUpdateRegexOld = (validSeries) =>
-  new RegExp(
-    `^(${validSeries.join(
-      "|"
-    )})\\s(\\d+|na|\\/)\\s(\\d+|na|\\/)(?:\\s(\\d+))?(?:\\s(\\d+))?\\s([pPaAtTgG]\\w*)`,
-    "i"
-  );
-
 export const getAdminPricesUpdateRegex = (validSeries) =>
   new RegExp(
     `^(${validSeries.join(
@@ -37,6 +21,14 @@ export const getFetchPriceInfoRegex = (validSeries) =>
 export const getFetchHistoricalPricesRegex = (validSeries) =>
   new RegExp(
     `^(${validSeries.join("|")})(?:\\s+)?(weekly|2 weeks)(?:\\s+)?$`,
+    "i"
+  );
+
+export const getFetchTimeAndSalesRegex = (validSeries) =>
+  new RegExp(
+    `^(${validSeries.join(
+      "|"
+    )})(?:\\s+)?(?:time and sales)(?:\\s+)?(\\d\\d\\/\\d\\d)?(?:\\s+)?$`,
     "i"
   );
 
