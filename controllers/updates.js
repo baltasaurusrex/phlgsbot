@@ -135,113 +135,68 @@ export const fetchHistoricalPrices = async (series, period) => {
     // get series of days
     // if weekly, get the past 7 days, excluding weekends
     const array = [];
-    if (period === "weekly") {
-      const startOfToday = dayjs().startOf("day").toDate();
 
-      for (let daysAgo = 0; daysAgo <= 7; daysAgo++) {
-        const date = dayjs(startOfToday).subtract(daysAgo, "days").toDate();
+    const startOfToday = dayjs().startOf("day").toDate();
 
-        const daysEnd = dayjs(startOfToday)
-          .subtract(daysAgo - 1, "days")
-          .toDate();
+    let daysLimit = null;
 
-        const dayOfTheWeek = dayjs(date).day();
-
-        const weekend = [0, 6].includes(dayOfTheWeek);
-
-        if (!weekend) {
-          const dealsThatDay = await Update.find({
-            series,
-            type: "last_dealt",
-            lastDealtVol: { $gte: 50 },
-            time: {
-              $gte: date,
-              $lt: daysEnd,
-            },
-          });
-          const trades = dealsThatDay.length;
-
-          let dayObj = { date, day: dayOfTheWeek };
-
-          if (trades > 0) {
-            const { vwap, totalVol } = getVWAP(dealsThatDay);
-            const { open, high, low, close } = getOHLC(dealsThatDay);
-
-            dayObj = {
-              ...dayObj,
-              open,
-              high,
-              low,
-              close,
-              vwap,
-              totalVol,
-              trades,
-            };
-          } else {
-            dayObj = {
-              ...dayObj,
-              trades,
-            };
-          }
-
-          console.log("dayObj: ", dayObj);
-
-          array.push(dayObj);
-        }
-      }
+    if (["weekly", "1 week"].includes(period)) {
+      daysLimit = 7;
     } else if (period === "2 weeks") {
-      const startOfToday = dayjs().startOf("day").toDate();
+      daysLimit = 14;
+    } else if (["1 month", "monthly"].includes(period)) {
+      daysLimit = 30;
+    }
 
-      for (let daysAgo = 0; daysAgo <= 14; daysAgo++) {
-        const date = dayjs(startOfToday).subtract(daysAgo, "days").toDate();
+    for (let daysAgo = 0; daysAgo <= daysLimit; daysAgo++) {
+      const date = dayjs(startOfToday).subtract(daysAgo, "days").toDate();
 
-        const daysEnd = dayjs(startOfToday)
-          .subtract(daysAgo - 1, "days")
-          .toDate();
+      const daysEnd = dayjs(startOfToday)
+        .subtract(daysAgo - 1, "days")
+        .toDate();
 
-        const dayOfTheWeek = dayjs(date).day();
+      const dayOfTheWeek = dayjs(date).day();
 
-        const weekend = [0, 6].includes(dayOfTheWeek);
+      const weekend = [0, 6].includes(dayOfTheWeek);
 
-        if (!weekend) {
-          const dealsThatDay = await Update.find({
-            series,
-            type: "last_dealt",
-            lastDealtVol: { $gte: 50 },
-            time: {
-              $gte: date,
-              $lt: daysEnd,
-            },
-          });
-          const trades = dealsThatDay.length;
+      if (!weekend) {
+        const dealsThatDay = await Update.find({
+          series,
+          type: "last_dealt",
+          lastDealtVol: { $gte: 50 },
+          time: {
+            $gte: date,
+            $lt: daysEnd,
+          },
+        });
+        const trades = dealsThatDay.length;
 
-          let dayObj = { date, day: dayOfTheWeek };
+        let dayObj = { date, day: dayOfTheWeek };
 
-          if (trades > 0) {
-            const { vwap, totalVol } = getVWAP(dealsThatDay);
-            const { open, high, low, close } = getOHLC(dealsThatDay);
+        if (trades > 0) {
+          const { vwap, totalVol } = getVWAP(dealsThatDay);
+          const { open, high, low, close } = getOHLC(dealsThatDay);
 
-            dayObj = {
-              ...dayObj,
-              open,
-              high,
-              low,
-              close,
-              vwap,
-              totalVol,
-              trades,
-            };
-          } else {
-            dayObj = {
-              ...dayObj,
-              trades,
-            };
-          }
-
-          console.log("dayObj: ", dayObj);
-
-          array.push(dayObj);
+          dayObj = {
+            ...dayObj,
+            open,
+            high,
+            low,
+            close,
+            vwap,
+            totalVol,
+            trades,
+          };
+        } else {
+          dayObj = {
+            ...dayObj,
+            trades,
+          };
         }
+
+        console.log("dayObj: ", dayObj);
+
+        array.push(dayObj);
       }
     }
 
@@ -251,7 +206,6 @@ export const fetchHistoricalPrices = async (series, period) => {
     return err;
   }
 };
-
 // Gets the most recent time and sales of that series for most recent trading day
 export const fetchTimeAndSales = async (series, period) => {
   try {
