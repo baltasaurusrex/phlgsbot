@@ -58,7 +58,7 @@ import {
 } from "./utils/regex.js";
 
 // populateIsins();
-// uploadTimeAndSales("10-28-2021").then((res) => console.log(res));
+// uploadTimeAndSales("10-29-2021").then((res) => console.log(res));
 // fetchHistoricalPrices("5-77", "weekly");
 
 export const bot = new Bot({
