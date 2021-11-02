@@ -566,9 +566,13 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
             lastDealt.time
           ).format("h:mm A")}`;
 
-          const fromNow = `${dayjs(lastDealt.time).fromNow()}`;
+          const sameDay =
+            dayjs().format("ddd") === dayjs(lastDealt.time).format("ddd");
+          const fromNowDay = sameDay
+            ? `today`
+            : `last ${dayjs(lastDealt.time).format("ddd")}`;
 
-          return `\n\nlast ${lastDealt.direction} at ${lastDealt.lastDealt} for ${lastDealt.lastDealtVol} Mn\n${timestamp} ${fromNow}`;
+          return `\n\nlast ${lastDealt.direction} at ${lastDealt.lastDealt} for ${lastDealt.lastDealtVol} Mn\n${timestamp} ${fromNowDay}`;
         };
 
         const renderPrevLastDealt = () => {
@@ -597,15 +601,18 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
             signToShow = "";
           }
 
+          const yesterday =
+            dayjs().subtract(1, "day").format("ddd") ===
+            dayjs(timePrev).format("ddd");
+          const fromNowDay = yesterday
+            ? `from yesterday`
+            : `from last ${dayjs(timePrev).format("ddd")}`;
           console.log("timeNow: ", timeNow);
           console.log("timePrev: ", timePrev);
 
-          const timeFrom = dayjs(timeNow).to(dayjs(timePrev));
-          const fromNow = `${dayjs(timePrev).fromNow()}`;
-
           return `\n${
             signToShow ? signToShow : ""
-          }${bpsDiff} bps from ${fromNow}`;
+          }${bpsDiff} bps ${fromNowDay}`;
         };
 
         const renderVWAP = () => {
