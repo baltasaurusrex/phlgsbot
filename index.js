@@ -58,7 +58,7 @@ import {
 } from "./utils/regex.js";
 
 // populateIsins();
-// uploadTimeAndSales("10-29-2021").then((res) => console.log(res));
+// uploadTimeAndSales("11-03-2021").then((res) => console.log(res));
 // fetchHistoricalPrices("5-77", "weekly");
 
 export const bot = new Bot({
@@ -691,27 +691,40 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const [full, seriesInput, periodInput] = match;
       const series = await getSeries(seriesInput);
       const period = periodInput.toLowerCase();
-      const data = await fetchHistoricalPrices(series, period);
+      const { array, summary } = await fetchHistoricalPrices(series, period);
 
       const renderData = (days) => {
         return days.map((day) => {
           const dayOfWeek = dayjs(day.date).format("ddd");
           const shortDate = dayjs(day.date).format("MM/DD");
           if (day.trades === 0) {
-            return `${dayOfWeek}, ${shortDate}: No good vol trades\n\n`;
+            return `${dayOfWeek}, ${shortDate}: No good trades\n\n`;
           } else {
             return `${dayOfWeek}, ${shortDate}:\nOpen: ${day.open}\nHigh: ${day.high}\nLow: ${day.low}\nClose: ${day.close}\nVWAP: ${day.vwap}\nTotal vol: ${day.totalVol} Mn\nTrades: ${day.trades}\n\n`;
           }
         });
       };
 
+      const renderSummary = (summary) => {
+        const startPd = dayjs(summary.startOfPeriod).format("MM/DD");
+        const endPd = dayjs(summary.endOfPeriod).format("MM/DD");
+        if (summary.trades > 0) {
+          return `*Summary for ${startPd} - ${endPd}:* \nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close}\nVWAP: ${summary.vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
+        } else {
+          return `*Summary for ${startPd} - ${endPd}*:\nTrades: ${summary.trades}`;
+        }
+      };
+
       bot.sendMessage(userProfile, [
-        new Message.Text(`${renderData(data).join("")}`),
+        new Message.Text(
+          `${renderData(array).join("")}\n${renderSummary(summary)}`
+        ),
       ]);
 
       return;
     }
 
+    // Fetching time and sales
     if (fetchTimeAndSalesRegex.test(text)) {
       console.log(`regex triggered: fetchTimeAndSalesRegex.test(text)`);
       const match = text.match(fetchTimeAndSalesRegex);
@@ -719,15 +732,18 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const [full, seriesInput, period] = match;
       const series = await getSeries(seriesInput);
 
-      const data = await fetchTimeAndSales(series, period);
-      console.log("data: ", data);
+      const { array, summary } = await fetchTimeAndSales(series, period);
+      console.log("array: ", array);
+      console.log("summary: ", summary);
 
-      const renderData = (deals) => {
+      const renderMOSB = (deals) => {
         if (deals.length > 0) {
           return deals
             .map((deal) => {
               const time = dayjs(deal.time).format("h:mm A");
-              return `${deal.lastDealt} | ${deal.lastDealtVol} | ${time}`;
+              return `${deal.lastDealt.toFixed(3)} | ${
+                deal.lastDealtVol
+              } Mn | ${time}`;
             })
             .join("\n");
         } else {
@@ -745,11 +761,19 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const dayOfWeek = dayjs(day).format("ddd");
       const shortDate = dayjs(day).format("MM/DD");
 
+      const renderSummary = (summary) => {
+        if (summary.trades > 0) {
+          return `\n\nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close}\nVWAP: ${summary.vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
+        } else {
+          return ``;
+        }
+      };
+
       bot.sendMessage(userProfile, [
         new Message.Text(
-          `${series} time and sales data for ${dayOfWeek}, ${shortDate}: \n\n${renderData(
-            data
-          )}`
+          `${series} time and sales data for ${dayOfWeek}, ${shortDate}: \n\n${renderMOSB(
+            array
+          )}${renderSummary(summary)}`
         ),
       ]);
 
@@ -1080,7 +1104,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const [full, seriesInput, periodInput] = match;
       const series = await getSeries(seriesInput);
       const period = periodInput.toLowerCase();
-      const data = await fetchHistoricalPrices(series, period);
+      const { array, summary } = await fetchHistoricalPrices(series, period);
 
       const renderData = (days) => {
         return days.map((day) => {
@@ -1094,8 +1118,65 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
         });
       };
 
+      const renderSummary = (summary) => {
+        const startPd = dayjs(summary.startOfPeriod).format("MM/DD");
+        const endPd = dayjs(summary.endOfPeriod).format("MM/DD");
+        if (summary.trades > 0) {
+          return `*Summary for ${startPd} - ${endPd}:* \nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close}\nVWAP: ${summary.vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
+        } else {
+          return `*Summary for ${startPd} - ${endPd}*:\nTrades: ${summary.trades}`;
+        }
+      };
+
       bot.sendMessage(userProfile, [
-        new Message.Text(`${renderData(data).join("")}`),
+        new Message.Text(
+          `${renderData(array).join("")}\n${renderSummary(summary)}`
+        ),
+      ]);
+
+      return;
+    }
+
+    // Fetching time and sales
+    if (fetchTimeAndSalesRegex.test(text)) {
+      console.log(`regex triggered: fetchTimeAndSalesRegex.test(text)`);
+      const match = text.match(fetchTimeAndSalesRegex);
+      console.log("match: ", match);
+      const [full, seriesInput, period] = match;
+      const series = await getSeries(seriesInput);
+
+      const data = await fetchTimeAndSales(series, period);
+      console.log("data: ", data);
+
+      const renderData = (deals) => {
+        if (deals.length > 0) {
+          return deals
+            .map((deal) => {
+              const time = dayjs(deal.time).format("h:mm A");
+              return `${deal.lastDealt} | ${deal.lastDealtVol} | ${time}`;
+            })
+            .join("\n");
+        } else {
+          return "No deals";
+        }
+      };
+
+      let day = null;
+      if (period) {
+        day = dayjs(period, "MM/DD").toDate();
+      } else {
+        day = dayjs().toDate();
+      }
+
+      const dayOfWeek = dayjs(day).format("ddd");
+      const shortDate = dayjs(day).format("MM/DD");
+
+      bot.sendMessage(userProfile, [
+        new Message.Text(
+          `${series} time and sales data for ${dayOfWeek}, ${shortDate}: \n\n${renderData(
+            data
+          )}`
+        ),
       ]);
 
       return;

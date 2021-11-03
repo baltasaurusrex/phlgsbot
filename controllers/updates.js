@@ -136,6 +136,9 @@ export const fetchHistoricalPrices = async (series, period) => {
     // if weekly, get the past 7 days, excluding weekends
     const array = [];
 
+    const allTrades = [];
+    let summary = {};
+
     const startOfToday = dayjs().startOf("day").toDate();
 
     let daysLimit = null;
@@ -147,6 +150,11 @@ export const fetchHistoricalPrices = async (series, period) => {
     } else if (["1 month", "monthly"].includes(period)) {
       daysLimit = 30;
     }
+
+    const endOfPeriod = dayjs().startOf("day").toDate();
+    const startOfPeriod = dayjs(endOfPeriod)
+      .subtract(daysLimit, "days")
+      .toDate();
 
     for (let daysAgo = 0; daysAgo <= daysLimit; daysAgo++) {
       const date = dayjs(startOfToday).subtract(daysAgo, "days").toDate();
@@ -174,6 +182,7 @@ export const fetchHistoricalPrices = async (series, period) => {
         let dayObj = { date, day: dayOfTheWeek };
 
         if (trades > 0) {
+          allTrades.push(...dealsThatDay);
           const { vwap, totalVol } = getVWAP(dealsThatDay);
           const { open, high, low, close } = getOHLC(dealsThatDay);
 
@@ -193,14 +202,28 @@ export const fetchHistoricalPrices = async (series, period) => {
             trades,
           };
         }
-
         console.log("dayObj: ", dayObj);
 
         array.push(dayObj);
       }
     }
 
-    return array;
+    summary.trades = allTrades.length;
+    summary.endOfPeriod = endOfPeriod;
+    summary.startOfPeriod = startOfPeriod;
+
+    if (allTrades.length > 0) {
+      summary.vwap = getVWAP(allTrades).vwap;
+      summary.totalVol = getVWAP(allTrades).totalVol;
+      summary.open = getOHLC(allTrades).open;
+      summary.high = getOHLC(allTrades).high;
+      summary.low = getOHLC(allTrades).low;
+      summary.close = getOHLC(allTrades).close;
+    }
+
+    console.log("summary: ", summary);
+
+    return { array, summary };
     // return a sorted array of objects {date, vwap, vol, lastDealt} representing each day
   } catch (err) {
     return err;
@@ -209,6 +232,8 @@ export const fetchHistoricalPrices = async (series, period) => {
 // Gets the most recent time and sales of that series for most recent trading day
 export const fetchTimeAndSales = async (series, period) => {
   try {
+    console.log("in fetchTimeAndSales: ");
+
     let date = null;
 
     console.log("period: ", period);
@@ -217,7 +242,6 @@ export const fetchTimeAndSales = async (series, period) => {
     } else {
       date = dayjs().toDate();
     }
-
     console.log("date: ", date);
 
     const startOfDay = dayjs(date).startOf("day").toDate();
@@ -229,9 +253,28 @@ export const fetchTimeAndSales = async (series, period) => {
       time: { $gte: startOfDay, $lt: endOfDay },
     };
 
-    const dealsThatDay = await Update.find(mongoQuery).sort({ time: "desc" });
+    const unsorted = await Update.find(mongoQuery);
 
-    return dealsThatDay;
+    const array = unsorted.sort((a, b) => {
+      return b.time - a.time;
+    });
+
+    let summary = {};
+
+    summary.trades = array.length;
+
+    if (array.length > 0) {
+      summary.vwap = getVWAP(array).vwap;
+      summary.totalVol = getVWAP(array).totalVol;
+      summary.open = getOHLC(array.filter((el) => el.lastDealtVol >= 50)).open;
+      summary.high = getOHLC(array.filter((el) => el.lastDealtVol >= 50)).high;
+      summary.low = getOHLC(array.filter((el) => el.lastDealtVol >= 50)).low;
+      summary.close = getOHLC(
+        array.filter((el) => el.lastDealtVol >= 50)
+      ).close;
+    }
+
+    return { array, summary };
   } catch (err) {
     return err;
   }

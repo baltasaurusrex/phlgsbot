@@ -99,7 +99,7 @@ export const getBestBidOffer = (updateArray) => {
 };
 
 export const getVWAP = (array) => {
-  console.log("getVWAP");
+  console.log("in getVWAP");
   let num = 0;
   let den = 0;
 
@@ -111,20 +111,19 @@ export const getVWAP = (array) => {
   });
 
   const returnObj = {
-    vwap: (num / den).toPrecision(4),
-    totalVol: den,
+    vwap: (num / den).toFixed(3),
+    totalVol: den.toFixed(2),
   };
-
-  console.log("returnObj: ", returnObj);
 
   return returnObj;
 };
 
 export const getOHLC = (array) => {
-  let open = null;
-  let high = null;
-  let low = null;
-  let close = null;
+  console.log("in getOHLC");
+  let open = "no good vol";
+  let high = "no good vol";
+  let low = "no good vol";
+  let close = "no good vol";
 
   const getOpenClose = (array) => {
     const sorted = array.sort((a, b) => {
@@ -139,10 +138,12 @@ export const getOHLC = (array) => {
     return { high: sorted[0], low: sorted[sorted.length - 1] };
   };
 
-  open = getOpenClose(array).open.lastDealt.toPrecision(4);
-  close = getOpenClose(array).close.lastDealt.toPrecision(4);
-  high = getHighLow(array).high.lastDealt.toPrecision(4);
-  low = getHighLow(array).low.lastDealt.toPrecision(4);
+  if (array.length > 0) {
+    open = getOpenClose(array).open.lastDealt.toFixed(3);
+    close = getOpenClose(array).close.lastDealt.toFixed(3);
+    high = getHighLow(array).high.lastDealt.toFixed(3);
+    low = getHighLow(array).low.lastDealt.toFixed(3);
+  }
 
   return { open, high, low, close };
 };
