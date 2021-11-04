@@ -58,8 +58,7 @@ import {
 } from "./utils/regex.js";
 
 // populateIsins();
-// uploadTimeAndSales("11-03-2021").then((res) => console.log(res));
-// fetchHistoricalPrices("5-77", "weekly");
+// uploadTimeAndSales("11-04-2021").then((res) => console.log(res));
 
 export const bot = new Bot({
   authToken: process.env.AUTH_TOKEN,
@@ -694,9 +693,10 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const { array, summary } = await fetchHistoricalPrices(series, period);
 
       const renderData = (days) => {
-        return days.map((day) => {
+        return days.map((day, index, array) => {
           const dayOfWeek = dayjs(day.date).format("ddd");
           const shortDate = dayjs(day.date).format("MM/DD");
+
           if (day.trades === 0) {
             return `${dayOfWeek}, ${shortDate}: No good trades\n\n`;
           } else {
@@ -986,9 +986,13 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
             lastDealt.time
           ).format("h:mm A")}`;
 
-          const fromNow = `${dayjs(lastDealt.time).fromNow()}`;
+          const sameDay =
+            dayjs().format("ddd") === dayjs(lastDealt.time).format("ddd");
+          const fromNowDay = sameDay
+            ? `today`
+            : `last ${dayjs(lastDealt.time).format("ddd")}`;
 
-          return `\n\nlast ${lastDealt.direction} at ${lastDealt.lastDealt} for ${lastDealt.lastDealtVol} Mn\n${timestamp} ${fromNow}`;
+          return `\n\nlast ${lastDealt.direction} at ${lastDealt.lastDealt} for ${lastDealt.lastDealtVol} Mn\n${timestamp} ${fromNowDay}`;
         };
 
         const renderPrevLastDealt = () => {
@@ -1017,15 +1021,18 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
             signToShow = "";
           }
 
+          const yesterday =
+            dayjs().subtract(1, "day").format("ddd") ===
+            dayjs(timePrev).format("ddd");
+          const fromNowDay = yesterday
+            ? `from yesterday`
+            : `from last ${dayjs(timePrev).format("ddd")}`;
           console.log("timeNow: ", timeNow);
           console.log("timePrev: ", timePrev);
 
-          const timeFrom = dayjs(timeNow).to(dayjs(timePrev));
-          const fromNow = `${dayjs(timePrev).fromNow()}`;
-
           return `\n${
             signToShow ? signToShow : ""
-          }${bpsDiff} bps from ${fromNow}`;
+          }${bpsDiff} bps ${fromNowDay}`;
         };
 
         const renderVWAP = () => {
@@ -1107,9 +1114,10 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const { array, summary } = await fetchHistoricalPrices(series, period);
 
       const renderData = (days) => {
-        return days.map((day) => {
+        return days.map((day, index, array) => {
           const dayOfWeek = dayjs(day.date).format("ddd");
           const shortDate = dayjs(day.date).format("MM/DD");
+
           if (day.trades === 0) {
             return `${dayOfWeek}, ${shortDate}: No good trades\n\n`;
           } else {
@@ -1145,15 +1153,18 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const [full, seriesInput, period] = match;
       const series = await getSeries(seriesInput);
 
-      const data = await fetchTimeAndSales(series, period);
-      console.log("data: ", data);
+      const { array, summary } = await fetchTimeAndSales(series, period);
+      console.log("array: ", array);
+      console.log("summary: ", summary);
 
-      const renderData = (deals) => {
+      const renderMOSB = (deals) => {
         if (deals.length > 0) {
           return deals
             .map((deal) => {
               const time = dayjs(deal.time).format("h:mm A");
-              return `${deal.lastDealt} | ${deal.lastDealtVol} | ${time}`;
+              return `${deal.lastDealt.toFixed(3)} | ${
+                deal.lastDealtVol
+              } Mn | ${time}`;
             })
             .join("\n");
         } else {
@@ -1171,11 +1182,19 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const dayOfWeek = dayjs(day).format("ddd");
       const shortDate = dayjs(day).format("MM/DD");
 
+      const renderSummary = (summary) => {
+        if (summary.trades > 0) {
+          return `\n\nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close}\nVWAP: ${summary.vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
+        } else {
+          return ``;
+        }
+      };
+
       bot.sendMessage(userProfile, [
         new Message.Text(
-          `${series} time and sales data for ${dayOfWeek}, ${shortDate}: \n\n${renderData(
-            data
-          )}`
+          `${series} time and sales data for ${dayOfWeek}, ${shortDate}: \n\n${renderMOSB(
+            array
+          )}${renderSummary(summary)}`
         ),
       ]);
 
