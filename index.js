@@ -692,15 +692,37 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const period = periodInput.toLowerCase();
       const { array, summary } = await fetchHistoricalPrices(series, period);
 
+      bot.sendMessage(userProfile, [
+        new Message.Text(`Fetching historical price data for ${series}...`),
+      ]);
+
       const renderData = (days) => {
-        return days.map((day, index, array) => {
+        return days.map((day) => {
           const dayOfWeek = dayjs(day.date).format("ddd");
           const shortDate = dayjs(day.date).format("MM/DD");
 
           if (day.trades === 0) {
             return `${dayOfWeek}, ${shortDate}: No good trades\n\n`;
           } else {
-            return `${dayOfWeek}, ${shortDate}:\nOpen: ${day.open}\nHigh: ${day.high}\nLow: ${day.low}\nClose: ${day.close}\nVWAP: ${day.vwap}\nTotal vol: ${day.totalVol} Mn\nTrades: ${day.trades}\n\n`;
+            // const change = {
+            //   close: day.change.close,
+            //   vwap: day.change.vwap,
+            // };
+            let change = {
+              close: parseFloat(day.change.close) * 100,
+              vwap: parseFloat(day.change.vwap) * 100,
+            };
+
+            change.close =
+              change.close > 0
+                ? "+" + change.close.toFixed(2)
+                : change.close.toFixed(2);
+            change.vwap =
+              change.vwap > 0
+                ? "+" + change.vwap.toFixed(2)
+                : change.vwap.toFixed(2);
+
+            return `${dayOfWeek}, ${shortDate}:\nOpen: ${day.open}\nHigh: ${day.high}\nLow: ${day.low}\nClose: ${day.close} (${change.close} bps)\nVWAP: ${day.vwap} (${change.vwap} bps)\nTotal vol: ${day.totalVol} Mn\nTrades: ${day.trades}\n\n`;
           }
         });
       };

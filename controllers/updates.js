@@ -132,6 +132,7 @@ export const fetchPricingData = async (series) => {
 
 export const fetchHistoricalPrices = async (series, period) => {
   try {
+    console.log("in fetchHistoricalPrices");
     // get series of days
     // if weekly, get the past 7 days, excluding weekends
     const array = [];
@@ -159,13 +160,15 @@ export const fetchHistoricalPrices = async (series, period) => {
     for (let daysAgo = 0; daysAgo <= daysLimit; daysAgo++) {
       const date = dayjs(startOfToday).subtract(daysAgo, "days").toDate();
 
+      const dayOfTheWeek = dayjs(date).day();
+
       const daysEnd = dayjs(startOfToday)
         .subtract(daysAgo - 1, "days")
         .toDate();
 
-      const dayOfTheWeek = dayjs(date).day();
-
       const weekend = [0, 6].includes(dayOfTheWeek);
+
+      let dayObj = { date, day: dayOfTheWeek };
 
       if (!weekend) {
         const dealsThatDay = await Update.find({
@@ -177,9 +180,11 @@ export const fetchHistoricalPrices = async (series, period) => {
             $lt: daysEnd,
           },
         });
-        const trades = dealsThatDay.length;
 
-        let dayObj = { date, day: dayOfTheWeek };
+        console.log("date: ", date);
+        console.log("daysEnd: ", daysEnd);
+
+        const trades = dealsThatDay.length;
 
         if (trades > 0) {
           allTrades.push(...dealsThatDay);
@@ -202,7 +207,64 @@ export const fetchHistoricalPrices = async (series, period) => {
             trades,
           };
         }
+
         console.log("dayObj: ", dayObj);
+
+        // find the most recent day
+        const mostRecentPrev = await Update.findOne({
+          series,
+          type: "last_dealt",
+          lastDealtVol: { $gte: 50 },
+          time: {
+            $lt: date,
+          },
+        }).sort({ time: "desc" });
+
+        console.log("mostRecentPrev: ", mostRecentPrev);
+
+        let mostRecentPrev_startOfDay = null;
+        let mostRecentPrev_endOfDay = null;
+
+        if (mostRecentPrev) {
+          mostRecentPrev_startOfDay = dayjs(mostRecentPrev.time)
+            .startOf("day")
+            .toDate();
+          console.log("mostRecentPrev_startOfDay: ", mostRecentPrev_startOfDay);
+          mostRecentPrev_endOfDay = dayjs(mostRecentPrev_startOfDay)
+            .add(1, "day")
+            .toDate();
+          console.log("mostRecentPrev_endOfDay: ", mostRecentPrev_endOfDay);
+        }
+
+        // get the trades of that day
+        const prevDayDeals = await Update.find({
+          series,
+          type: "last_dealt",
+          lastDealtVol: { $gte: 50 },
+          time: {
+            $gte: mostRecentPrev_startOfDay,
+            $lt: mostRecentPrev_endOfDay,
+          },
+        });
+
+        const prevDayTrades = prevDayDeals.length;
+
+        if (trades > 0 && prevDayTrades > 0) {
+          const { vwap, totalVol } = getVWAP(prevDayDeals);
+          const { open, high, low, close } = getOHLC(prevDayDeals);
+          console.log("dayObj.vwap: ", dayObj.vwap);
+          console.log("prev vwap: ", vwap);
+          console.log("dayObj.close: ", dayObj.close);
+          console.log("prev close: ", close);
+          const change = {
+            close: (parseFloat(dayObj.close) - parseFloat(close)).toFixed(4),
+            vwap: (parseFloat(dayObj.vwap) - parseFloat(vwap)).toFixed(4),
+          };
+          console.log("change: ", change);
+          dayObj.change = { ...change };
+        }
+
+        // console.log("dayObj: ", dayObj);
 
         array.push(dayObj);
       }
