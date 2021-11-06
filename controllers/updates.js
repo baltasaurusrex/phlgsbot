@@ -1,7 +1,12 @@
 import Update from "../models/Update.js";
-import { getSeries } from "./isins.js";
+import { getSeries, getAllIsins } from "./isins.js";
 import dayjs from "dayjs";
-import { getBestBidOffer, getVWAP, getOHLC } from "../utils/updates.js";
+import {
+  getBestBidOffer,
+  getVWAP,
+  getOHLC,
+  getPrevDayTrades,
+} from "../utils/updates.js";
 
 export const createPricesUpdate = async (data) => {
   try {
@@ -291,6 +296,7 @@ export const fetchHistoricalPrices = async (series, period) => {
     return err;
   }
 };
+
 // Gets the most recent time and sales of that series for most recent trading day
 export const fetchTimeAndSales = async (series, period) => {
   try {
@@ -308,6 +314,8 @@ export const fetchTimeAndSales = async (series, period) => {
 
     const startOfDay = dayjs(date).startOf("day").toDate();
     const endOfDay = dayjs(date).add(1, "day");
+    console.log("startOfDay: ", startOfDay);
+    console.log("endOfDay: ", endOfDay);
 
     const mongoQuery = {
       series,
@@ -321,25 +329,60 @@ export const fetchTimeAndSales = async (series, period) => {
       return b.time - a.time;
     });
 
+    console.log("array.length: ", array.length);
+
     let summary = {};
 
     summary.trades = array.length;
 
     if (array.length > 0) {
-      summary.vwap = getVWAP(array).vwap;
-      summary.totalVol = getVWAP(array).totalVol;
-      summary.open = getOHLC(array.filter((el) => el.lastDealtVol >= 50)).open;
-      summary.high = getOHLC(array.filter((el) => el.lastDealtVol >= 50)).high;
-      summary.low = getOHLC(array.filter((el) => el.lastDealtVol >= 50)).low;
-      summary.close = getOHLC(
-        array.filter((el) => el.lastDealtVol >= 50)
-      ).close;
+      const goodVolTrades = array.filter((el) => el.lastDealtVol >= 50);
+      const { vwap, totalVol } = getVWAP(goodVolTrades);
+      summary.vwap = vwap;
+      summary.totalVol = totalVol;
+      const { open, high, low, close } = getOHLC(goodVolTrades);
+      summary.open = open;
+      summary.high = high;
+      summary.low = low;
+      summary.close = close;
+    }
+
+    console.log("summary: ", summary);
+
+    const prevDayTrades = await getPrevDayTrades(series, startOfDay);
+
+    console.log("prevDayTrades.length: ", prevDayTrades.length);
+
+    if (summary.trades > 0 && prevDayTrades.length > 0) {
+      const prevDayTrades_goodVol = prevDayTrades.filter(
+        (el) => el.lastDealtVol >= 50
+      );
+      const { vwap, totalVol } = getVWAP(prevDayTrades_goodVol);
+      const { open, high, low, close } = getOHLC(prevDayTrades_goodVol);
+      console.log("summary.vwap: ", summary.vwap);
+      console.log("prev vwap: ", vwap);
+      console.log("summary.close: ", summary.close);
+      console.log("prev close: ", close);
+      const change = {
+        close: (parseFloat(summary.close) - parseFloat(close)).toFixed(4),
+        vwap: (parseFloat(summary.vwap) - parseFloat(vwap)).toFixed(4),
+      };
+      console.log("change: ", change);
+      summary.change = { ...change };
     }
 
     return { array, summary };
   } catch (err) {
     return err;
   }
+};
+
+export const fetchSummary = async (day) => {
+  console.log("in fetchSummary");
+  const isins = await getAllIsins();
+  const series = isins.map((isin) => isin.series);
+  console.log("isins: ", isins);
+  return isins;
 };
 
 export const deleteLastDealts = async (date) => {

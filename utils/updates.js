@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import CustomParseFormat from "dayjs/plugin/customParseFormat.js";
 dayjs.extend(CustomParseFormat);
+import Update from "../models/Update.js";
 
 export const formatPrice = (price) => {
   console.log("price: ", price);
@@ -146,4 +147,44 @@ export const getOHLC = (array) => {
   }
 
   return { open, high, low, close };
+};
+
+export const getPrevDayTrades = async (series, startingDate) => {
+  // find the most recent day
+  console.log("in getPrevDayTrades");
+  const mostRecentPrev = await Update.findOne({
+    series,
+    type: "last_dealt",
+    lastDealtVol: { $gte: 50 },
+    time: {
+      $lt: startingDate,
+    },
+  }).sort({ time: "desc" });
+
+  let startOfDay = null;
+  let endOfDay = null;
+
+  console.log("mostRecentPrev: ", mostRecentPrev);
+
+  if (mostRecentPrev) {
+    startOfDay = dayjs(mostRecentPrev.time).startOf("day").toDate();
+    console.log("startOfDay: ", startOfDay);
+    endOfDay = dayjs(startOfDay).add(1, "day").toDate();
+    console.log("endOfDay: ", endOfDay);
+  } else {
+    return [];
+  }
+
+  // get the trades of that day
+  const prevDayDeals = await Update.find({
+    series,
+    type: "last_dealt",
+    lastDealtVol: { $gte: 50 },
+    time: {
+      $gte: startOfDay,
+      $lt: endOfDay,
+    },
+  });
+
+  return prevDayDeals;
 };

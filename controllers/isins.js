@@ -37,6 +37,17 @@ export const createIsin = async (data) => {
   }
 };
 
+export const getAllIsins = async () => {
+  try {
+    const all = await Isin.find({});
+    let sorted = all.sort((a, b) => a.maturity - b.maturity);
+
+    return all;
+  } catch (err) {
+    return err;
+  }
+};
+
 export const getValidSeries = async () => {
   try {
     const allIsins = await Isin.find({ aliases: { $exists: true } });
