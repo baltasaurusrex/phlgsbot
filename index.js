@@ -60,7 +60,7 @@ import {
 
 // populateIsins();
 // uploadTimeAndSales("11-05-2021").then((res) => console.log(res));
-fetchSummary().then((res) => console.log(res));
+// fetchSummary().then((res) => console.log(res));
 
 export const bot = new Bot({
   authToken: process.env.AUTH_TOKEN,
