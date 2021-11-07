@@ -703,6 +703,8 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
           const dayOfWeek = dayjs(day.date).format("ddd");
           const shortDate = dayjs(day.date).format("MM/DD");
 
+          console.log("day: ", day);
+
           if (day.trades === 0) {
             return `${dayOfWeek}, ${shortDate}: No good trades\n\n`;
           } else {
