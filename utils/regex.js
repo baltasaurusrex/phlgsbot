@@ -22,7 +22,7 @@ export const getFetchHistoricalPricesRegex = (validSeries) =>
   new RegExp(
     `^(${validSeries.join(
       "|"
-    )})(?:\\s+)?(weekly|1 week|2 weeks|monthly|1 month)(?:\\s+)?$`,
+    )})(?:\\s+)?(weekly|1 week|2 weeks|monthly|1 month|last week|last 2 weeks)(?:\\s+)?$`,
     "i"
   );
 

@@ -59,7 +59,7 @@ import {
 } from "./utils/regex.js";
 
 // populateIsins();
-// uploadTimeAndSales("11-05-2021").then((res) => console.log(res));
+// uploadTimeAndSales("11-08-2021").then((res) => console.log(res));
 // fetchSummary().then((res) => console.log(res));
 
 export const bot = new Bot({
@@ -728,10 +728,16 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       };
 
       const renderSummary = (summary) => {
+        let bpsChange = (
+          (parseFloat(summary.close) - parseFloat(summary.open)) *
+          100
+        ).toFixed(2);
+
+        bpsChange = bpsChange > 0 ? "+" + bpsChange : bpsChange;
         const startPd = dayjs(summary.startOfPeriod).format("MM/DD");
         const endPd = dayjs(summary.endOfPeriod).format("MM/DD");
         if (summary.trades > 0) {
-          return `*Summary for ${startPd} - ${endPd}:* \nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close}\nVWAP: ${summary.vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
+          return `*Summary for ${startPd} - ${endPd}:* \nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close} (${bpsChange} bps)\nVWAP: ${summary.vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
         } else {
           return `*Summary for ${startPd} - ${endPd}*:\nTrades: ${summary.trades}`;
         }

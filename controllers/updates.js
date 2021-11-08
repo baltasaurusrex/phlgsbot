@@ -146,7 +146,17 @@ export const fetchHistoricalPrices = async (series, period) => {
     const allTrades = [];
     let summary = {};
 
-    const startOfToday = dayjs().startOf("day").toDate();
+    let startOfToday = null;
+
+    if (period === "last week" || period === "last 2 weeks") {
+      let sunday = dayjs().day(0).startOf("day");
+      console.log("sunday: ", sunday);
+      startOfToday = sunday.subtract(2, "days").toDate();
+    } else {
+      startOfToday = dayjs().startOf("day").toDate();
+    }
+
+    console.log("startOfToday: ", startOfToday);
 
     let daysLimit = null;
 
@@ -156,12 +166,19 @@ export const fetchHistoricalPrices = async (series, period) => {
       daysLimit = 14;
     } else if (["1 month", "monthly"].includes(period)) {
       daysLimit = 30;
+    } else if (period === "last week") {
+      daysLimit = 4;
+    } else if (period === "last 2 weeks") {
+      daysLimit = 4 + 7;
     }
 
-    const endOfPeriod = dayjs().startOf("day").toDate();
+    const endOfPeriod = dayjs(startOfToday).startOf("day").toDate();
     const startOfPeriod = dayjs(endOfPeriod)
       .subtract(daysLimit, "days")
       .toDate();
+
+    console.log("endOfPeriod: ", endOfPeriod);
+    console.log("startOfPeriod: ", startOfPeriod);
 
     // create first run of dayObj's (OHLC, vwap, totalVol, trades)
     for (let daysAgo = 0; daysAgo <= daysLimit; daysAgo++) {
