@@ -114,11 +114,11 @@ bot.onUnsubscribe((userId) => {
 
 // for any messages from the user
 bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
-  console.log("message: ", message);
+  // console.log("message: ", message);
   const { text } = message;
   console.log("text: ", text);
 
-  console.log("response: ", response);
+  // console.log("response: ", response);
   const { userProfile } = response;
   console.log("userProfile: ", userProfile);
 
@@ -160,8 +160,13 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       ]);
       // if the user is registered, show them help spiel
     } else {
+      const intro = new Message.Text(
+        `Hi, ${userProfile.name}! Looks like you're a${
+          user.role === "admin" ? "n" : ""
+        } ${user.role}. Here's what you can do: `
+      );
       if (user.role === "dealer") {
-        bot.sendMessage(userProfile, dealerSpiel);
+        bot.sendMessage(userProfile, [intro, ...dealerSpiel]);
       }
 
       if (user.role === "broker") {
@@ -169,7 +174,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       }
 
       if (user.role === "admin") {
-        bot.sendMessage(userProfile, adminSpiel);
+        bot.sendMessage(userProfile, [intro, ...adminSpiel]);
       }
     }
     return;

@@ -1,11 +1,34 @@
 import pkg from "viber-bot";
 const { Message } = pkg;
 
+const instructions = {
+  fetchPriceInfo: `To *fetch price updates* on a specific ISIN, please type it's series
+  
+E.g. '577'
+  
+You may also type multiple series with one query
+  
+E.g. '577 1061 765'`,
+
+  timeAndSales: `For *time and sales* data, please type '{series} time and sales MM/DD'
+  
+Note: If MM/DD is not specified, the date is assumed to be the current date`,
+
+  historicalPrices: `For *historical prices*, please type "{series} {period}"
+  
+with the choices for *period* being:
+  - 'weekly' (past 7 trading days)
+  - '2 weeks' (past 14 trading days)
+  - 'last week' (past 7 trading days from last Fri)
+  - 'last 2 weeks' (past 14 trading days from last Fri)
+  
+Note: If MM/DD is not specified, the date is assumed to be the current date`,
+};
+
 export const dealerSpiel = [
-  new Message.Text(`For updates on a specific ISIN, please type it's series`),
-  new Message.Text(`E.g. 577`),
-  new Message.Text(`You may also type multiple series with one query`),
-  new Message.Text(`E.g. 577 1061 765`),
+  new Message.Text(instructions.fetchPriceInfo),
+  new Message.Text(instructions.timeAndSales),
+  new Message.Text(instructions.historicalPrices),
 ];
 
 export const brokerSpiel = [
@@ -29,14 +52,9 @@ export const adminSpiel = [
     `Since you're an *admin*, you can perform both dealer (reading pricing data) and broker functions (create pricing data)`
   ),
   new Message.Text(`*===DEALER FUNCTIONS===*`),
-  new Message.Text(
-    `To *fetch price updates* on a specific ISIN, please type it's series \n\nE.g. 577`
-  ),
-
-  new Message.Text(
-    `You may also type *multiple* series with one query \n\nE.g. 577 1061 765`
-  ),
-
+  new Message.Text(instructions.fetchPriceInfo),
+  new Message.Text(instructions.timeAndSales),
+  new Message.Text(instructions.historicalPrices),
   new Message.Text(`*===BROKER FUNCTIONS===*`),
   new Message.Text(
     `To *input a price update* on a specific ISIN, please type it's series, followed by it's bid, offer, bid vol (optional), offer vol (optional), and broker \n\nE.g. 577 2900 2750 100 100 p`
