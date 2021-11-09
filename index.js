@@ -59,8 +59,8 @@ import {
 } from "./utils/regex.js";
 
 // populateIsins();
-// uploadTimeAndSales("11-08-2021").then((res) => console.log(res));
-// fetchSummary().then((res) => console.log(res));
+// uploadTimeAndSales("11-09-2021").then((res) => console.log(res));
+// fetchSummary("11/05").then((res) => console.log(res));
 
 export const bot = new Bot({
   authToken: process.env.AUTH_TOKEN,
@@ -790,7 +790,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const shortDate = dayjs(day).format("MM/DD");
 
       const renderSummary = (summary) => {
-        if (summary.trades > 0) {
+        if (summary.trades > 0 && summary.change) {
           let change = {
             close: parseFloat(summary.change.close) * 100,
             vwap: parseFloat(summary.change.vwap) * 100,
@@ -806,6 +806,9 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
               : change.vwap.toFixed(2);
 
           return `\n\nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close} (${change.close} bps)\nVWAP: ${summary.vwap} (${change.vwap} bps)\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
+        } else if (summary.trades > 0) {
+          //if there are trades but there were no good deals
+          return `\n\nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close}\nVWAP: ${summary.vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
         } else {
           return ``;
         }
@@ -942,9 +945,6 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
   // Dealer functions
   if (user.role === "dealer") {
-    const fetchPriceInfoRegex = getFetchPriceInfoRegex(validSeries);
-    console.log("fetchPriceInfoRegex: ", fetchPriceInfoRegex);
-
     // Fetch price info
     if (fetchPriceInfoRegex.test(text)) {
       console.log("regex triggered: fetchPriceInfoRegex");
@@ -1155,24 +1155,50 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const period = periodInput.toLowerCase();
       const { array, summary } = await fetchHistoricalPrices(series, period);
 
+      bot.sendMessage(userProfile, [
+        new Message.Text(`Fetching historical price data for ${series}...`),
+      ]);
+
       const renderData = (days) => {
-        return days.map((day, index, array) => {
+        return days.map((day) => {
           const dayOfWeek = dayjs(day.date).format("ddd");
           const shortDate = dayjs(day.date).format("MM/DD");
+
+          console.log("day: ", day);
 
           if (day.trades === 0) {
             return `${dayOfWeek}, ${shortDate}: No good trades\n\n`;
           } else {
-            return `${dayOfWeek}, ${shortDate}:\nOpen: ${day.open}\nHigh: ${day.high}\nLow: ${day.low}\nClose: ${day.close}\nVWAP: ${day.vwap}\nTotal vol: ${day.totalVol} Mn\nTrades: ${day.trades}\n\n`;
+            let change = {
+              close: parseFloat(day.change.close) * 100,
+              vwap: parseFloat(day.change.vwap) * 100,
+            };
+
+            change.close =
+              change.close > 0
+                ? "+" + change.close.toFixed(2)
+                : change.close.toFixed(2);
+            change.vwap =
+              change.vwap > 0
+                ? "+" + change.vwap.toFixed(2)
+                : change.vwap.toFixed(2);
+
+            return `${dayOfWeek}, ${shortDate}:\nOpen: ${day.open}\nHigh: ${day.high}\nLow: ${day.low}\nClose: ${day.close} (${change.close} bps)\nVWAP: ${day.vwap} (${change.vwap} bps)\nTotal vol: ${day.totalVol} Mn\nTrades: ${day.trades}\n\n`;
           }
         });
       };
 
       const renderSummary = (summary) => {
+        let bpsChange = (
+          (parseFloat(summary.close) - parseFloat(summary.open)) *
+          100
+        ).toFixed(2);
+
+        bpsChange = bpsChange > 0 ? "+" + bpsChange : bpsChange;
         const startPd = dayjs(summary.startOfPeriod).format("MM/DD");
         const endPd = dayjs(summary.endOfPeriod).format("MM/DD");
         if (summary.trades > 0) {
-          return `*Summary for ${startPd} - ${endPd}:* \nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close}\nVWAP: ${summary.vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
+          return `*Summary for ${startPd} - ${endPd}:* \nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close} (${bpsChange} bps)\nVWAP: ${summary.vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
         } else {
           return `*Summary for ${startPd} - ${endPd}*:\nTrades: ${summary.trades}`;
         }
@@ -1225,7 +1251,24 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const shortDate = dayjs(day).format("MM/DD");
 
       const renderSummary = (summary) => {
-        if (summary.trades > 0) {
+        if (summary.trades > 0 && summary.change) {
+          let change = {
+            close: parseFloat(summary.change.close) * 100,
+            vwap: parseFloat(summary.change.vwap) * 100,
+          };
+
+          change.close =
+            change.close > 0
+              ? "+" + change.close.toFixed(2)
+              : change.close.toFixed(2);
+          change.vwap =
+            change.vwap > 0
+              ? "+" + change.vwap.toFixed(2)
+              : change.vwap.toFixed(2);
+
+          return `\n\nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close} (${change.close} bps)\nVWAP: ${summary.vwap} (${change.vwap} bps)\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
+        } else if (summary.trades > 0) {
+          //if there are trades but there were no good deals
           return `\n\nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close}\nVWAP: ${summary.vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
         } else {
           return ``;

@@ -311,6 +311,7 @@ export const fetchHistoricalPrices = async (series, period) => {
 };
 
 // Gets the most recent time and sales of that series for most recent trading day
+// for period, accepts: MM/DD or
 export const fetchTimeAndSales = async (series, period) => {
   try {
     console.log("in fetchTimeAndSales: ");
@@ -348,11 +349,11 @@ export const fetchTimeAndSales = async (series, period) => {
 
     summary.trades = array.length;
 
-    if (array.length > 0) {
-      const goodVolTrades = array.filter((el) => el.lastDealtVol >= 50);
-      const { vwap, totalVol } = getVWAP(goodVolTrades);
-      summary.vwap = vwap;
-      summary.totalVol = totalVol;
+    const goodVolTrades = array.filter((el) => el.lastDealtVol >= 50);
+    console.log("goodVolTrades.length: ", goodVolTrades.length);
+    if (summary.trades > 0) {
+      summary.vwap = getVWAP(goodVolTrades)?.vwap;
+      summary.totalVol = getVWAP(array)?.totalVol;
       const { open, high, low, close } = getOHLC(goodVolTrades);
       summary.open = open;
       summary.high = high;
@@ -360,13 +361,11 @@ export const fetchTimeAndSales = async (series, period) => {
       summary.close = close;
     }
 
-    console.log("summary: ", summary);
-
     const prevDayTrades = await getPrevDayTrades(series, startOfDay);
 
     console.log("prevDayTrades.length: ", prevDayTrades.length);
 
-    if (summary.trades > 0 && prevDayTrades.length > 0) {
+    if (goodVolTrades.length > 0 && prevDayTrades.length > 0) {
       const prevDayTrades_goodVol = prevDayTrades.filter(
         (el) => el.lastDealtVol >= 50
       );
@@ -384,18 +383,28 @@ export const fetchTimeAndSales = async (series, period) => {
       summary.change = { ...change };
     }
 
+    console.log("summary: ", summary);
+
     return { array, summary };
   } catch (err) {
     return err;
   }
 };
 
-export const fetchSummary = async (day) => {
+export const fetchSummary = async (period) => {
   console.log("in fetchSummary");
   const isins = await getAllIsins();
-  const series = isins.map((isin) => isin.series);
-  console.log("isins: ", isins);
-  return isins;
+  const series_array = isins.map((isin) => isin.series);
+  const summaries = await Promise.all(
+    series_array.map(async (series) => {
+      const { summary } = await fetchTimeAndSales(series, period);
+      return {
+        series,
+        summary,
+      };
+    })
+  );
+  return summaries;
 };
 
 export const deleteLastDealts = async (date) => {
