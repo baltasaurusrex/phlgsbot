@@ -60,7 +60,7 @@ import {
 
 // populateIsins();
 // uploadTimeAndSales("11-08-2021").then((res) => console.log(res));
-// fetchSummary().then((res) => console.log(res));
+fetchSummary("11/05").then((res) => console.log(res));
 
 export const bot = new Bot({
   authToken: process.env.AUTH_TOKEN,
@@ -790,7 +790,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const shortDate = dayjs(day).format("MM/DD");
 
       const renderSummary = (summary) => {
-        if (summary.trades > 0) {
+        if (summary.trades > 0 && summary.change) {
           let change = {
             close: parseFloat(summary.change.close) * 100,
             vwap: parseFloat(summary.change.vwap) * 100,
@@ -806,6 +806,9 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
               : change.vwap.toFixed(2);
 
           return `\n\nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close} (${change.close} bps)\nVWAP: ${summary.vwap} (${change.vwap} bps)\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
+        } else if (summary.trades > 0) {
+          //if there are trades but there were no good deals
+          return `\n\nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close}\nVWAP: ${summary.vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
         } else {
           return ``;
         }

@@ -104,19 +104,20 @@ export const getVWAP = (array) => {
   let num = 0;
   let den = 0;
 
-  if (array.length === 0) return null;
+  let vwap = "no good vol";
+  let totalVol = null;
+
+  if (array.length === 0) return { vwap, totalVol };
 
   array.forEach((deal) => {
     num += deal.lastDealt * deal.lastDealtVol;
     den += deal.lastDealtVol;
   });
 
-  const returnObj = {
-    vwap: (num / den).toFixed(3),
-    totalVol: den.toFixed(2),
-  };
+  vwap = (num / den).toFixed(3);
+  totalVol = den.toFixed(2);
 
-  return returnObj;
+  return { vwap, totalVol };
 };
 
 export const getOHLC = (array) => {
