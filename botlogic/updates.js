@@ -1,4 +1,15 @@
 import { bot } from "../index.js";
+import pkg from "viber-bot";
+const { Bot, Events, Message } = pkg;
+
+import dayjs from "dayjs";
+import CustomParseFormat from "dayjs/plugin/customParseFormat.js";
+dayjs.extend(CustomParseFormat);
+import RelativeTime from "dayjs/plugin/relativeTime.js";
+dayjs.extend(RelativeTime);
+
+import dotenv from "dotenv";
+dotenv.config();
 
 import {
   createPricesUpdate,
@@ -78,4 +89,6 @@ export const fetchSummariesLogic = async (userProfile, match) => {
   bot.sendMessage(userProfile, [
     new Message.Text(`${renderSummaries(summaries)}`),
   ]);
+
+  return;
 };
