@@ -11,6 +11,13 @@ dayjs.extend(RelativeTime);
 const { Bot, Events, Message } = pkg;
 dotenv.config();
 
+export const bot = new Bot({
+  authToken: process.env.AUTH_TOKEN,
+  name: "PHL GS Bot",
+  avatar:
+    "https://www.pexels.com/photo/turned-on-monitor-displaying-frequency-graph-241544/", // It is recommended to be 720x720, and no more than 100kb.
+});
+
 import { createUser, findUser } from "./controllers/users.js";
 import {
   createPricesUpdate,
@@ -21,6 +28,7 @@ import {
   deleteLastDealts,
   fetchSummary,
 } from "./controllers/updates.js";
+import { fetchSummariesLogic } from "./botlogic/updates.js";
 import {
   createOrder,
   fetchOrders,
@@ -56,18 +64,15 @@ import {
   getPendingDealtOrderRegex,
   getFetchHistoricalPricesRegex,
   getFetchTimeAndSalesRegex,
+  getFetchSummariesRegex,
 } from "./utils/regex.js";
 
 // populateIsins();
-// uploadTimeAndSales("11-09-2021").then((res) => console.log(res));
-// fetchSummary("11/05").then((res) => console.log(res));
-
-export const bot = new Bot({
-  authToken: process.env.AUTH_TOKEN,
-  name: "PHL GS Bot",
-  avatar:
-    "https://www.pexels.com/photo/turned-on-monitor-displaying-frequency-graph-241544/", // It is recommended to be 720x720, and no more than 100kb.
-});
+// uploadTimeAndSales("11-10-2021").then((res) => console.log(res));
+// fetchSummary("last week").then((res) => {
+//   const { summaries } = res;
+//   console.log(summaries);
+// });
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)
@@ -114,25 +119,17 @@ bot.onUnsubscribe((userId) => {
 
 // for any messages from the user
 bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
-  // console.log("message: ", message);
+  const { userProfile } = response;
+  const user = await findUser(userProfile.id);
+  console.log("user: ", user);
   const { text } = message;
   console.log("text: ", text);
 
-  // console.log("response: ", response);
-  const { userProfile } = response;
-  console.log("userProfile: ", userProfile);
-
-  const user = await findUser(userProfile.id);
-  console.log("user: ", user);
-
   const validSeries = await getValidSeries();
-  console.log("validSeries: ", validSeries);
 
   const validNicknames = await getValidNicknames();
-  console.log("validNicknames: ", validNicknames);
 
   const validDesks = await getValidDesks();
-  console.log("validDesks: ", validDesks);
 
   // Check if there are PendingQueries tied to that user
   // While there are PendingQueries, those queries have to be answered before normal functions can be carried out
@@ -312,6 +309,10 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
   const fetchHistoricalPricesRegex = getFetchHistoricalPricesRegex(validSeries);
 
+  const fetchTimeAndSalesRegex = getFetchTimeAndSalesRegex(validSeries);
+
+  const fetchSummariesRegex = getFetchSummariesRegex();
+
   const createOrderRegex = getCreateOrderRegex(validSeries, validNicknames);
 
   const showOrdersRegex = getShowOrdersRegex(
@@ -325,8 +326,6 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
     validDesks,
     validNicknames
   );
-
-  const fetchTimeAndSalesRegex = getFetchTimeAndSalesRegex(validSeries);
 
   // Admin functions
   if (user.role === "admin") {
@@ -825,6 +824,78 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
             array
           )}${renderSummary(summary)}`
         ),
+      ]);
+
+      return;
+    }
+
+    // Fetching summaries
+    if (fetchSummariesRegex.test(text)) {
+      console.log(`regex triggered: fetchSummariesRegex.test(text)`);
+      const match = text.match(fetchSummariesRegex);
+      console.log("match: ", match);
+      const [full, period] = match;
+
+      const { summaries } = await fetchSummary(period);
+      console.log("summaries: ", summaries);
+
+      const renderSummary = (summaryInput) => {
+        const { series, summary } = summaryInput;
+
+        let priceDataString = null;
+
+        if (summary.trades > 0) {
+          let change =
+            parseFloat(summary.close) * 100 - parseFloat(summary.open) * 100;
+
+          if (Number.isNaN(change)) {
+            change = ``;
+          } else {
+            change = `(${
+              change > 0 ? "+" + change.toFixed(2) : change.toFixed(2)
+            } bps)`;
+          }
+
+          priceDataString = `Open: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close} ${change}\nVWAP: ${summary.vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
+        } else {
+          priceDataString = `No good vol trades`;
+        }
+
+        return `\n\n${series}:\n${priceDataString}`;
+      };
+
+      const renderSummaries = (summaries) => {
+        let periodIntro = null;
+
+        if (
+          ["weekly", "1 week", "2 weeks", "last week", "last 2 weeks"].includes(
+            period
+          )
+        ) {
+          const { startOfPeriod, endOfPeriod } = summaries[0].summary;
+          const startPd = dayjs(startOfPeriod).format("MM/DD");
+          const endPd = dayjs(endOfPeriod).format("MM/DD");
+
+          periodIntro = `Summary for ${startPd} - ${endPd}: `;
+        } else {
+          let day = null;
+          if (period) {
+            day = dayjs(period, "MM/DD").toDate();
+          } else {
+            day = dayjs().toDate();
+          }
+          const dayOfWeek = dayjs(day).format("ddd");
+          const shortDate = dayjs(day).format("MM/DD");
+
+          periodIntro = `Summary for ${dayOfWeek}, ${shortDate}: `;
+        }
+        return `${periodIntro}${summaries
+          .map((summary) => renderSummary(summary))
+          .join("")}`;
+      };
+
+      bot.sendMessage(userProfile, [
+        new Message.Text(`${renderSummaries(summaries)}`),
       ]);
 
       return;
