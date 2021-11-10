@@ -13,6 +13,6 @@ export const createUser = async (userDetails, role) => {
 
 export const findUser = async (viberId) => {
   const user = await User.findOne({ viberId }).exec();
-  console.log("foundUser: ", user);
+
   return user;
 };

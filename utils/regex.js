@@ -22,7 +22,7 @@ export const getFetchHistoricalPricesRegex = (validSeries) =>
   new RegExp(
     `^(${validSeries.join(
       "|"
-    )})(?:\\s+)?(weekly|1 week|2 weeks|monthly|1 month|last week|last 2 weeks)(?:\\s+)?$`,
+    )})(?:\\s+)?(weekly|1 week|2 weeks|1 month|last week|last 2 weeks)(?:\\s+)?$`,
     "i"
   );
 
@@ -31,6 +31,12 @@ export const getFetchTimeAndSalesRegex = (validSeries) =>
     `^(${validSeries.join(
       "|"
     )})(?:\\s+)?(?:time and sales)(?:\\s+)?(\\d\\d\\/\\d\\d)?(?:\\s+)?$`,
+    "i"
+  );
+
+export const getFetchSummariesRegex = () =>
+  new RegExp(
+    `^(?:summary)(?:\\s+)?(\\d\\d\\/\\d\\d|weekly|1 week|2 weeks|last week|last 2 weeks)?(?:\\s+)?$`,
     "i"
   );
 

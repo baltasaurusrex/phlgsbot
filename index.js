@@ -1,15 +1,24 @@
 import express from "express";
 import mongoose from "mongoose";
-import dotenv from "dotenv";
 import ngrok from "./utils/getPublicUrl.js";
 import pkg from "viber-bot";
+const { Bot, Events, Message } = pkg;
+
 import dayjs from "dayjs";
 import CustomParseFormat from "dayjs/plugin/customParseFormat.js";
 dayjs.extend(CustomParseFormat);
 import RelativeTime from "dayjs/plugin/relativeTime.js";
 dayjs.extend(RelativeTime);
-const { Bot, Events, Message } = pkg;
+
+import dotenv from "dotenv";
 dotenv.config();
+
+export const bot = new Bot({
+  authToken: process.env.AUTH_TOKEN,
+  name: "PHL GS Bot",
+  avatar:
+    "https://www.pexels.com/photo/turned-on-monitor-displaying-frequency-graph-241544/", // It is recommended to be 720x720, and no more than 100kb.
+});
 
 import { createUser, findUser } from "./controllers/users.js";
 import {
@@ -21,6 +30,7 @@ import {
   deleteLastDealts,
   fetchSummary,
 } from "./controllers/updates.js";
+import { fetchSummariesLogic } from "./botlogic/updates.js";
 import {
   createOrder,
   fetchOrders,
@@ -56,18 +66,15 @@ import {
   getPendingDealtOrderRegex,
   getFetchHistoricalPricesRegex,
   getFetchTimeAndSalesRegex,
+  getFetchSummariesRegex,
 } from "./utils/regex.js";
 
 // populateIsins();
-// uploadTimeAndSales("11-09-2021").then((res) => console.log(res));
-// fetchSummary("11/05").then((res) => console.log(res));
-
-export const bot = new Bot({
-  authToken: process.env.AUTH_TOKEN,
-  name: "PHL GS Bot",
-  avatar:
-    "https://www.pexels.com/photo/turned-on-monitor-displaying-frequency-graph-241544/", // It is recommended to be 720x720, and no more than 100kb.
-});
+// uploadTimeAndSales("11-10-2021").then((res) => console.log(res));
+// fetchSummary("last week").then((res) => {
+//   const { summaries } = res;
+//   console.log(summaries);
+// });
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)
@@ -114,25 +121,17 @@ bot.onUnsubscribe((userId) => {
 
 // for any messages from the user
 bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
-  // console.log("message: ", message);
+  const { userProfile } = response;
+  const user = await findUser(userProfile.id);
+  console.log("user: ", user);
   const { text } = message;
   console.log("text: ", text);
 
-  // console.log("response: ", response);
-  const { userProfile } = response;
-  console.log("userProfile: ", userProfile);
-
-  const user = await findUser(userProfile.id);
-  console.log("user: ", user);
-
   const validSeries = await getValidSeries();
-  console.log("validSeries: ", validSeries);
 
   const validNicknames = await getValidNicknames();
-  console.log("validNicknames: ", validNicknames);
 
   const validDesks = await getValidDesks();
-  console.log("validDesks: ", validDesks);
 
   // Check if there are PendingQueries tied to that user
   // While there are PendingQueries, those queries have to be answered before normal functions can be carried out
@@ -312,6 +311,10 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
   const fetchHistoricalPricesRegex = getFetchHistoricalPricesRegex(validSeries);
 
+  const fetchTimeAndSalesRegex = getFetchTimeAndSalesRegex(validSeries);
+
+  const fetchSummariesRegex = getFetchSummariesRegex();
+
   const createOrderRegex = getCreateOrderRegex(validSeries, validNicknames);
 
   const showOrdersRegex = getShowOrdersRegex(
@@ -325,8 +328,6 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
     validDesks,
     validNicknames
   );
-
-  const fetchTimeAndSalesRegex = getFetchTimeAndSalesRegex(validSeries);
 
   // Admin functions
   if (user.role === "admin") {
@@ -830,6 +831,17 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       return;
     }
 
+    // Fetching summaries
+    if (fetchSummariesRegex.test(text)) {
+      console.log(`regex triggered: fetchSummariesRegex.test(text)`);
+      const match = text.match(fetchSummariesRegex);
+      console.log("match: ", match);
+
+      await fetchSummariesLogic(userProfile, match);
+
+      return;
+    }
+
     // Creating orders
     if (createOrderRegex.test(text)) {
       console.log("regex triggered: createOrderRegex");
@@ -1287,6 +1299,17 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
           )}${renderSummary(summary)}`
         ),
       ]);
+
+      return;
+    }
+
+    // Fetching summaries
+    if (fetchSummariesRegex.test(text)) {
+      console.log(`regex triggered: fetchSummariesRegex.test(text)`);
+      const match = text.match(fetchSummariesRegex);
+      console.log("match: ", match);
+
+      await fetchSummariesLogic(userProfile, match);
 
       return;
     }

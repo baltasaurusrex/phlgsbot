@@ -1,6 +1,8 @@
 import Update from "../models/Update.js";
 import { getSeries, getAllIsins } from "./isins.js";
 import dayjs from "dayjs";
+import CustomParseFormat from "dayjs/plugin/customParseFormat.js";
+dayjs.extend(CustomParseFormat);
 import {
   getBestBidOffer,
   getVWAP,
@@ -305,6 +307,20 @@ export const fetchHistoricalPrices = async (series, period) => {
 
     return { array: arrayWithChange, summary };
     // return a sorted array of objects {date, daym OHLC, vwap, totalVol, trades, change} representing each day + the summary for that period
+    // SAMPLE RETURN OBJECT (SUMMARY)
+    // {
+    //   summary: {
+    //     trades: 57,
+    //     endOfPeriod: 2021-11-04T16:00:00.000Z,
+    //     startOfPeriod: 2021-10-31T16:00:00.000Z,
+    //     vwap: '4.899',
+    //     totalVol: '6788.42',
+    //     open: '4.632',
+    //     high: '4.950',
+    //     low: '4.632',
+    //     close: '4.900'
+    //   }
+    // }
   } catch (err) {
     return err;
   }
@@ -386,6 +402,21 @@ export const fetchTimeAndSales = async (series, period) => {
     console.log("summary: ", summary);
 
     return { array, summary };
+
+    // sample return object (summary)
+    // {
+    //   series: '1066',
+    //   summary: {
+    //     trades: 20,
+    //     vwap: '5.174',
+    //     totalVol: '1098.00',
+    //     open: '5.150',
+    //     high: '5.200',
+    //     low: '5.140',
+    //     close: '5.200',
+    //     change: [Object]
+    //   }
+    // }
   } catch (err) {
     return err;
   }
@@ -395,16 +426,35 @@ export const fetchSummary = async (period) => {
   console.log("in fetchSummary");
   const isins = await getAllIsins();
   const series_array = isins.map((isin) => isin.series);
-  const summaries = await Promise.all(
-    series_array.map(async (series) => {
-      const { summary } = await fetchTimeAndSales(series, period);
-      return {
-        series,
-        summary,
-      };
-    })
-  );
-  return summaries;
+  let summaries = [];
+
+  if (
+    ["weekly", "1 week", "2 weeks", "last week", "last 2 weeks"].includes(
+      period
+    )
+  ) {
+    summaries = await Promise.all(
+      series_array.map(async (series) => {
+        const { summary } = await fetchHistoricalPrices(series, period);
+        return {
+          series,
+          summary,
+        };
+      })
+    );
+  } else {
+    // else if blank or has a date, use fetchTimeAndSales (1 period only)
+    summaries = await Promise.all(
+      series_array.map(async (series) => {
+        const { summary } = await fetchTimeAndSales(series, period);
+        return {
+          series,
+          summary,
+        };
+      })
+    );
+  }
+  return { period, summaries };
 };
 
 export const deleteLastDealts = async (date) => {
