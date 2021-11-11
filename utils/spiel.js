@@ -23,12 +23,24 @@ with the choices for *period* being:
   - 'last 2 weeks' (past 14 trading days from last Fri)
   
 Note: If MM/DD is not specified, the date is assumed to be the current date`,
+
+  fetchSummary: `To fetch a *summary* of a particular period, please type "summary {period}"
+  
+with the choices for *period* being:
+  - MM/DD for a specific day (i.e. 11/09 for Nov 09)
+  - 'weekly' (past 7 trading days)
+  - '2 weeks' (past 14 trading days)
+  - 'last week' (past 7 trading days from last Fri)
+  - 'last 2 weeks' (past 14 trading days from last Fri)
+  
+Note: If MM/DD is not specified, the date is assumed to be the current date`,
 };
 
 export const dealerSpiel = [
   new Message.Text(instructions.fetchPriceInfo),
   new Message.Text(instructions.timeAndSales),
   new Message.Text(instructions.historicalPrices),
+  new Message.Text(instructions.fetchSummary),
 ];
 
 export const brokerSpiel = [
@@ -55,6 +67,7 @@ export const adminSpiel = [
   new Message.Text(instructions.fetchPriceInfo),
   new Message.Text(instructions.timeAndSales),
   new Message.Text(instructions.historicalPrices),
+  new Message.Text(instructions.fetchSummary),
   new Message.Text(`*===BROKER FUNCTIONS===*`),
   new Message.Text(
     `To *input a price update* on a specific ISIN, please type it's series, followed by it's bid, offer, bid vol (optional), offer vol (optional), and broker \n\nE.g. 577 2900 2750 100 100 p`
