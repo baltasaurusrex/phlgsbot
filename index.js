@@ -79,10 +79,6 @@ import { updateAdmins } from "./botlogic/broadcast.js";
 
 // populateIsins();
 // uploadTimeAndSales("11-11-2021").then((res) => console.log(res));
-// fetchSummary("last week").then((res) => {
-//   const { summaries } = res;
-//   console.log(summaries);
-// });
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)
@@ -129,10 +125,17 @@ bot.onUnsubscribe((userId) => {
 // for any messages from the user
 bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
   const { userProfile } = response;
+  console.log("userProfile: ", userProfile);
   const user = await findUser(userProfile.id);
   console.log("user: ", user);
   const { text } = message;
   console.log("text: ", text);
+
+  if (user) {
+    updateAdmins(`${user.name} sent a message:\n\n${text}`);
+  } else {
+    updateAdmins(`${userProfile} sent a message:\n\n${text}`);
+  }
 
   const validSeries = await getValidSeries();
 
@@ -338,8 +341,6 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
   // Admin functions
   if (user.role === "admin") {
-    await updateAdmins(`${user.name} sent a message:\n\n${text}`);
-
     // Create bid offer update
     if (pricesUpdateRegex.test(text)) {
       console.log(`regex triggered: pricesUpdateRegex.test(text)`);
@@ -529,8 +530,6 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
   // Dealer functions
   if (user.role === "dealer") {
     // Fetch price info
-
-    await updateAdmins(`${user.name} sent a message:\n\n${text}`);
 
     if (fetchPriceInfoRegex.test(text)) {
       console.log("regex triggered: fetchPriceInfoRegex");

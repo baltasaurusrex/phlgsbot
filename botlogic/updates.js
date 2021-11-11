@@ -515,7 +515,7 @@ export const fetchSummariesLogic = async (userProfile, match) => {
 
       priceDataString = `Open: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close} ${change}\nVWAP: ${summary.vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
     } else {
-      priceDataString = `No good vol trades`;
+      priceDataString = `No trades`;
     }
 
     return `\n\n${series}:\n${priceDataString}`;
