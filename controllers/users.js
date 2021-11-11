@@ -16,3 +16,13 @@ export const findUser = async (viberId) => {
 
   return user;
 };
+
+export const fetchAdmins = async () => {
+  try {
+    console.log("in fetchAdmins controller");
+    const admins = await User.find({ role: "admin" });
+    return admins;
+  } catch (err) {
+    return err;
+  }
+};

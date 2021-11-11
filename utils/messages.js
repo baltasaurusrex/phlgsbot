@@ -9,6 +9,9 @@ const API = axios.create({
 
 export const broadcastMessage = async (receiverViberIdList, text) => {
   try {
+    console.log("in broadcastMessage");
+    console.log("receiverViberIdList: ", receiverViberIdList);
+    console.log("text: ", text);
     const data = await API.post(`/broadcast_message`, {
       broadcast_list: [...receiverViberIdList],
       type: "text",

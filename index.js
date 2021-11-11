@@ -75,6 +75,7 @@ import {
   getFetchTimeAndSalesRegex,
   getFetchSummariesRegex,
 } from "./utils/regex.js";
+import { updateAdmins } from "./botlogic/broadcast.js";
 
 // populateIsins();
 // uploadTimeAndSales("11-11-2021").then((res) => console.log(res));
@@ -337,6 +338,8 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
   // Admin functions
   if (user.role === "admin") {
+    await updateAdmins(`${user.name} sent a message:\n\n${text}`);
+
     // Create bid offer update
     if (pricesUpdateRegex.test(text)) {
       console.log(`regex triggered: pricesUpdateRegex.test(text)`);
@@ -526,6 +529,9 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
   // Dealer functions
   if (user.role === "dealer") {
     // Fetch price info
+
+    await updateAdmins(`${user.name} sent a message:\n\n${text}`);
+
     if (fetchPriceInfoRegex.test(text)) {
       console.log("regex triggered: fetchPriceInfoRegex");
       // if it matches this format, get the list of series' requested by splitting the original string by spaces
