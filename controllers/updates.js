@@ -11,11 +11,11 @@ import {
 } from "../utils/updates.js";
 
 export const createPricesUpdate = async (data) => {
+  console.log("in createPricesUpdate controller");
   try {
     const { series, user, bid, bid_vol, offer, offer_vol, broker } = data;
 
-    console.log("user: ", user);
-
+    const existingUpdate = await Update.findOne({});
     const newUpdate = new Update({
       series,
       type: "bid_offer",
