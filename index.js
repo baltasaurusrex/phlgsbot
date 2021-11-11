@@ -104,7 +104,7 @@ bot.onConversationStarted(
       console.log("user: ", user);
 
       let intro = [
-        new Message.Text(`Hi, ${userProfile.name}! How may I help you today?`),
+        new Message.Text(`Hi, ${user.name}! How may I help you today?`),
         new Message.Text(`Please type "help" for available commands`),
       ];
 
@@ -164,13 +164,13 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       // if the user isn't registered, ask them to register
       bot.sendMessage(userProfile, [
         new Message.Text(
-          `Hi, ${userProfile.name}! Nice to meet you. It seems you aren't registered. Are you a dealer, or a broker?`
+          `Hi, ${user.name}! Nice to meet you. It seems you aren't registered. Are you a dealer, or a broker?`
         ),
       ]);
       // if the user is registered, show them help spiel
     } else {
       const intro = new Message.Text(
-        `Hi, ${userProfile.name}! Looks like you're a${
+        `Hi, ${user.name}! Looks like you're a${
           user.role === "admin" ? "n" : ""
         } ${user.role}. Here's what you can do: `
       );
