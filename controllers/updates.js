@@ -16,15 +16,18 @@ export const createPricesUpdate = async (data) => {
     const startOfToday = dayjs().startOf("day").toDate();
 
     let existingUpdate = await Update.findOne({
+      type: "bid_offer",
       series: data.series,
-      series: data.broker,
+      broker: data.broker,
       time: { $gte: startOfToday },
     });
+
     console.log("existingUpdate: ", existingUpdate);
 
     let savedUpdate = null;
     if (existingUpdate) {
       existingUpdate = Object.assign(existingUpdate, data);
+      console.log("existingUpdate after Object.assign: ", existingUpdate);
       savedUpdate = await existingUpdate.save();
     } else {
       const { series, user, bid, bid_vol, offer, offer_vol, broker } = data;

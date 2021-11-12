@@ -350,7 +350,20 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       console.log(`regex triggered: pricesUpdateRegex.test(text)`);
       const match = text.match(pricesUpdateRegex);
 
-      await pricesUpdateLogic(userProfile, match, user);
+      const message = await pricesUpdateLogic(userProfile, match, user);
+
+      updateAdmins(message);
+
+      return;
+    }
+
+    if (offPricesRegex.test(text)) {
+      console.log("regex triggered: offPricesRegex");
+      const match = text.match(offPricesRegex);
+
+      const message = await offPricesLogic(userProfile, match, user);
+
+      updateAdmins(message);
 
       return;
     }
@@ -361,7 +374,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       console.log("text.match: ", text.match(dealtUpdateRegex));
       const match = text.match(dealtUpdateRegex);
 
-      await dealtUpdateLogic(userProfile, match);
+      await dealtUpdateLogic(userProfile, match, user);
 
       return;
     }
@@ -376,15 +389,6 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       console.log("list: ", list);
 
       await fetchPriceInfoLogic(userProfile, list);
-
-      return;
-    }
-
-    if (offPricesRegex.test(text)) {
-      console.log("regex triggered: offPricesRegex");
-      const match = text.match(offPricesRegex);
-
-      await offPricesLogic(userProfile, match, user);
 
       return;
     }

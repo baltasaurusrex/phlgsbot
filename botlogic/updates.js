@@ -22,6 +22,13 @@ import {
 } from "../controllers/updates.js";
 import { formatPrice, getBroker, formatTime } from "../utils/updates.js";
 
+import {
+  createOrder,
+  fetchOrders,
+  offOrders,
+  fillOrder,
+} from "../controllers/orders.js";
+
 import { getValidSeries, getSeries } from "../controllers/isins.js";
 
 export const showBot = () => {
@@ -29,6 +36,7 @@ export const showBot = () => {
 };
 
 export const pricesUpdateLogic = async (userProfile, match, user) => {
+  console.log("in pricesUpdateLogic");
   const [
     full,
     seriesInput,
@@ -50,9 +58,6 @@ export const pricesUpdateLogic = async (userProfile, match, user) => {
     bid = formatPrice(bidInput);
     offer = formatPrice(offerInput);
   }
-
-  console.log("bid: ", bid);
-  console.log("offer: ", offer);
 
   const bid_vol = bid ? (vol1 ? Number.parseFloat(vol1) : 50) : null;
 
@@ -85,17 +90,15 @@ export const pricesUpdateLogic = async (userProfile, match, user) => {
 
   console.log("update: ", update);
 
-  bot.sendMessage(userProfile, [
-    new Message.Text(
-      `${update.series} prices created\n\nBid: ${
-        !update.bid ? "none" : `${update.bid} for ${update.bid_vol} Mn`
-      } \nOffer: ${
-        !update.offer ? "none" : `${update.offer} for ${update.offer_vol} Mn`
-      }\non ${update.broker}`
-    ),
-  ]);
+  let message = `${update.series} prices updated\n\nBid: ${
+    !update.bid ? "none" : `${update.bid} for ${update.bid_vol} Mn`
+  } \nOffer: ${
+    !update.offer ? "none" : `${update.offer} for ${update.offer_vol} Mn`
+  }\non ${update.broker}`;
 
-  return;
+  bot.sendMessage(userProfile, [new Message.Text(message)]);
+
+  return message;
 };
 
 export const offPricesLogic = async (userProfile, match, user) => {
@@ -134,10 +137,16 @@ export const offPricesLogic = async (userProfile, match, user) => {
     });
   }
 
-  return update;
+  let message = `${series} ${side} taken out on ${broker}:\n\n Bid: ${
+    !update.bid ? "none" : `${update.bid} for ${update.bid_vol} Mn`
+  } \nOffer: ${
+    !update.offer ? "none" : `${update.offer} for ${update.offer_vol} Mn`
+  }\non ${update.broker}`;
+
+  return message;
 };
 
-export const dealtUpdateLogic = async (userProfile, match) => {
+export const dealtUpdateLogic = async (userProfile, match, user) => {
   const [
     full,
     seriesInput,
