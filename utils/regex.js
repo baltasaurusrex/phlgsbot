@@ -18,6 +18,14 @@ export const getAdminDealtUpdateRegex = (validSeries) => {
 export const getFetchPriceInfoRegex = (validSeries) =>
   new RegExp(`^(?:(${validSeries.join("|")})\\s*?)+$`, "i");
 
+export const getOffPricesRegex = (validSeries) =>
+  new RegExp(
+    `^(${validSeries.join(
+      "|"
+    )})\\s(?:\\s+)?(?:off (prices|bid|offer))\\s(?:\\s+)?([pPaAtTgG]\\w*)`,
+    "i"
+  );
+
 export const getFetchHistoricalPricesRegex = (validSeries) =>
   new RegExp(
     `^(${validSeries.join(

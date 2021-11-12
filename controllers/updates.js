@@ -13,22 +13,36 @@ import {
 export const createPricesUpdate = async (data) => {
   console.log("in createPricesUpdate controller");
   try {
-    const { series, user, bid, bid_vol, offer, offer_vol, broker } = data;
+    const startOfToday = dayjs().startOf("day").toDate();
 
-    const existingUpdate = await Update.findOne({});
-    const newUpdate = new Update({
-      series,
-      type: "bid_offer",
-      creator: user,
-      bid,
-      bid_vol,
-      offer,
-      offer_vol,
-      broker,
+    let existingUpdate = await Update.findOne({
+      series: data.series,
+      series: data.broker,
+      time: { $gte: startOfToday },
     });
+    console.log("existingUpdate: ", existingUpdate);
 
-    const savedUpdate = await newUpdate.save();
+    let savedUpdate = null;
+    if (existingUpdate) {
+      existingUpdate = Object.assign(existingUpdate, data);
+      savedUpdate = await existingUpdate.save();
+    } else {
+      const { series, user, bid, bid_vol, offer, offer_vol, broker } = data;
 
+      const newUpdate = new Update({
+        series,
+        type: "bid_offer",
+        creator: user,
+        bid,
+        bid_vol,
+        offer,
+        offer_vol,
+        broker,
+      });
+      savedUpdate = await newUpdate.save();
+    }
+
+    console.log("savedUpdate: ", savedUpdate);
     return savedUpdate;
   } catch (err) {
     console.log("createPricesUpdate err: ", err);

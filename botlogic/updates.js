@@ -28,7 +28,7 @@ export const showBot = () => {
   console.log("bot: ", bot);
 };
 
-export const pricesUpdateLogic = async (userProfile, match) => {
+export const pricesUpdateLogic = async (userProfile, match, user) => {
   const [
     full,
     seriesInput,
@@ -96,6 +96,45 @@ export const pricesUpdateLogic = async (userProfile, match) => {
   ]);
 
   return;
+};
+
+export const offPricesLogic = async (userProfile, match, user) => {
+  const [full, seriesInput, sideInput, brokerInput] = match;
+
+  let series = await getSeries(seriesInput);
+  let side = sideInput.toLowerCase();
+  const broker = getBroker(brokerInput);
+
+  let update = null;
+  if (side === "prices") {
+    update = await createPricesUpdate({
+      series,
+      bid: null,
+      offer: null,
+      bid_vol: null,
+      offer_vol: null,
+      broker,
+      user,
+    });
+  } else if (side === "bid") {
+    update = await createPricesUpdate({
+      series,
+      bid: null,
+      bid_vol: null,
+      broker,
+      user,
+    });
+  } else if (side === "offer") {
+    update = await createPricesUpdate({
+      series,
+      offer: null,
+      offer_vol: null,
+      broker,
+      user,
+    });
+  }
+
+  return update;
 };
 
 export const dealtUpdateLogic = async (userProfile, match) => {

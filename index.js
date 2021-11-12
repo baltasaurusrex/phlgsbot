@@ -36,6 +36,7 @@ import {
   fetchPriceInfoLogic,
   fetchSummariesLogic,
   fetchTimeAndSalesLogic,
+  offPricesLogic,
   pricesUpdateLogic,
 } from "./botlogic/updates.js";
 import {
@@ -74,11 +75,12 @@ import {
   getFetchHistoricalPricesRegex,
   getFetchTimeAndSalesRegex,
   getFetchSummariesRegex,
+  getOffPricesRegex,
 } from "./utils/regex.js";
 import { updateAdmins } from "./botlogic/broadcast.js";
 
 // populateIsins();
-// uploadTimeAndSales("11-11-2021").then((res) => console.log(res));
+// uploadTimeAndSales("11-12-2021").then((res) => console.log(res));
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)
@@ -319,6 +321,8 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
   const fetchPriceInfoRegex = getFetchPriceInfoRegex(validSeries);
 
+  const offPricesRegex = getOffPricesRegex(validSeries);
+
   const fetchHistoricalPricesRegex = getFetchHistoricalPricesRegex(validSeries);
 
   const fetchTimeAndSalesRegex = getFetchTimeAndSalesRegex(validSeries);
@@ -346,7 +350,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       console.log(`regex triggered: pricesUpdateRegex.test(text)`);
       const match = text.match(pricesUpdateRegex);
 
-      await pricesUpdateLogic(userProfile, match);
+      await pricesUpdateLogic(userProfile, match, user);
 
       return;
     }
@@ -372,6 +376,15 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       console.log("list: ", list);
 
       await fetchPriceInfoLogic(userProfile, list);
+
+      return;
+    }
+
+    if (offPricesRegex.test(text)) {
+      console.log("regex triggered: offPricesRegex");
+      const match = text.match(offPricesRegex);
+
+      await offPricesLogic(userProfile, match, user);
 
       return;
     }

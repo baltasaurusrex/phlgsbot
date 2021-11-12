@@ -9,6 +9,7 @@ import {
   getFetchHistoricalPricesRegex,
   getFetchTimeAndSalesRegex,
   getFetchSummariesRegex,
+  getOffPricesRegex,
 } from "./regex.js";
 
 export const validCommand = (
@@ -36,6 +37,10 @@ export const validCommand = (
   const fetchPriceInfoRegex = getFetchPriceInfoRegex(validSeries);
 
   if (fetchPriceInfoRegex.test(text)) flag = true;
+
+  const offPricesRegex = getOffPricesRegex(validSeries);
+
+  if (offPricesRegex.test(text)) flag = true;
 
   const fetchHistoricalPricesRegex = getFetchHistoricalPricesRegex(validSeries);
 
