@@ -377,7 +377,7 @@ export const fetchHistoricalPricesLogic = async (userProfile, match) => {
       console.log("day: ", day);
 
       if (day.trades === 0) {
-        return `${dayOfWeek}, ${shortDate}: No good trades\n\n`;
+        return `${dayOfWeek}, ${shortDate}: No trades w/ good vol\n\n`;
       } else {
         let change = {
           close: parseFloat(day.change.close) * 100,
