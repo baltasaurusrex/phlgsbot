@@ -22,15 +22,6 @@ export const bot = new Bot({
 
 import { createUser, findUser } from "./controllers/users.js";
 import {
-  createPricesUpdate,
-  createDealtUpdate,
-  fetchPricingData,
-  fetchHistoricalPrices,
-  fetchTimeAndSales,
-  deleteLastDealts,
-  fetchSummary,
-} from "./controllers/updates.js";
-import {
   dealtUpdateLogic,
   fetchHistoricalPricesLogic,
   fetchPriceInfoLogic,

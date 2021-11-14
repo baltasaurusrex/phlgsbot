@@ -78,15 +78,18 @@ export const pricesUpdateLogic = async (userProfile, match, user) => {
 
   console.log("broker: ", broker);
 
-  const update = await createPricesUpdate({
-    series,
-    bid,
-    offer,
-    bid_vol,
-    offer_vol,
-    broker,
-    user,
-  });
+  const update = await createPricesUpdate(
+    {
+      series,
+      bid,
+      offer,
+      bid_vol,
+      offer_vol,
+      broker,
+      user,
+    },
+    { nullIgnored: true }
+  );
 
   console.log("update: ", update);
 

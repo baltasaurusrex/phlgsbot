@@ -4,7 +4,6 @@ dayjs.extend(CustomParseFormat);
 import Update from "../models/Update.js";
 
 export const formatPrice = (price) => {
-  console.log("price: ", price);
   const regex = new RegExp(`na|\\/`, "i");
   if (regex.test(price)) return null;
   const decimal = price.slice(0, 1) + "." + price.slice(1);
