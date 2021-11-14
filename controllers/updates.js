@@ -10,8 +10,22 @@ import {
   getPrevDayTrades,
 } from "../utils/updates.js";
 
-export const createPricesUpdate = async (data) => {
+export const createPricesUpdate = async (data, options) => {
   console.log("in createPricesUpdate controller");
+  console.log("data: ", data);
+  console.log("options: ", options);
+  const settings = {
+    nullIgnored: false,
+  };
+
+  console.log("typeof options: ", typeof options);
+  if (options && typeof options === "object") {
+    console.log(`options && typeof options === "object"`);
+    if (Object.keys(options).includes("nullIgnored")) {
+      console.log('Object.keys(options).includes("nullIgnored")');
+      settings.nullIgnored = options.nullIgnored;
+    }
+  }
   try {
     const startOfToday = dayjs().startOf("day").toDate();
 
@@ -26,7 +40,17 @@ export const createPricesUpdate = async (data) => {
 
     let savedUpdate = null;
     if (existingUpdate) {
-      existingUpdate = Object.assign(existingUpdate, data);
+      let obj = null;
+
+      if (settings.nullIgnored) {
+        obj = Object.fromEntries(
+          Object.entries(data).filter(([_, v]) => v != null)
+        );
+      } else {
+        obj = data;
+      }
+
+      existingUpdate = Object.assign(existingUpdate, obj);
       console.log("existingUpdate after Object.assign: ", existingUpdate);
       savedUpdate = await existingUpdate.save();
     } else {
