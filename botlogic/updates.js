@@ -363,7 +363,7 @@ export const fetchPriceInfoLogic = async (userProfile, list) => {
         return "\n\nno levels";
       } else {
         const brokerString = quotes.map((quote) => {
-          const timestamp = `last updated ${dayjs(quote.created_at).format(
+          const timestamp = `last updated ${dayjs(quote.updatedAt).format(
             "h:mm A"
           )}`;
 
