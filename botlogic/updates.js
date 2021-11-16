@@ -516,7 +516,7 @@ export const fetchTimeAndSalesLogic = async (userProfile, match) => {
 
     const renderSummary = (summary) => {
       if (!series) {
-        return `\n\nTotal vol: ${summary.totalVol}\nTrades: ${summary.trades}`;
+        return `\nTotal vol: ${summary.totalVol}\nTrades: ${summary.trades}`;
       }
       if (summary.trades > 0 && summary.change) {
         let change = {
@@ -533,28 +533,49 @@ export const fetchTimeAndSalesLogic = async (userProfile, match) => {
             ? "+" + change.vwap.toFixed(2)
             : change.vwap.toFixed(2);
 
-        return `\n\nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close} (${change.close} bps)\nVWAP: ${summary.vwap} (${change.vwap} bps)\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
+        return `\nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close} (${change.close} bps)\nVWAP: ${summary.vwap} (${change.vwap} bps)\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
       } else if (summary.trades > 0) {
         //if there are trades but there were no good deals
-        return `\n\nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close}\nVWAP: ${summary.vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
+        return `\nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close}\nVWAP: ${summary.vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
       } else {
         return ``;
       }
     };
 
     console.log("MOSB: ", renderMOSB(array));
+    console.log("Summary: ", renderSummary(summary));
 
-    // if array is > 30, split it into different messages
+    // if array is > 50, split it into different messages
 
-    bot.sendMessage(userProfile, [
-      new Message.Text(
-        `${
-          series ? series : "All"
-        } time and sales data for ${dayOfWeek}, ${shortDate}: \n\n${renderMOSB(
-          array
-        )}${renderSummary(summary)}`
-      ),
-    ]);
+    function paginate(array, page_size) {
+      let pages = Math.ceil(array.length / page_size);
+
+      // will store an array of the spliced arrays
+      let new_array = [];
+
+      // populate the array
+      for (let i = 0; i < pages; i++) {
+        new_array.push(array.slice(i * page_size, page_size * (i + 1)));
+      }
+
+      return new_array;
+    }
+
+    const sub_arrays = paginate(array, 50);
+
+    const intro_msg = new Message.Text(
+      `${
+        series ? series : "All"
+      } time and sales data for ${dayOfWeek}, ${shortDate}: `
+    );
+
+    const mosb_msg = sub_arrays.map(
+      (sub_array) => new Message.Text(`${renderMOSB(sub_array)}`)
+    );
+
+    const summary_msg = new Message.Text(`Summary:\n${renderSummary(summary)}`);
+
+    bot.sendMessage(userProfile, [intro_msg, ...mosb_msg, summary_msg]);
     return;
   } catch (err) {
     console.log("err: ", err);
