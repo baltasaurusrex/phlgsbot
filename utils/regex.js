@@ -36,9 +36,9 @@ export const getFetchHistoricalPricesRegex = (validSeries) =>
 
 export const getFetchTimeAndSalesRegex = (validSeries) =>
   new RegExp(
-    `^(${validSeries.join(
+    `^(?:time and sales)(?:\\s+)?(\\d\\d\\/\\d\\d)?(?:\\s+)?(${validSeries.join(
       "|"
-    )})(?:\\s+)?(?:time and sales)(?:\\s+)?(\\d\\d\\/\\d\\d)?(?:\\s+)?$`,
+    )})?(?:\\s+)?$`,
     "i"
   );
 

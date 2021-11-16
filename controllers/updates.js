@@ -369,13 +369,14 @@ export const fetchHistoricalPrices = async (series, period) => {
 
 // Gets the most recent time and sales of that series for most recent trading day
 // for period, accepts: MM/DD or
-export const fetchTimeAndSales = async (series, period) => {
+export const fetchTimeAndSales = async (period, series) => {
   try {
     console.log("in fetchTimeAndSales: ");
+    console.log("period: ", period);
+    console.log("series: ", series);
 
     let date = null;
 
-    console.log("period: ", period);
     if (period) {
       date = dayjs(period, "MM/DD").toDate();
     } else {
@@ -388,59 +389,80 @@ export const fetchTimeAndSales = async (series, period) => {
     console.log("startOfDay: ", startOfDay);
     console.log("endOfDay: ", endOfDay);
 
-    const mongoQuery = {
-      series,
-      type: "last_dealt",
-      time: { $gte: startOfDay, $lt: endOfDay },
-    };
-
-    const unsorted = await Update.find(mongoQuery);
-
-    const array = unsorted.sort((a, b) => {
-      return b.time - a.time;
-    });
-
-    console.log("array.length: ", array.length);
-
     let summary = {};
+    let array = [];
 
-    summary.trades = array.length;
-
-    const goodVolTrades = array.filter((el) => el.lastDealtVol >= 50);
-    console.log("goodVolTrades.length: ", goodVolTrades.length);
-    if (summary.trades > 0) {
-      summary.vwap = getVWAP(goodVolTrades)?.vwap;
-      summary.totalVol = getVWAP(array)?.totalVol;
-      const { open, high, low, close } = getOHLC(goodVolTrades);
-      summary.open = open;
-      summary.high = high;
-      summary.low = low;
-      summary.close = close;
-    }
-
-    const prevDayTrades = await getPrevDayTrades(series, startOfDay);
-
-    console.log("prevDayTrades.length: ", prevDayTrades.length);
-
-    if (goodVolTrades.length > 0 && prevDayTrades.length > 0) {
-      const prevDayTrades_goodVol = prevDayTrades.filter(
-        (el) => el.lastDealtVol >= 50
-      );
-      const { vwap, totalVol } = getVWAP(prevDayTrades_goodVol);
-      const { open, high, low, close } = getOHLC(prevDayTrades_goodVol);
-      console.log("summary.vwap: ", summary.vwap);
-      console.log("prev vwap: ", vwap);
-      console.log("summary.close: ", summary.close);
-      console.log("prev close: ", close);
-      const change = {
-        close: (parseFloat(summary.close) - parseFloat(close)).toFixed(4),
-        vwap: (parseFloat(summary.vwap) - parseFloat(vwap)).toFixed(4),
+    if (!series) {
+      console.log("!series");
+      const mongoQuery = {
+        type: "last_dealt",
+        time: { $gte: startOfDay, $lt: endOfDay },
       };
-      console.log("change: ", change);
-      summary.change = { ...change };
-    }
 
-    console.log("summary: ", summary);
+      const unsorted = await Update.find(mongoQuery);
+
+      array = unsorted.sort((a, b) => {
+        return b.time - a.time;
+      });
+
+      console.log("array.length: ", array.length);
+
+      summary.trades = array.length;
+
+      summary.totalVol = getVWAP(array)?.totalVol;
+    } else {
+      const mongoQuery = {
+        series,
+        type: "last_dealt",
+        time: { $gte: startOfDay, $lt: endOfDay },
+      };
+
+      const unsorted = await Update.find(mongoQuery);
+
+      const array = unsorted.sort((a, b) => {
+        return b.time - a.time;
+      });
+
+      console.log("array.length: ", array.length);
+
+      summary.trades = array.length;
+
+      const goodVolTrades = array.filter((el) => el.lastDealtVol >= 50);
+      console.log("goodVolTrades.length: ", goodVolTrades.length);
+      if (summary.trades > 0) {
+        summary.vwap = getVWAP(goodVolTrades)?.vwap;
+        summary.totalVol = getVWAP(array)?.totalVol;
+        const { open, high, low, close } = getOHLC(goodVolTrades);
+        summary.open = open;
+        summary.high = high;
+        summary.low = low;
+        summary.close = close;
+      }
+
+      const prevDayTrades = await getPrevDayTrades(series, startOfDay);
+
+      console.log("prevDayTrades.length: ", prevDayTrades.length);
+
+      if (goodVolTrades.length > 0 && prevDayTrades.length > 0) {
+        const prevDayTrades_goodVol = prevDayTrades.filter(
+          (el) => el.lastDealtVol >= 50
+        );
+        const { vwap, totalVol } = getVWAP(prevDayTrades_goodVol);
+        const { open, high, low, close } = getOHLC(prevDayTrades_goodVol);
+        console.log("summary.vwap: ", summary.vwap);
+        console.log("prev vwap: ", vwap);
+        console.log("summary.close: ", summary.close);
+        console.log("prev close: ", close);
+        const change = {
+          close: (parseFloat(summary.close) - parseFloat(close)).toFixed(4),
+          vwap: (parseFloat(summary.vwap) - parseFloat(vwap)).toFixed(4),
+        };
+        console.log("change: ", change);
+        summary.change = { ...change };
+      }
+
+      console.log("summary: ", summary);
+    }
 
     return { array, summary };
 
@@ -487,7 +509,7 @@ export const fetchSummary = async (period) => {
     // else if blank or has a date, use fetchTimeAndSales (1 period only)
     summaries = await Promise.all(
       series_array.map(async (series) => {
-        const { summary } = await fetchTimeAndSales(series, period);
+        const { summary } = await fetchTimeAndSales(period, series);
         return {
           series,
           summary,

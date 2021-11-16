@@ -475,10 +475,10 @@ export const fetchHistoricalPricesLogic = async (userProfile, match) => {
 };
 
 export const fetchTimeAndSalesLogic = async (userProfile, match) => {
-  const [full, seriesInput, period] = match;
+  const [full, period, seriesInput] = match;
   const series = await getSeries(seriesInput);
 
-  const { array, summary } = await fetchTimeAndSales(series, period);
+  const { array, summary } = await fetchTimeAndSales(period, series);
   console.log("array: ", array);
   console.log("summary: ", summary);
 
@@ -487,9 +487,15 @@ export const fetchTimeAndSalesLogic = async (userProfile, match) => {
       return deals
         .map((deal) => {
           const time = dayjs(deal.time).format("h:mm A");
-          return `${deal.lastDealt.toFixed(3)} | ${
-            deal.lastDealtVol
-          } Mn | ${time}`;
+          if (!series) {
+            return `${deal.series} | ${deal.lastDealt.toFixed(3)} | ${
+              deal.lastDealtVol
+            } Mn | ${time}`;
+          } else {
+            return `${deal.lastDealt.toFixed(3)} | ${
+              deal.lastDealtVol
+            } Mn | ${time}`;
+          }
         })
         .join("\n");
     } else {
@@ -508,6 +514,9 @@ export const fetchTimeAndSalesLogic = async (userProfile, match) => {
   const shortDate = dayjs(day).format("MM/DD");
 
   const renderSummary = (summary) => {
+    if (!series) {
+      return `\n\nTotal vol: ${summary.totalVol}\nTrades: ${summary.trades}`;
+    }
     if (summary.trades > 0 && summary.change) {
       let change = {
         close: parseFloat(summary.change.close) * 100,
@@ -532,7 +541,9 @@ export const fetchTimeAndSalesLogic = async (userProfile, match) => {
 
   bot.sendMessage(userProfile, [
     new Message.Text(
-      `${series} time and sales data for ${dayOfWeek}, ${shortDate}: \n\n${renderMOSB(
+      `${
+        series ? series : "All"
+      } time and sales data for ${dayOfWeek}, ${shortDate}: \n\n${renderMOSB(
         array
       )}${renderSummary(summary)}`
     ),

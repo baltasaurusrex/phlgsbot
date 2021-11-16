@@ -78,6 +78,8 @@ export const getValidIsins = async () => {
 
 export const getSeries = async (alias) => {
   try {
+    if (!alias) return null;
+
     const instrument = await Isin.findOne({
       aliases: { $regex: `${alias}`, $options: "gi" },
     }).exec();

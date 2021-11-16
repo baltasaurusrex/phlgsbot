@@ -10,7 +10,7 @@ You may also type multiple series with one query
   
 E.g. '577 1061 765'`,
 
-  timeAndSales: `For *time and sales* data, please type '{series} time and sales MM/DD'
+  timeAndSales: `For *time and sales* data, please type 'time and sales MM/DD {series}'
   
 Note: If MM/DD is not specified, the date is assumed to be the current date`,
 
