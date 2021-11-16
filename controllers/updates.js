@@ -419,7 +419,7 @@ export const fetchTimeAndSales = async (period, series) => {
 
       const unsorted = await Update.find(mongoQuery);
 
-      const array = unsorted.sort((a, b) => {
+      array = unsorted.sort((a, b) => {
         return b.time - a.time;
       });
 
@@ -487,8 +487,9 @@ export const fetchTimeAndSales = async (period, series) => {
 
 export const fetchSummary = async (period) => {
   console.log("in fetchSummary");
-  const isins = await getAllIsins();
+  const isins = await getAllIsins({ watchlistOnly: true });
   const series_array = isins.map((isin) => isin.series);
+  console.log("series_array: ", series_array);
   let summaries = [];
 
   if (

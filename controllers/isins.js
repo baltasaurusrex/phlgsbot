@@ -1,7 +1,10 @@
 import Isin from "../models/Isin.js";
 
 export const createIsin = async (data) => {
+  console.log("in createIsin");
   console.log("data: ", data);
+  const aliases = [data.series_mosb];
+  if (data.series_short) aliases.push(data.series_short);
   try {
     // check if exists
     let existing = await Isin.findOne({ series: data.series_mosb });
@@ -12,9 +15,10 @@ export const createIsin = async (data) => {
         existing._id,
         {
           series: data.series_mosb,
-          aliases: [data.series_short, data.series_mosb],
+          aliases,
           isin: data.isin,
           maturity: data.maturity,
+          watchlist: data.watchlist,
         },
         { new: true }
       );
@@ -22,9 +26,10 @@ export const createIsin = async (data) => {
       //if not, create a new one
       const newIsin = new Isin({
         series: data.series_mosb,
-        aliases: [data.series_short, data.series_mosb],
+        aliases,
         isin: data.isin,
         maturity: data.maturity,
+        watchlist: data.watchlist,
       });
 
       savedIsin = await newIsin.save();
@@ -32,17 +37,28 @@ export const createIsin = async (data) => {
 
     return savedIsin;
   } catch (err) {
-    console.log("createIsin err: ", err);
     return Promise.reject(err);
   }
 };
 
-export const getAllIsins = async () => {
+export const getAllIsins = async (options) => {
   try {
-    const all = await Isin.find({});
+    console.log("in getAllIsins: ");
+    console.log("options: ", options);
+    let mongoQuery = {};
+    if (options) {
+      if (options.watchlistOnly === true) mongoQuery.watchlist = true;
+    }
+
+    console.log("mongoQuery: ", mongoQuery);
+
+    const all = await Isin.find(mongoQuery);
+
+    console.log("all: ", all);
+
     let sorted = all.sort((a, b) => a.maturity - b.maturity);
 
-    return all;
+    return sorted;
   } catch (err) {
     return err;
   }

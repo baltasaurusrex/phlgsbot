@@ -42,8 +42,6 @@ export const populateIsins = async () => {
     })
   );
 
-  console.log("results: ", results);
-
   let fulfilled = results.filter((el) => el.status === "fulfilled");
   fulfilled = fulfilled.map((obj) => obj.value.keyword);
   let rejected = results.filter((el) => el.status === "rejected");

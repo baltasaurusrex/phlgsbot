@@ -71,7 +71,7 @@ import {
 import { updateAdmins } from "./botlogic/broadcast.js";
 
 // populateIsins();
-// uploadTimeAndSales("11-15-2021").then((res) => console.log(res));
+// uploadTimeAndSales("11-16-2021").then((res) => console.log(res));
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)

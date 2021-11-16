@@ -5,6 +5,7 @@ const IsinSchema = new mongoose.Schema({
   aliases: { type: [String], unique: true },
   isin: { type: String, unique: true },
   maturity: { type: Date },
+  watchlist: { type: Boolean, default: false },
 });
 
 export default mongoose.model("Isin", IsinSchema);
