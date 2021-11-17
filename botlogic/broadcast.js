@@ -29,3 +29,12 @@ export const updateAdmins = async (text) => {
     return err;
   }
 };
+
+export const updateUsers = async (text) => {
+  try {
+    console.log("in updateUsers controller");
+  } catch (err) {
+    console.log("error in updateUsers: ", err);
+    return err;
+  }
+};
