@@ -71,7 +71,19 @@ import {
 import { updateAdmins } from "./botlogic/broadcast.js";
 
 // populateIsins();
-// uploadTimeAndSales("11-16-2021").then((res) => console.log(res));
+// uploadTimeAndSales("11-17-2021").then((res) => {
+//   const { deals } = res;
+//   if (deals) {
+//     const last_deal = deals[0].value;
+//     console.log("last_deal: ", last_deal);
+//     console.log("last_deal.time: ", last_deal.time);
+//     const time = dayjs(last_deal.time).format("h:mm A");
+//     console.log("time: ", time);
+//     updateAdmins(
+//       `Time and sales updated as of ${time}\n${deals.length} deals added`
+//     );
+//   }
+// });
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)

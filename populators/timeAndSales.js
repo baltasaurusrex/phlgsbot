@@ -90,10 +90,10 @@ export const uploadTimeAndSales = async (filename) => {
     const createdDeals = attempts.filter((deal) => deal.status === "fulfilled");
     const rejectedDeals = attempts.filter((deal) => deal.status === "rejected");
 
-    console.log("createdDeals: ", createdDeals);
-    console.log("rejectedDeals: ", rejectedDeals);
     console.log("createdDeals length: ", createdDeals.length);
     console.log("rejectedDeals length: ", rejectedDeals.length);
+
+    return { date, deals: createdDeals };
   } catch (err) {
     return err;
   }

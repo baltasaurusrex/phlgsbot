@@ -79,7 +79,9 @@ export const createPricesUpdate = async (data, options) => {
 
 export const createDealtUpdate = async (data) => {
   try {
-    const { series, action, price, volume, broker, creator, time } = data;
+    const { series, action, price, volInput, broker, creator, time } = data;
+
+    const volume = volInput ? Number.parseFloat(volInput) : 50;
 
     const newUpdate = new Update({
       type: "last_dealt",

@@ -516,7 +516,7 @@ export const fetchTimeAndSalesLogic = async (userProfile, match) => {
 
     const renderSummary = (summary) => {
       if (!series) {
-        return `\nTotal vol: ${summary.totalVol}\nTrades: ${summary.trades}`;
+        return `\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
       }
       if (summary.trades > 0 && summary.change) {
         let change = {
