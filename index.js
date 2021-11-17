@@ -68,7 +68,7 @@ import {
   getFetchSummariesRegex,
   getOffPricesRegex,
 } from "./utils/regex.js";
-import { updateAdmins } from "./botlogic/broadcast.js";
+import { updateAdmins, updateUsers } from "./botlogic/broadcast.js";
 
 // populateIsins();
 // uploadTimeAndSales("11-17-2021").then((res) => {
@@ -80,6 +80,10 @@ import { updateAdmins } from "./botlogic/broadcast.js";
 //     const time = dayjs(last_deal.time).format("h:mm A");
 //     console.log("time: ", time);
 //     updateAdmins(
+//       `Time and sales updated as of ${time}\n${deals.length} deals added`
+//     );
+//     updateUsers(
+//       "time_and_sales",
 //       `Time and sales updated as of ${time}\n${deals.length} deals added`
 //     );
 //   }
@@ -356,6 +360,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const message = await pricesUpdateLogic(userProfile, match, user);
 
       updateAdmins(message);
+      updateUsers("prices", message);
 
       return;
     }
