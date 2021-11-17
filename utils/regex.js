@@ -18,7 +18,7 @@ export const getAdminDealtUpdateRegex = (validSeries) => {
   return new RegExp(
     `^(${validSeries.join(
       "|"
-    )})\\s(given|lifted|taken|mapped)\\s(\\d+)(?:\\s*)?([\\d.]+)?(?:\\s*)?(?:\\s([pPaAtTgG]\\w*))?(?:\\s*)?(?:(\\d{1,4})(am|pm))?(?:\\s*)$`,
+    )})\\s(?:\\s*)(given|lifted|taken|mapped)\\s(?:\\s*)(\\d+)(?:\\s*)(\\d+(?!(?:\\d{1,4})(?:am|pm)))?(?:\\s*)(?:\\s([pPaAtTgG]\\w*))?(?:\\s*)(?:(\\d{1,4})(am|pm))?(?:\\s*)$`,
     "i"
   );
 };
