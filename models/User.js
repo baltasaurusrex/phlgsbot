@@ -11,6 +11,10 @@ const UserSchema = new mongoose.Schema({
     },
     enum: ["Amstel", "Prebon", "Tradition", "GFI"],
   },
+  updates: {
+    time_and_sales: { type: Boolean, default: false },
+    prices: { type: Boolean, default: false },
+  },
 });
 
 export default mongoose.model("User", UserSchema);

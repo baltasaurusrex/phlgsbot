@@ -542,9 +542,6 @@ export const fetchTimeAndSalesLogic = async (userProfile, match) => {
       }
     };
 
-    console.log("MOSB: ", renderMOSB(array));
-    console.log("Summary: ", renderSummary(summary));
-
     // if array is > 50, split it into different messages
 
     function paginate(array, page_size) {

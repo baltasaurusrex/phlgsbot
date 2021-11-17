@@ -11,7 +11,7 @@ dayjs.extend(RelativeTime);
 import dotenv from "dotenv";
 dotenv.config();
 
-import { fetchAdmins } from "../controllers/users.js";
+import { fetchAdmins, fetchDealers } from "../controllers/users.js";
 import { broadcastMessage } from "../utils/messages.js";
 
 export const updateAdmins = async (text) => {
@@ -30,9 +30,31 @@ export const updateAdmins = async (text) => {
   }
 };
 
-export const updateUsers = async (text) => {
+export const updateUsers = async (type, text) => {
   try {
     console.log("in updateUsers controller");
+    console.log("type: ", type);
+
+    let options = {
+      updates: {},
+    };
+
+    const valid_types = ["time_and_sales", "prices"];
+    if (!valid_types.includes(type)) throw "Not a valid type";
+
+    options.updates[type] = true;
+
+    console.log("options: ", options);
+
+    const users_to_update = await fetchDealers(options);
+    console.log("users_to_update: ", users_to_update);
+
+    if (users_to_update.length > 0) {
+      console.log("users_to_update.length > 0");
+      const viber_ids = users_to_update.map((user) => user.viberId);
+      console.log("viber_ids: ", viber_ids);
+      await broadcastMessage(viber_ids, text);
+    }
   } catch (err) {
     console.log("error in updateUsers: ", err);
     return err;

@@ -26,3 +26,31 @@ export const fetchAdmins = async () => {
     return err;
   }
 };
+
+export const fetchDealers = async (options) => {
+  try {
+    console.log("in fetchDealers controller");
+
+    let mongoQuery = {
+      role: "dealer",
+    };
+
+    if (options.updates) {
+      if (options.updates.time_and_sales) {
+        mongoQuery[`updates.time_and_sales`] = true;
+      }
+      if (options.updates.prices) {
+        mongoQuery[`updates.prices`] = true;
+      }
+    }
+
+    console.log("mongoQuery: ", mongoQuery);
+
+    const users = await User.find(mongoQuery);
+
+    return users;
+  } catch (err) {
+    console.log("error in fetchUsers: ", err);
+    return err;
+  }
+};
