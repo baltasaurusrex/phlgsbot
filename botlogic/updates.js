@@ -140,11 +140,17 @@ export const offPricesLogic = async (userProfile, match, user) => {
     });
   }
 
-  let message = `${series} ${side} taken out on ${broker}:\n\n Bid: ${
+  let message = `${series} prices updated\n\nBid: ${
     !update.bid ? "none" : `${update.bid} for ${update.bid_vol} Mn`
   } \nOffer: ${
     !update.offer ? "none" : `${update.offer} for ${update.offer_vol} Mn`
   }\non ${update.broker}`;
+
+  // let message = `${series} ${side} taken out on ${broker}:\n\n Bid: ${
+  //   !update.bid ? "none" : `${update.bid} for ${update.bid_vol} Mn`
+  // } \nOffer: ${
+  //   !update.offer ? "none" : `${update.offer} for ${update.offer_vol} Mn`
+  // }\non ${update.broker}`;
 
   return message;
 };
@@ -194,11 +200,9 @@ export const dealtUpdateLogic = async (userProfile, match, user) => {
 
   const formattedTime = dayjs(update.time).format("h:mm A");
 
-  bot.sendMessage(userProfile, [
-    new Message.Text(
-      `${series} was ${action} at ${price} for ${volume} Mn \n\non ${broker} at ${formattedTime}`
-    ),
-  ]);
+  let message = `${series} was ${action} at ${price} for ${volume} Mn \n\non ${broker} at ${formattedTime}`;
+
+  bot.sendMessage(userProfile, [new Message.Text(message)]);
 
   // Look for possible existing orders on that series, at that price, and on that broker (across all desks)
   const desk = undefined;
@@ -224,7 +228,7 @@ export const dealtUpdateLogic = async (userProfile, match, user) => {
     ]);
   }
 
-  return;
+  return message;
 };
 
 export const fetchPriceInfoLogic = async (userProfile, list) => {

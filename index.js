@@ -71,7 +71,7 @@ import {
 import { updateAdmins, updateUsers } from "./botlogic/broadcast.js";
 
 // populateIsins();
-// uploadTimeAndSales("11-17-2021").then((res) => {
+// uploadTimeAndSales("11-18-2021").then((res) => {
 //   const { deals } = res;
 //   if (deals) {
 //     const last_deal = deals[0].value;
@@ -382,7 +382,10 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       console.log("text.match: ", text.match(dealtUpdateRegex));
       const match = text.match(dealtUpdateRegex);
 
-      await dealtUpdateLogic(userProfile, match, user);
+      const message = await dealtUpdateLogic(userProfile, match, user);
+
+      updateAdmins(message);
+      updateUsers("prices", message);
 
       return;
     }
