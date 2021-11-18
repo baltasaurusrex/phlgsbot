@@ -4,15 +4,39 @@ dayjs.extend(CustomParseFormat);
 import Update from "../models/Update.js";
 
 export const formatPrice = (price) => {
-  const regex = new RegExp(`na|\\/`, "i");
-  if (regex.test(price)) return null;
-  const decimal = price.slice(0, 1) + "." + price.slice(1);
+  try {
+    // if no price is inputted, or price inputted is "na" or "/", means price is null
+    const na_format = new RegExp(`na|\\/`, "i");
+    if (!price || na_format.test(price)) {
+      console.log("!price || na_format.test(price)");
+      return null;
+    }
 
-  const float = Number.parseFloat(decimal);
+    // else, check if price is formatted properly
+    const proper_format = new RegExp(`^\\d*\\.?\\d*$`, "i");
+    console.log("proper_format: ", proper_format);
+    if (!proper_format.test(price)) {
+      console.log("!proper_format.test(price)");
+      throw "Price not formatted properly";
+    }
 
-  const precise = Number.parseFloat(float.toPrecision(4));
-
-  return precise;
+    // if it's formatted properly:
+    // if price has a decimal
+    const has_decimal = new RegExp(`\\.`, "i");
+    if (has_decimal.test(price)) {
+      const float = Number.parseFloat(price);
+      const to_fixed = float.toFixed(3);
+      return Number.parseFloat(to_fixed);
+    } else {
+      const decimal = price.slice(0, 1) + "." + price.slice(1);
+      const float = Number.parseFloat(decimal);
+      const to_fixed = float.toFixed(3);
+      return Number.parseFloat(to_fixed);
+    }
+  } catch (err) {
+    console.log("formatPrice err: ", err);
+    return err;
+  }
 };
 
 export const getBroker = (code) => {
@@ -100,8 +124,6 @@ export const getBestBidOffer = (updateArray) => {
 
 export const getVWAP = (array) => {
   console.log("in getVWAP");
-  console.log("array.length: ", array.length);
-  console.log("array[0]: ", array[0]);
 
   let num = 0;
   let den = 0;
@@ -118,8 +140,6 @@ export const getVWAP = (array) => {
 
   vwap = (num / den).toFixed(3);
   totalVol = den.toFixed(2);
-
-  console.log("returning: ", vwap, totalVol);
 
   return { vwap, totalVol };
 };

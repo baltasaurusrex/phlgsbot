@@ -2,9 +2,11 @@ export const getAdminPricesUpdateRegex = (validSeries) =>
   new RegExp(
     `^(${validSeries.join(
       "|"
-    )})\\s(?:\\s*)(\\d+)\\s(?:\\s*)(?:(\\d+)|(bid|offer))\\s(?:\\s*)(\\d+)?(?:\\s*)(\\d+)?(?:\\s*)([pPaAtTgG]\\w*)`,
+    )})\\s(?:\\s*)(\\d*\\.?\\d*)\\s(?:\\s*)(?:(\\d*\\.?\\d*)|(bid|offer))(?:\\s*)(\\d*\\.?\\d*)?(?:\\s*)(\\d*\\.?\\d*)?(?:\\s*)([pPaAtTgG]\\w*)(?:\\s*)$`,
     "i"
   );
+
+// ^(1061|577)\s(?:\s*)(\d*\.?\d*)\s(?:\s*)(?:(\d*\.?\d*)|(bid|offer))(?:\s*)(\d*\.?\d*)?(?:\s*)(\d*\.?\d*)?(?:\s*)([pPaAtTgG]\w*)(?:\s*)$
 
 export const getOffPricesRegex = (validSeries) =>
   new RegExp(
