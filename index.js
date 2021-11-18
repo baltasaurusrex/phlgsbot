@@ -71,7 +71,7 @@ import {
 import { updateAdmins, updateUsers } from "./botlogic/broadcast.js";
 
 // populateIsins();
-// uploadTimeAndSales("11-17-2021").then((res) => {
+// uploadTimeAndSales("11-18-2021").then((res) => {
 //   const { deals } = res;
 //   if (deals) {
 //     const last_deal = deals[0].value;
@@ -82,14 +82,12 @@ import { updateAdmins, updateUsers } from "./botlogic/broadcast.js";
 //     updateAdmins(
 //       `Time and sales updated as of ${time}\n${deals.length} deals added`
 //     );
-//     // updateUsers(
-//     //   "time_and_sales",
-//     //   `Time and sales updated as of ${time}\n${deals.length} deals added`
-//     // );
+//     updateUsers(
+//       "time_and_sales",
+//       `Time and sales updated as of ${time}\n${deals.length} deals added`
+//     );
 //   }
 // });
-
-// console.log("formatPrice testing: ", formatPrice("10.56"));
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)
@@ -362,7 +360,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const message = await pricesUpdateLogic(userProfile, match, user);
 
       updateAdmins(message);
-      // updateUsers("prices", message);
+      updateUsers("prices", message);
 
       return;
     }
@@ -384,7 +382,10 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       console.log("text.match: ", text.match(dealtUpdateRegex));
       const match = text.match(dealtUpdateRegex);
 
-      await dealtUpdateLogic(userProfile, match, user);
+      const message = await dealtUpdateLogic(userProfile, match, user);
+
+      updateAdmins(message);
+      updateUsers("prices", message);
 
       return;
     }
