@@ -79,7 +79,15 @@ export const createPricesUpdate = async (data, options) => {
 
 export const createDealtUpdate = async (data) => {
   try {
-    const { series, action, price, volInput, broker, creator, time } = data;
+    const {
+      series,
+      action,
+      price,
+      volume: volInput,
+      broker,
+      creator,
+      time,
+    } = data;
 
     const volume = volInput ? Number.parseFloat(volInput) : 50;
 
@@ -411,6 +419,7 @@ export const fetchTimeAndSales = async (period, series) => {
 
       summary.trades = array.length;
 
+      console.log("array[0]: ", array[0]);
       summary.totalVol = getVWAP(array)?.totalVol;
     } else {
       const mongoQuery = {

@@ -100,6 +100,9 @@ export const getBestBidOffer = (updateArray) => {
 
 export const getVWAP = (array) => {
   console.log("in getVWAP");
+  console.log("array.length: ", array.length);
+  console.log("array[0]: ", array[0]);
+
   let num = 0;
   let den = 0;
 
@@ -115,6 +118,8 @@ export const getVWAP = (array) => {
 
   vwap = (num / den).toFixed(3);
   totalVol = den.toFixed(2);
+
+  console.log("returning: ", vwap, totalVol);
 
   return { vwap, totalVol };
 };
