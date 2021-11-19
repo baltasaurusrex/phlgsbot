@@ -53,7 +53,12 @@ import {
   getDesk,
   getValidDesks,
 } from "./controllers/desks.js";
-import { formatPrice, getBroker, formatTime } from "./utils/updates.js";
+import {
+  formatPrice,
+  getBroker,
+  formatTime,
+  getBrokers,
+} from "./utils/updates.js";
 
 import {
   getAdminDealtUpdateRegex,
@@ -71,7 +76,7 @@ import {
 import { updateAdmins, updateUsers } from "./botlogic/broadcast.js";
 
 // populateIsins();
-// uploadTimeAndSales("11-18-2021").then((res) => {
+// uploadTimeAndSales("11-19-2021").then((res) => {
 //   const { deals } = res;
 //   if (deals) {
 //     const last_deal = deals[0].value;
@@ -357,10 +362,12 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       console.log(`regex triggered: pricesUpdateRegex.test(text)`);
       const match = text.match(pricesUpdateRegex);
 
-      const message = await pricesUpdateLogic(userProfile, match, user);
+      const messages = await pricesUpdateLogic(userProfile, match, user);
 
-      updateAdmins(message);
-      updateUsers("prices", message);
+      for (const message of messages) {
+        updateAdmins(message);
+        // updateUsers("prices", message);
+      }
 
       return;
     }

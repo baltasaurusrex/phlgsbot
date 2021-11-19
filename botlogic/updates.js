@@ -20,7 +20,12 @@ import {
   deleteLastDealts,
   fetchSummary,
 } from "../controllers/updates.js";
-import { formatPrice, getBroker, formatTime } from "../utils/updates.js";
+import {
+  formatPrice,
+  getBroker,
+  getBrokers,
+  formatTime,
+} from "../utils/updates.js";
 
 import {
   createOrder,
@@ -74,34 +79,39 @@ export const pricesUpdateLogic = async (userProfile, match, user) => {
   console.log("bid_vol: ", bid_vol);
   console.log("offer_vol: ", offer_vol);
 
-  const broker = getBroker(brokerInput);
+  // make a getBrokers function that returns an array of broker names inputted (based on the regex string)
+  const brokers = getBrokers(brokerInput);
+  // const broker = getBroker(brokerInput);
 
-  console.log("broker: ", broker);
+  let messages = await Promise.all(
+    brokers.map(async (broker) => {
+      const update = await createPricesUpdate(
+        {
+          series,
+          bid,
+          offer,
+          bid_vol,
+          offer_vol,
+          broker,
+          user,
+        },
+        { nullIgnored: true }
+      );
 
-  const update = await createPricesUpdate(
-    {
-      series,
-      bid,
-      offer,
-      bid_vol,
-      offer_vol,
-      broker,
-      user,
-    },
-    { nullIgnored: true }
+      console.log("update: ", update);
+      let message = `${update.series} prices updated\n\nBid: ${
+        !update.bid ? "none" : `${update.bid} for ${update.bid_vol} Mn`
+      } \nOffer: ${
+        !update.offer ? "none" : `${update.offer} for ${update.offer_vol} Mn`
+      }\non ${update.broker}`;
+
+      bot.sendMessage(userProfile, [new Message.Text(message)]);
+
+      return message;
+    })
   );
 
-  console.log("update: ", update);
-
-  let message = `${update.series} prices updated\n\nBid: ${
-    !update.bid ? "none" : `${update.bid} for ${update.bid_vol} Mn`
-  } \nOffer: ${
-    !update.offer ? "none" : `${update.offer} for ${update.offer_vol} Mn`
-  }\non ${update.broker}`;
-
-  bot.sendMessage(userProfile, [new Message.Text(message)]);
-
-  return message;
+  return messages;
 };
 
 export const offPricesLogic = async (userProfile, match, user) => {

@@ -47,7 +47,7 @@ export const getAllIsins = async (options) => {
     console.log("options: ", options);
     let mongoQuery = {};
     if (options) {
-      if (options.watchlistOnly === true) mongoQuery.watchlist = true;
+      if (options.watchlist_only === true) mongoQuery.watchlist = true;
     }
 
     console.log("mongoQuery: ", mongoQuery);
