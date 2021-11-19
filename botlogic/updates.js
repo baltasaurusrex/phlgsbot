@@ -601,12 +601,17 @@ export const fetchSummariesLogic = async (userProfile, match) => {
 
   const renderSummary = (summaryInput) => {
     const { series, summary } = summaryInput;
+    console.log("in renderSummary");
 
     let priceDataString = null;
 
     if (summary.trades > 0) {
+      console.log("summary: ", summary);
+      console.log("summary.change: ", summary.change);
       let change =
         parseFloat(summary.close) * 100 - parseFloat(summary.open) * 100;
+
+      console.log("change: ", change);
 
       if (Number.isNaN(change)) {
         change = ``;
