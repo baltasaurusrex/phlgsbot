@@ -366,7 +366,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
       for (const message of messages) {
         updateAdmins(message);
-        // updateUsers("prices", message);
+        updateUsers("prices", message);
       }
 
       return;
