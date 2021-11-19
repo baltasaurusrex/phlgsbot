@@ -395,7 +395,7 @@ export const fetchTimeAndSales = async (period, series) => {
     console.log("date: ", date);
 
     const startOfDay = dayjs(date).startOf("day").toDate();
-    const endOfDay = dayjs(date).add(1, "day");
+    const endOfDay = dayjs(startOfDay).add(1, "day").toDate();
     console.log("startOfDay: ", startOfDay);
     console.log("endOfDay: ", endOfDay);
 
@@ -498,7 +498,7 @@ export const fetchTimeAndSales = async (period, series) => {
 
 export const fetchSummary = async (period) => {
   console.log("in fetchSummary");
-  const isins = await getAllIsins({ watchlistOnly: true });
+  const isins = await getAllIsins({ watchlist_only: true });
   const series_array = isins.map((isin) => isin.series);
   console.log("series_array: ", series_array);
   let summaries = [];

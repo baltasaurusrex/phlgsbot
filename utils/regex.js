@@ -2,11 +2,12 @@ export const getAdminPricesUpdateRegex = (validSeries) =>
   new RegExp(
     `^(${validSeries.join(
       "|"
-    )})\\s(?:\\s*)(\\d*\\.?\\d*)\\s(?:\\s*)(?:(\\d*\\.?\\d*)|(bid|offer))(?:\\s*)(\\d*\\.?\\d*)?(?:\\s*)(\\d*\\.?\\d*)?(?:\\s*)([pPaAtTgG]\\w*)(?:\\s*)$`,
+    )})\\s(?:\\s*)(\\d*\\.?\\d*)\\s(?:\\s*)(?:(\\d*\\.?\\d*)|(bid|offer))(?:\\s*)(\\d*\\.?\\d*)?(?:\\s*)(\\d*\\.?\\d*)?(?:\\s*)((?![patg]*?([patg])\\8)[patg]*)(?:\\s*)$`,
     "i"
   );
 
-// ^(1061|577)\s(?:\s*)(\d*\.?\d*)\s(?:\s*)(?:(\d*\.?\d*)|(bid|offer))(?:\s*)(\d*\.?\d*)?(?:\s*)(\d*\.?\d*)?(?:\s*)([pPaAtTgG]\w*)(?:\s*)$
+// regex for no repeating patg
+// ^(577|1061)\s(?:\s*)(\d*\.?\d*)\s(?:\s*)(?:(\d*\.?\d*)|(bid|offer))(?:\s*)(\d*\.?\d*)?(?:\s*)(\d*\.?\d*)?(?:\s*)((?![patg]*?([patg])\8)[patg]*)(?:\s*)$
 
 export const getOffPricesRegex = (validSeries) =>
   new RegExp(

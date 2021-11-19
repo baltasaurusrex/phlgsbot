@@ -39,6 +39,18 @@ export const formatPrice = (price) => {
   }
 };
 
+export const getBrokers = (string) => {
+  // loop through the string
+  let broker_array = [];
+
+  for (let i = 0; i < string.length; i++) {
+    let char = string.charAt(i);
+    broker_array.push(getBroker(char));
+  }
+
+  return broker_array;
+};
+
 export const getBroker = (code) => {
   if (!code) return "MOSB";
 
