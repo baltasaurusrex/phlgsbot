@@ -2,7 +2,7 @@ export const getAdminPricesUpdateRegex = (validSeries) =>
   new RegExp(
     `^(${validSeries.join(
       "|"
-    )})\\s(?:\\s*)(\\d*\\.?\\d*)\\s(?:\\s*)(?:(\\d*\\.?\\d*)|(bid|offer))(?:\\s*)(\\d*\\.?\\d*)?(?:\\s*)(\\d*\\.?\\d*)?(?:\\s*)((?![patg]*?([patg])\\8)[patg]*)(?:\\s*)$`,
+    )})\\s(?:\\s*)(\\d*\\.?\\d*)\\s(?:\\s*)(?:(\\d*\\.?\\d*)|(bid|offer))\\s(?:\\s*)(\\d*\\.?\\d*)?(?:\\s*)(\\d*\\.?\\d*)?(?:\\s*)((?![patg]*?([patg])\\8)[patg]*)(?:\\s*)$`,
     "i"
   );
 
