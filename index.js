@@ -90,18 +90,11 @@ const time_and_sales_func = (res) => {
     updateAdmins(
       `Time and sales updated as of ${time}\n${deals.length} deals added`
     );
-<<<<<<< HEAD
-    // updateUsers(
-    //   "time_and_sales",
-    //   `Time and sales updated as of ${time}\n${deals.length} deals added`
-    // );
-=======
     if (settings.update_users)
       updateUsers(
         "time_and_sales",
         `Time and sales updated as of ${time}\n${deals.length} deals added`
       );
->>>>>>> dev
   }
 };
 // uploadTimeAndSales("11-22-2021").then(time_and_sales_func);
@@ -404,11 +397,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const message = await dealtUpdateLogic(userProfile, match, user);
 
       updateAdmins(message);
-<<<<<<< HEAD
-      // updateUsers("prices", message);
-=======
       if (settings.update_users) updateUsers("prices", message);
->>>>>>> dev
 
       return;
     }
