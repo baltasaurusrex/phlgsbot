@@ -44,17 +44,13 @@ export const createIsin = async (data) => {
 export const getAllIsins = async (options) => {
   try {
     console.log("in getAllIsins: ");
-    console.log("options: ", options);
+
     let mongoQuery = {};
     if (options) {
       if (options.watchlist_only === true) mongoQuery.watchlist = true;
     }
 
-    console.log("mongoQuery: ", mongoQuery);
-
     const all = await Isin.find(mongoQuery);
-
-    console.log("all: ", all);
 
     let sorted = all.sort((a, b) => a.maturity - b.maturity);
 
