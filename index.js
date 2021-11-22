@@ -97,7 +97,7 @@ const time_and_sales_func = (res) => {
       );
   }
 };
-// uploadTimeAndSales("11-19-2021").then(time_and_sales_func);
+// uploadTimeAndSales("11-22-2021").then(time_and_sales_func);
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)
