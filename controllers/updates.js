@@ -190,7 +190,7 @@ export const fetchPricingData = async (series) => {
 
 export const fetchHistoricalPrices = async (series, period) => {
   try {
-    console.log("in fetchHistoricalPrices");
+    console.log("in fetchHistoricalPrices: ");
 
     // array of dayObj's
     let array = [];
@@ -203,13 +203,10 @@ export const fetchHistoricalPrices = async (series, period) => {
 
     if (period === "last week" || period === "last 2 weeks") {
       let sunday = dayjs().day(0).startOf("day");
-      console.log("sunday: ", sunday);
       startOfToday = sunday.subtract(2, "days").toDate();
     } else {
       startOfToday = dayjs().startOf("day").toDate();
     }
-
-    console.log("startOfToday: ", startOfToday);
 
     let daysLimit = null;
 
@@ -229,9 +226,6 @@ export const fetchHistoricalPrices = async (series, period) => {
     const startOfPeriod = dayjs(endOfPeriod)
       .subtract(daysLimit, "days")
       .toDate();
-
-    console.log("endOfPeriod: ", endOfPeriod);
-    console.log("startOfPeriod: ", startOfPeriod);
 
     // create first run of dayObj's (OHLC, vwap, totalVol, trades)
     for (let daysAgo = 0; daysAgo <= daysLimit; daysAgo++) {
@@ -258,9 +252,6 @@ export const fetchHistoricalPrices = async (series, period) => {
           },
         });
 
-        console.log("date: ", date);
-        console.log("daysEnd: ", daysEnd);
-
         const trades = dealsThatDay.length;
 
         if (trades > 0) {
@@ -285,20 +276,17 @@ export const fetchHistoricalPrices = async (series, period) => {
           };
         }
 
-        console.log("dayObj: ", dayObj);
-
         array.push(dayObj);
       }
     }
 
-    console.log("start mapping to new arrayWithChange");
+    // adding D-o-D change objects to the dayObj's
     const arrayWithChange = await Promise.all(
       array.map(async (dayObj, i, array) => {
         let change = {
           close: null,
           vwap: null,
         };
-        console.log("dayObj, beg: ", dayObj);
 
         // loop through the rest until you find an element with trades > 0
         for (let j = i + 1; j < array.length; j++) {
@@ -318,7 +306,7 @@ export const fetchHistoricalPrices = async (series, period) => {
           }
         }
 
-        // if after that, it still has no change object, then:
+        // if after that, it still has no change object, then just query it from mongodb
         if (dayObj.trades > 0 && !change.close && !change.vwap) {
           const startDate = dayjs(dayObj.date).startOf("day").toDate();
           const prevDayDeals = await getPrevDayTrades(series, startDate);
@@ -330,8 +318,6 @@ export const fetchHistoricalPrices = async (series, period) => {
             vwap: (parseFloat(dayObj.vwap) - parseFloat(vwap)).toFixed(4),
           };
         }
-
-        console.log("dayObj, end: ", { ...dayObj, change });
 
         return {
           ...dayObj,
@@ -351,27 +337,26 @@ export const fetchHistoricalPrices = async (series, period) => {
       summary.high = getOHLC(allTrades).high;
       summary.low = getOHLC(allTrades).low;
       summary.close = getOHLC(allTrades).close;
+
+      const prevDayTrades = await getPrevDayTrades(series, startOfPeriod);
+      const prevDayTrades_goodVol = prevDayTrades.filter(
+        (el) => el.lastDealtVol >= 50
+      );
+      const { vwap: vwap_prev } = getVWAP(prevDayTrades_goodVol);
+      const { close: close_prev } = getOHLC(prevDayTrades_goodVol);
+
+      console.log("summary.close: ", summary.close);
+      console.log("close_prev: ", close_prev);
+
+      const change = {
+        close: (parseFloat(summary.close) - parseFloat(close_prev)).toFixed(4),
+        vwap: (parseFloat(summary.vwap) - parseFloat(vwap_prev)).toFixed(4),
+      };
+      summary.change = change;
     }
 
-    console.log("arrayWithChange: ", arrayWithChange);
     console.log("summary: ", summary);
-
     return { array: arrayWithChange, summary };
-    // return a sorted array of objects {date, daym OHLC, vwap, totalVol, trades, change} representing each day + the summary for that period
-    // SAMPLE RETURN OBJECT (SUMMARY)
-    // {
-    //   summary: {
-    //     trades: 57,
-    //     endOfPeriod: 2021-11-04T16:00:00.000Z,
-    //     startOfPeriod: 2021-10-31T16:00:00.000Z,
-    //     vwap: '4.899',
-    //     totalVol: '6788.42',
-    //     open: '4.632',
-    //     high: '4.950',
-    //     low: '4.632',
-    //     close: '4.900'
-    //   }
-    // }
   } catch (err) {
     return err;
   }
@@ -392,12 +377,9 @@ export const fetchTimeAndSales = async (period, series) => {
     } else {
       date = dayjs().toDate();
     }
-    console.log("date: ", date);
 
     const startOfDay = dayjs(date).startOf("day").toDate();
     const endOfDay = dayjs(startOfDay).add(1, "day").toDate();
-    console.log("startOfDay: ", startOfDay);
-    console.log("endOfDay: ", endOfDay);
 
     let summary = {};
     let array = [];
@@ -434,12 +416,10 @@ export const fetchTimeAndSales = async (period, series) => {
         return b.time - a.time;
       });
 
-      console.log("array.length: ", array.length);
-
       summary.trades = array.length;
 
       const goodVolTrades = array.filter((el) => el.lastDealtVol >= 50);
-      console.log("goodVolTrades.length: ", goodVolTrades.length);
+
       if (summary.trades > 0) {
         summary.vwap = getVWAP(goodVolTrades)?.vwap;
         summary.totalVol = getVWAP(array)?.totalVol;
@@ -451,8 +431,6 @@ export const fetchTimeAndSales = async (period, series) => {
       }
 
       const prevDayTrades = await getPrevDayTrades(series, startOfDay);
-
-      console.log("prevDayTrades.length: ", prevDayTrades.length);
 
       if (goodVolTrades.length > 0 && prevDayTrades.length > 0) {
         const prevDayTrades_goodVol = prevDayTrades.filter(
@@ -468,39 +446,22 @@ export const fetchTimeAndSales = async (period, series) => {
           close: (parseFloat(summary.close) - parseFloat(close)).toFixed(4),
           vwap: (parseFloat(summary.vwap) - parseFloat(vwap)).toFixed(4),
         };
-        console.log("change: ", change);
+
         summary.change = { ...change };
       }
-
-      console.log("summary: ", summary);
     }
 
+    console.log("summary: ", summary);
     return { array, summary };
-
-    // sample return object (summary)
-    // {
-    //   series: '1066',
-    //   summary: {
-    //     trades: 20,
-    //     vwap: '5.174',
-    //     totalVol: '1098.00',
-    //     open: '5.150',
-    //     high: '5.200',
-    //     low: '5.140',
-    //     close: '5.200',
-    //     change: [Object]
-    //   }
-    // }
   } catch (err) {
     return err;
   }
 };
 
 export const fetchSummary = async (period) => {
-  console.log("in fetchSummary");
+  console.log("in fetchSummary: ");
   const isins = await getAllIsins({ watchlist_only: true });
   const series_array = isins.map((isin) => isin.series);
-  console.log("series_array: ", series_array);
   let summaries = [];
 
   if (

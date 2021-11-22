@@ -156,12 +156,15 @@ export const getVWAP = (array) => {
   return { vwap, totalVol };
 };
 
-export const getOHLC = (array) => {
-  console.log("in getOHLC");
+// Only get's OHLC of good vol trades
+export const getOHLC = (array_input) => {
+  console.log("in getOHLC: ");
   let open = "no good vol";
   let high = "no good vol";
   let low = "no good vol";
   let close = "no good vol";
+
+  const array = array_input.filter((el) => el.lastDealtVol >= 50);
 
   const getOpenClose = (array) => {
     const sorted = array.sort((a, b) => {
@@ -186,9 +189,10 @@ export const getOHLC = (array) => {
   return { open, high, low, close };
 };
 
+//
 export const getPrevDayTrades = async (series, startingDate) => {
-  // find the most recent day
-  console.log("in getPrevDayTrades");
+  // find the most recent good vol trade prior to the starting day
+  console.log("in getPrevDayTrades: ");
   const mostRecentPrev = await Update.findOne({
     series,
     type: "last_dealt",
@@ -198,25 +202,24 @@ export const getPrevDayTrades = async (series, startingDate) => {
     },
   }).sort({ time: "desc" });
 
+  console.log("mostRecentPrev: ", mostRecentPrev);
+
   let startOfDay = null;
   let endOfDay = null;
 
-  console.log("mostRecentPrev: ", mostRecentPrev);
-
+  // once found, use that trade's time to determine the start and end of that day
   if (mostRecentPrev) {
     startOfDay = dayjs(mostRecentPrev.time).startOf("day").toDate();
-    console.log("startOfDay: ", startOfDay);
+
     endOfDay = dayjs(startOfDay).add(1, "day").toDate();
-    console.log("endOfDay: ", endOfDay);
   } else {
     return [];
   }
 
-  // get the trades of that day
+  // use the start and end of that day to get the trades of that day
   const prevDayDeals = await Update.find({
     series,
     type: "last_dealt",
-    lastDealtVol: { $gte: 50 },
     time: {
       $gte: startOfDay,
       $lt: endOfDay,

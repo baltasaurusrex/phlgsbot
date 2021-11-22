@@ -464,16 +464,23 @@ export const fetchHistoricalPricesLogic = async (userProfile, match) => {
   };
 
   const renderSummary = (summary) => {
-    let bpsChange = (
-      (parseFloat(summary.close) - parseFloat(summary.open)) *
-      100
-    ).toFixed(2);
+    let close_change = null;
 
-    bpsChange = bpsChange > 0 ? "+" + bpsChange : bpsChange;
+    if (!summary.change) {
+      close_change = (
+        (parseFloat(summary.close) - parseFloat(summary.open)) *
+        100
+      ).toFixed(2);
+    } else {
+      console.log("has summary.change: ", summary.change);
+      close_change = (parseFloat(summary.change.close) * 100).toFixed(2);
+    }
+
+    close_change = close_change > 0 ? "+" + close_change : close_change;
     const startPd = dayjs(summary.startOfPeriod).format("MM/DD");
     const endPd = dayjs(summary.endOfPeriod).format("MM/DD");
     if (summary.trades > 0) {
-      return `*Summary for ${startPd} - ${endPd}:* \nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close} (${bpsChange} bps)\nVWAP: ${summary.vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
+      return `*Summary for ${startPd} - ${endPd}:* \nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close} (${close_change} bps)\nVWAP: ${summary.vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
     } else {
       return `*Summary for ${startPd} - ${endPd}*:\nTrades: ${summary.trades}`;
     }
@@ -601,22 +608,36 @@ export const fetchSummariesLogic = async (userProfile, match) => {
 
   const renderSummary = (summaryInput) => {
     const { series, summary } = summaryInput;
+    console.log("in renderSummary");
+    console.log("series: ", series);
 
     let priceDataString = null;
 
     if (summary.trades > 0) {
-      let change =
-        parseFloat(summary.close) * 100 - parseFloat(summary.open) * 100;
+      console.log("summary: ", summary);
+      console.log("summary.change: ", summary.change);
+      let change_close = null;
 
-      if (Number.isNaN(change)) {
-        change = ``;
+      if (summary.change) {
+        change_close = parseFloat(summary.change.close) * 100;
       } else {
-        change = `(${
-          change > 0 ? "+" + change.toFixed(2) : change.toFixed(2)
+        change_close =
+          parseFloat(summary.close) * 100 - parseFloat(summary.open) * 100;
+      }
+
+      console.log("change_close: ", change_close);
+
+      if (Number.isNaN(change_close)) {
+        change_close = ``;
+      } else {
+        change_close = `(${
+          change_close > 0
+            ? "+" + change_close.toFixed(2)
+            : change_close.toFixed(2)
         } bps)`;
       }
 
-      priceDataString = `Open: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close} ${change}\nVWAP: ${summary.vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
+      priceDataString = `Open: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close} ${change_close}\nVWAP: ${summary.vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
     } else {
       priceDataString = `No trades`;
     }

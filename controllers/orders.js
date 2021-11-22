@@ -55,14 +55,12 @@ export const fetchOrders = async (series, rate, desk, broker) => {
       time: { $gte: startOfToday },
     };
 
-    rate !== undefined ? (mongoQuery.rate = rate) : null;
-    series !== undefined
+    rate ? (mongoQuery.rate = rate) : null;
+    series
       ? (mongoQuery.series = { $regex: `${series}`, $options: "gi" })
       : null;
-    desk !== undefined
-      ? (mongoQuery.forDesk = { $regex: `${desk}`, $options: "gi" })
-      : null;
-    broker !== undefined ? (mongoQuery.broker = broker) : null;
+    desk ? (mongoQuery.forDesk = { $regex: `${desk}`, $options: "gi" }) : null;
+    broker ? (mongoQuery.broker = broker) : null;
 
     console.log("mongoQuery: ", mongoQuery);
     const orders = await Order.find(mongoQuery);
