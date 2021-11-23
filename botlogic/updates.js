@@ -602,7 +602,17 @@ export const fetchTimeAndSalesLogic = async (userProfile, match) => {
 
 export const fetchSummariesLogic = async (userProfile, match) => {
   console.log("match: ", match);
-  const [full, period] = match;
+  const [full, period, beg, end] = match;
+
+  // if there's an end, test it here first
+  if (end) {
+    bot.sendMessage(userProfile, [
+      new Message.Text(`Beg: ${beg}, End: ${end}`),
+    ]);
+    return;
+  }
+
+  // else (even if its beg) just do it normally like before
   const { summaries } = await fetchSummary(period);
   console.log("summaries: ", summaries);
 

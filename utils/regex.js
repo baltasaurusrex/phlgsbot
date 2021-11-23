@@ -45,9 +45,17 @@ export const getFetchTimeAndSalesRegex = (validSeries) =>
     "i"
   );
 
+const arbitrary_dates = `(?:\\s((?:1[0-2]|0?[1-9])\\/(?:3[01]|[12][0-9]|0?[1-9])(?:\\/(?:[0-9]{2})?[0-9]{2})?))(?:-((?:1[0-2]|0?[1-9])\\/(?:3[01]|[12][0-9]|0?[1-9])(?:\\/(?:[0-9]{2})?[0-9]{2})?))?`;
+
+// export const getFetchSummariesRegex = () =>
+//   new RegExp(
+//     `^(?:summary)(?:\\s+)?(\\d\\d\\/\\d\\d|weekly|1 week|2 weeks|last week|last 2 weeks)?(?:\\s+)?$`,
+//     "i"
+//   );
+
 export const getFetchSummariesRegex = () =>
   new RegExp(
-    `^(?:summary)(?:\\s+)?(\\d\\d\\/\\d\\d|weekly|1 week|2 weeks|last week|last 2 weeks)?(?:\\s+)?$`,
+    `^(?:summary)(?:\\s+)(((?:1[0-2]|0?[1-9])\\/(?:3[01]|[12][0-9]|0?[1-9])(?:\\/(?:[0-9]{2})?[0-9]{2})?)(?:-((?:1[0-2]|0?[1-9])\\/(?:3[01]|[12][0-9]|0?[1-9])(?:\\/(?:[0-9]{2})?[0-9]{2})?))?|weekly|1 week|2 weeks|last week|last 2 weeks)?(?:\\s*)$`,
     "i"
   );
 
