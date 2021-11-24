@@ -64,8 +64,15 @@ export const pricesUpdateLogic = async (userProfile, match, user) => {
     offer = formatPrice(offerInput);
   }
 
+  // if there is no bid, bid_vol = null
+  // if there is a bid, use vol1, or if n/a, default of 50
   const bid_vol = bid ? (vol1 ? Number.parseFloat(vol1) : 50) : null;
 
+  // if there is no offer, offer_vol = null
+  // if there is an offer, and there is a bid, use vol2, or if n/a, use default of 50
+  // // 577 4100 4000
+  // if there is an offer, and there is no bid, use vol1, or if n/a, use default of 50
+  // // 577 4075 offer
   const offer_vol = offer
     ? bid
       ? vol2
