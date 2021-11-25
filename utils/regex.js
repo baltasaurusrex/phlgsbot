@@ -29,16 +29,16 @@ export const getAdminDealtUpdateRegex = (validSeries) => {
 export const getFetchPriceInfoRegex = (validSeries) =>
   new RegExp(`^(?:(${validSeries.join("|")})\\s*?)+$`, "i");
 
+// has two capturing groups (Group 1)-(Group 2), so when incorporating this into other regex's, adjust accordingly
+const arbitrary_dates = `((?:1[0-2]|0?[1-9])\\/(?:3[01]|[12][0-9]|0?[1-9])(?:\\/(?:[0-9]{2})?[0-9]{2})?)(?:-((?:1[0-2]|0?[1-9])\\/(?:3[01]|[12][0-9]|0?[1-9])(?:\\/(?:[0-9]{2})?[0-9]{2})?))?`;
+
 export const getFetchHistoricalPricesRegex = (validSeries) =>
   new RegExp(
     `^(${validSeries.join(
       "|"
-    )})(?:\\s+)?(weekly|1 week|2 weeks|1 month|last week|last 2 weeks)(?:\\s+)?$`,
+    )})(?:\\s+)?(${arbitrary_dates}|weekly|1 week|2 weeks|1 month|last week|last 2 weeks)(?:\\s+)?$`,
     "i"
   );
-
-// has two capturing groups (Group 1)-(Group 2), so when incorporating this into other regex's, adjust accordingly
-const arbitrary_dates = `((?:1[0-2]|0?[1-9])\\/(?:3[01]|[12][0-9]|0?[1-9])(?:\\/(?:[0-9]{2})?[0-9]{2})?)(?:-((?:1[0-2]|0?[1-9])\\/(?:3[01]|[12][0-9]|0?[1-9])(?:\\/(?:[0-9]{2})?[0-9]{2})?))?`;
 
 export const getFetchTimeAndSalesRegex = (validSeries) =>
   new RegExp(

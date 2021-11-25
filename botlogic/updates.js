@@ -431,10 +431,30 @@ export const fetchPriceInfoLogic = async (userProfile, list) => {
   return;
 };
 
+const getDate = (dateInput) => {
+  try {
+    return dayjs(dateInput, ["MM/DD", "MM/DD/YY", "MM/DD/YYYY"]).format(
+      "DD-MM-YYYY"
+    );
+  } catch (err) {
+    return err;
+  }
+};
+
 export const fetchHistoricalPricesLogic = async (userProfile, match) => {
-  const [full, seriesInput, periodInput] = match;
+  const [full, seriesInput, periodInput, startPdInput, endPdInput] = match;
   const series = await getSeries(seriesInput);
+  const startPd = getDate(startPdInput);
+  const endPd = getDate(endPdInput);
+
   const period = periodInput.toLowerCase();
+
+  if (startPdInput) {
+    bot.sendMessage(userProfile, [
+      new Message.Text(`Testing: ${startPd} to ${endPd}`),
+    ]);
+    return;
+  }
   const { array, summary } = await fetchHistoricalPrices(series, period);
 
   bot.sendMessage(userProfile, [
