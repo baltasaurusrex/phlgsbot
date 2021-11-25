@@ -76,7 +76,7 @@ import {
 import { updateAdmins, updateUsers } from "./botlogic/broadcast.js";
 
 // SETTINGS
-const settings = { update_users: true };
+const settings = { update_users: false };
 
 // populateIsins();
 const time_and_sales_func = (res) => {
@@ -98,7 +98,7 @@ const time_and_sales_func = (res) => {
       );
   }
 };
-// uploadTimeAndSales("11-24-2021").then(time_and_sales_func);
+// uploadTimeAndSales("11-25-2021").then(time_and_sales_func);
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)
