@@ -191,33 +191,41 @@ export const dealtUpdateLogic = async (userProfile, match, user) => {
   const volume = volInput ? Number.parseFloat(volInput) : 50;
   console.log("volume: ", volume);
   const broker = brokerInput ? getBroker(brokerInput) : "MOSB";
-  const time =
-    timeString && timePeriod
-      ? formatTime(timeString, timePeriod)
-      : dayjs().format();
+  const brokers = getBrokers(brokerInput);
 
-  console.log("series: ", series);
-  console.log("action: ", action);
-  console.log("price: ", price);
-  console.log("broker: ", broker);
-  console.log("time: ", time);
+  let messages = await Promise.all(
+    brokers.map(async (broker) => {
+      const time =
+        timeString && timePeriod
+          ? formatTime(timeString, timePeriod)
+          : dayjs().format();
 
-  // Create the "last_dealt" update
-  const update = await createDealtUpdate({
-    series,
-    price,
-    action,
-    volume,
-    broker,
-    creator: user,
-    time,
-  });
+      console.log("series: ", series);
+      console.log("action: ", action);
+      console.log("price: ", price);
+      console.log("broker: ", broker);
+      console.log("time: ", time);
 
-  console.log("update: ", update);
+      // Create the "last_dealt" update
+      const update = await createDealtUpdate({
+        series,
+        price,
+        action,
+        volume,
+        broker,
+        creator: user,
+        time,
+      });
 
-  const formattedTime = dayjs(update.time).format("h:mm A");
+      console.log("update: ", update);
 
-  let message = `${series} was ${action} at ${price} for ${volume} Mn \n\non ${broker} at ${formattedTime}`;
+      const formattedTime = dayjs(update.time).format("h:mm A");
+
+      let message = `${series} was ${action} at ${price} for ${volume} Mn \n\non ${broker} at ${formattedTime}`;
+
+      return message;
+    })
+  );
 
   bot.sendMessage(userProfile, [new Message.Text(message)]);
 

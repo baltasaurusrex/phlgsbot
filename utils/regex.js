@@ -21,10 +21,13 @@ export const getAdminDealtUpdateRegex = (validSeries) => {
   return new RegExp(
     `^(${validSeries.join(
       "|"
-    )})\\s(?:\\s*)(given|lifted|taken|mapped)\\s(?:\\s*)(\\d+)(?:\\s*)(\\d+(?!(?:\\d{1,4})(?:am|pm)))?(?:\\s*)(?:\\s([pPaAtTgG]\\w*))?(?:\\s*)(?:(\\d{1,4})(am|pm))?(?:\\s*)$`,
+    )})(?:\\s+)(given|lifted|taken|mapped)(?:\\s+)(\\d*\\.?\\d*)(?:\\s*)(\\d*\\.?\\d*)?(?:\\s*)?(?:\\s((?![patg]*?([patg])\\6)[patg]*))?(?:\\s*)?(?:(\\d{1,4})(am|pm))?(?:\\s*)$`,
     "i"
   );
 };
+
+// with non repeating patg
+// ^(1061|577)(?:\s+)(given|lifted|taken|mapped)(?:\s+)(\d*\.?\d*)(?:\s*)(\d*\.?\d*)?(?:\s*)?(?:\s((?![patg]*?([patg])\6)[patg]*))?(?:\s*)?(?:(\d{1,4})(am|pm))?(?:\s*)$
 
 export const getFetchPriceInfoRegex = (validSeries) =>
   new RegExp(`^(?:(${validSeries.join("|")})\\s*?)+$`, "i");
