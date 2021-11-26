@@ -191,33 +191,41 @@ export const dealtUpdateLogic = async (userProfile, match, user) => {
   const volume = volInput ? Number.parseFloat(volInput) : 50;
   console.log("volume: ", volume);
   const broker = brokerInput ? getBroker(brokerInput) : "MOSB";
-  const time =
-    timeString && timePeriod
-      ? formatTime(timeString, timePeriod)
-      : dayjs().format();
+  const brokers = getBrokers(brokerInput);
 
-  console.log("series: ", series);
-  console.log("action: ", action);
-  console.log("price: ", price);
-  console.log("broker: ", broker);
-  console.log("time: ", time);
+  let messages = await Promise.all(
+    brokers.map(async (broker) => {
+      const time =
+        timeString && timePeriod
+          ? formatTime(timeString, timePeriod)
+          : dayjs().format();
 
-  // Create the "last_dealt" update
-  const update = await createDealtUpdate({
-    series,
-    price,
-    action,
-    volume,
-    broker,
-    creator: user,
-    time,
-  });
+      console.log("series: ", series);
+      console.log("action: ", action);
+      console.log("price: ", price);
+      console.log("broker: ", broker);
+      console.log("time: ", time);
 
-  console.log("update: ", update);
+      // Create the "last_dealt" update
+      const update = await createDealtUpdate({
+        series,
+        price,
+        action,
+        volume,
+        broker,
+        creator: user,
+        time,
+      });
 
-  const formattedTime = dayjs(update.time).format("h:mm A");
+      console.log("update: ", update);
 
-  let message = `${series} was ${action} at ${price} for ${volume} Mn \n\non ${broker} at ${formattedTime}`;
+      const formattedTime = dayjs(update.time).format("h:mm A");
+
+      let message = `${series} was ${action} at ${price} for ${volume} Mn \n\non ${broker} at ${formattedTime}`;
+
+      return message;
+    })
+  );
 
   bot.sendMessage(userProfile, [new Message.Text(message)]);
 
@@ -431,10 +439,30 @@ export const fetchPriceInfoLogic = async (userProfile, list) => {
   return;
 };
 
+const getDate = (dateInput) => {
+  try {
+    return dayjs(dateInput, ["MM/DD", "MM/DD/YY", "MM/DD/YYYY"]).format(
+      "DD-MM-YYYY"
+    );
+  } catch (err) {
+    return err;
+  }
+};
+
 export const fetchHistoricalPricesLogic = async (userProfile, match) => {
-  const [full, seriesInput, periodInput] = match;
+  const [full, seriesInput, periodInput, startPdInput, endPdInput] = match;
   const series = await getSeries(seriesInput);
+  const startPd = getDate(startPdInput);
+  const endPd = getDate(endPdInput);
+
   const period = periodInput.toLowerCase();
+
+  if (startPdInput) {
+    bot.sendMessage(userProfile, [
+      new Message.Text(`Testing: ${startPd} to ${endPd}`),
+    ]);
+    return;
+  }
   const { array, summary } = await fetchHistoricalPrices(series, period);
 
   bot.sendMessage(userProfile, [

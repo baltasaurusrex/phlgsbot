@@ -395,10 +395,12 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       console.log("text.match: ", text.match(dealtUpdateRegex));
       const match = text.match(dealtUpdateRegex);
 
-      const message = await dealtUpdateLogic(userProfile, match, user);
+      const messages = await dealtUpdateLogic(userProfile, match, user);
 
-      updateAdmins(message);
-      if (settings.update_users) updateUsers("prices", message);
+      for (const message of messages) {
+        updateAdmins(message);
+        if (settings.update_users) updateUsers("prices", message);
+      }
 
       return;
     }

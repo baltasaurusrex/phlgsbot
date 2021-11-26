@@ -21,24 +21,27 @@ export const getAdminDealtUpdateRegex = (validSeries) => {
   return new RegExp(
     `^(${validSeries.join(
       "|"
-    )})\\s(?:\\s*)(given|lifted|taken|mapped)\\s(?:\\s*)(\\d+)(?:\\s*)(\\d+(?!(?:\\d{1,4})(?:am|pm)))?(?:\\s*)(?:\\s([pPaAtTgG]\\w*))?(?:\\s*)(?:(\\d{1,4})(am|pm))?(?:\\s*)$`,
+    )})(?:\\s+)(given|lifted|taken|mapped)(?:\\s+)(\\d*\\.?\\d*)(?:\\s*)(\\d*\\.?\\d*)?(?:\\s*)?(?:\\s((?![patg]*?([patg])\\6)[patg]*))?(?:\\s*)?(?:(\\d{1,4})(am|pm))?(?:\\s*)$`,
     "i"
   );
 };
 
+// with non repeating patg
+// ^(1061|577)(?:\s+)(given|lifted|taken|mapped)(?:\s+)(\d*\.?\d*)(?:\s*)(\d*\.?\d*)?(?:\s*)?(?:\s((?![patg]*?([patg])\6)[patg]*))?(?:\s*)?(?:(\d{1,4})(am|pm))?(?:\s*)$
+
 export const getFetchPriceInfoRegex = (validSeries) =>
   new RegExp(`^(?:(${validSeries.join("|")})\\s*?)+$`, "i");
+
+// has two capturing groups (Group 1)-(Group 2), so when incorporating this into other regex's, adjust accordingly
+const arbitrary_dates = `((?:1[0-2]|0?[1-9])\\/(?:3[01]|[12][0-9]|0?[1-9])(?:\\/(?:[0-9]{2})?[0-9]{2})?)(?:-((?:1[0-2]|0?[1-9])\\/(?:3[01]|[12][0-9]|0?[1-9])(?:\\/(?:[0-9]{2})?[0-9]{2})?))?`;
 
 export const getFetchHistoricalPricesRegex = (validSeries) =>
   new RegExp(
     `^(${validSeries.join(
       "|"
-    )})(?:\\s+)?(weekly|1 week|2 weeks|1 month|last week|last 2 weeks)(?:\\s+)?$`,
+    )})(?:\\s+)?(${arbitrary_dates}|weekly|1 week|2 weeks|1 month|last week|last 2 weeks)(?:\\s+)?$`,
     "i"
   );
-
-// has two capturing groups (Group 1)-(Group 2), so when incorporating this into other regex's, adjust accordingly
-const arbitrary_dates = `((?:1[0-2]|0?[1-9])\\/(?:3[01]|[12][0-9]|0?[1-9])(?:\\/(?:[0-9]{2})?[0-9]{2})?)(?:-((?:1[0-2]|0?[1-9])\\/(?:3[01]|[12][0-9]|0?[1-9])(?:\\/(?:[0-9]{2})?[0-9]{2})?))?`;
 
 export const getFetchTimeAndSalesRegex = (validSeries) =>
   new RegExp(
