@@ -362,8 +362,15 @@ export const fetchHistoricalPrices = async (series, period) => {
   }
 };
 
-// Gets the most recent time and sales of that series for most recent trading day
-// for period, accepts: MM/DD or
+const getPeriod = (period) => {
+  // check if custom format (blank, weekly, last week)
+  // check if arbitrary format (MM/DD, MM/DD/YY, MM/DD/YYYY)
+  // return {start, end}
+};
+
+// Gets the time and sales data for that period (series can be specified
+// for period, accepts:
+// 1. formats in getDate() function: ["MM/DD", "MM/DD/YY", "MM/DD/YYYY"]
 export const fetchTimeAndSales = async (period, series) => {
   try {
     console.log("in fetchTimeAndSales: ");

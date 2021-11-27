@@ -25,6 +25,7 @@ import {
   getBroker,
   getBrokers,
   formatTime,
+  getDate,
 } from "../utils/updates.js";
 
 import {
@@ -223,11 +224,11 @@ export const dealtUpdateLogic = async (userProfile, match, user) => {
 
       let message = `${series} was ${action} at ${price} for ${volume} Mn \n\non ${broker} at ${formattedTime}`;
 
+      bot.sendMessage(userProfile, [new Message.Text(message)]);
+
       return message;
     })
   );
-
-  bot.sendMessage(userProfile, [new Message.Text(message)]);
 
   // Look for possible existing orders on that series, at that price, and on that broker (across all desks)
   const desk = undefined;
@@ -253,7 +254,7 @@ export const dealtUpdateLogic = async (userProfile, match, user) => {
     ]);
   }
 
-  return message;
+  return messages;
 };
 
 export const fetchPriceInfoLogic = async (userProfile, list) => {
@@ -437,16 +438,6 @@ export const fetchPriceInfoLogic = async (userProfile, list) => {
     ]);
   }
   return;
-};
-
-const getDate = (dateInput) => {
-  try {
-    return dayjs(dateInput, ["MM/DD", "MM/DD/YY", "MM/DD/YYYY"]).format(
-      "DD-MM-YYYY"
-    );
-  } catch (err) {
-    return err;
-  }
 };
 
 export const fetchHistoricalPricesLogic = async (userProfile, match) => {
