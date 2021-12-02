@@ -3,6 +3,16 @@ import CustomParseFormat from "dayjs/plugin/customParseFormat.js";
 dayjs.extend(CustomParseFormat);
 import Update from "../models/Update.js";
 
+export const getDate = (dateInput) => {
+  try {
+    return dayjs(dateInput, ["MM/DD", "MM/DD/YY", "MM/DD/YYYY"]).format(
+      "DD-MM-YYYY"
+    );
+  } catch (err) {
+    return err;
+  }
+};
+
 export const formatPrice = (price) => {
   try {
     // if no price is inputted, or price inputted is "na" or "/", means price is null

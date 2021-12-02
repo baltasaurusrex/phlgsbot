@@ -25,6 +25,7 @@ import {
   getBroker,
   getBrokers,
   formatTime,
+  getDate,
 } from "../utils/updates.js";
 
 import {
@@ -223,11 +224,11 @@ export const dealtUpdateLogic = async (userProfile, match, user) => {
 
       let message = `${series} was ${action} at ${price} for ${volume} Mn \n\non ${broker} at ${formattedTime}`;
 
+      bot.sendMessage(userProfile, [new Message.Text(message)]);
+
       return message;
     })
   );
-
-  bot.sendMessage(userProfile, [new Message.Text(message)]);
 
   // Look for possible existing orders on that series, at that price, and on that broker (across all desks)
   const desk = undefined;
@@ -253,7 +254,7 @@ export const dealtUpdateLogic = async (userProfile, match, user) => {
     ]);
   }
 
-  return message;
+  return messages;
 };
 
 export const fetchPriceInfoLogic = async (userProfile, list) => {
@@ -439,16 +440,6 @@ export const fetchPriceInfoLogic = async (userProfile, list) => {
   return;
 };
 
-const getDate = (dateInput) => {
-  try {
-    return dayjs(dateInput, ["MM/DD", "MM/DD/YY", "MM/DD/YYYY"]).format(
-      "DD-MM-YYYY"
-    );
-  } catch (err) {
-    return err;
-  }
-};
-
 export const fetchHistoricalPricesLogic = async (userProfile, match) => {
   const [full, seriesInput, periodInput, startPdInput, endPdInput] = match;
   const series = await getSeries(seriesInput);
@@ -457,12 +448,14 @@ export const fetchHistoricalPricesLogic = async (userProfile, match) => {
 
   const period = periodInput.toLowerCase();
 
-  if (startPdInput) {
-    bot.sendMessage(userProfile, [
-      new Message.Text(`Testing: ${startPd} to ${endPd}`),
-    ]);
-    return;
-  }
+  console.log("period: ", period);
+
+  // if (startPdInput) {
+  //   bot.sendMessage(userProfile, [
+  //     new Message.Text(`Testing: ${startPd} to ${endPd}`),
+  //   ]);
+  //   return;
+  // }
   const { array, summary } = await fetchHistoricalPrices(series, period);
 
   bot.sendMessage(userProfile, [
@@ -662,15 +655,20 @@ export const fetchSummariesLogic = async (userProfile, match) => {
       console.log("summary: ", summary);
       console.log("summary.change: ", summary.change);
       let change_close = null;
+      let change_vwap = null;
 
       if (summary.change) {
         change_close = parseFloat(summary.change.close) * 100;
+        change_vwap = parseFloat(summary.change.vwap) * 100;
       } else {
         change_close =
           parseFloat(summary.close) * 100 - parseFloat(summary.open) * 100;
+        change_vwap =
+          parseFloat(summary.vwap) * 100 - parseFloat(summary.open) * 100;
       }
 
       console.log("change_close: ", change_close);
+      console.log("change_vwap: ", change_vwap);
 
       if (Number.isNaN(change_close)) {
         change_close = ``;
@@ -682,7 +680,17 @@ export const fetchSummariesLogic = async (userProfile, match) => {
         } bps)`;
       }
 
-      priceDataString = `Open: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close} ${change_close}\nVWAP: ${summary.vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
+      if (Number.isNaN(change_vwap)) {
+        change_vwap = ``;
+      } else {
+        change_vwap = `(${
+          change_vwap > 0
+            ? "+" + change_vwap.toFixed(2)
+            : change_vwap.toFixed(2)
+        } bps)`;
+      }
+
+      priceDataString = `Open: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close} ${change_close}\nVWAP: ${summary.vwap} ${change_vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
     } else {
       priceDataString = `No trades`;
     }
