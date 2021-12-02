@@ -191,6 +191,7 @@ export const fetchPricingData = async (series) => {
 export const fetchHistoricalPrices = async (series, period) => {
   try {
     console.log("in fetchHistoricalPrices: ");
+    // period should either be a keyword (last week, last 2 weeks, weekly, 2 weeks, monthly, etc.) or an object with two properties {beg: Date, end: Date}
 
     // array of dayObj's
     let array = [];
