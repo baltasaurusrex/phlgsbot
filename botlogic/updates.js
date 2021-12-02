@@ -643,7 +643,7 @@ export const fetchSummariesLogic = async (userProfile, match) => {
   // else (even if its beg) just do it normally like before
   const { summaries, summary } = await fetchSummary(period);
   console.log("summaries: ", summaries);
-  console.log("summary: ", summary);
+  console.log("646 summary: ", summary);
 
   const renderSummary = (summaryInput) => {
     const { series, summary } = summaryInput;
