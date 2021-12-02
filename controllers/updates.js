@@ -502,7 +502,7 @@ export const fetchSummary = async (period) => {
 
     summary = await fetchTimeAndSales(period);
   }
-  return { period, summaries };
+  return { period, summaries, summary };
 };
 
 export const deleteLastDealts = async (date) => {
