@@ -471,6 +471,7 @@ export const fetchSummary = async (period) => {
   const isins = await getAllIsins({ watchlist_only: true });
   const series_array = isins.map((isin) => isin.series);
   let summaries = [];
+  let summary = {};
 
   if (
     ["weekly", "1 week", "2 weeks", "last week", "last 2 weeks"].includes(
@@ -491,12 +492,15 @@ export const fetchSummary = async (period) => {
     summaries = await Promise.all(
       series_array.map(async (series) => {
         const { summary } = await fetchTimeAndSales(period, series);
+        console.log("summary: ", summary);
         return {
           series,
           summary,
         };
       })
     );
+
+    summary = await fetchTimeAndSales(period);
   }
   return { period, summaries };
 };
