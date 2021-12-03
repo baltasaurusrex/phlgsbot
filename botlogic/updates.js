@@ -730,17 +730,20 @@ export const fetchSummariesLogic = async (userProfile, match) => {
 
   const render_total_summary = (summary) => {
     if (summary) {
-      return `\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
+      return `\nSummary: \nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
     } else {
       return "";
     }
   };
 
-  bot.sendMessage(userProfile, [
-    new Message.Text(
-      `${render_isin_summaries(array)}${render_total_summary(summary)}`
-    ),
-  ]);
+  const array_msg = new Message.Text(
+    `${render_isin_summaries(array)}${render_total_summary(summary)}`
+  );
+  const summary_msg = new Message.Text(
+    `Summary:\n${render_total_summary(summary)}`
+  );
+
+  bot.sendMessage(userProfile, [array_msg, summary_msg]);
 
   return;
 };
