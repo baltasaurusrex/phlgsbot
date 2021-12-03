@@ -730,7 +730,7 @@ export const fetchSummariesLogic = async (userProfile, match) => {
 
   const render_total_summary = (summary) => {
     if (summary) {
-      return `\nSummary: \nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
+      return `Total vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
     } else {
       return "";
     }
