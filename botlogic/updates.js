@@ -736,9 +736,7 @@ export const fetchSummariesLogic = async (userProfile, match) => {
     }
   };
 
-  const array_msg = new Message.Text(
-    `${render_isin_summaries(array)}${render_total_summary(summary)}`
-  );
+  const array_msg = new Message.Text(`${render_isin_summaries(array)}`);
   const summary_msg = new Message.Text(
     `Summary:\n${render_total_summary(summary)}`
   );
