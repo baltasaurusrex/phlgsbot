@@ -35,6 +35,8 @@ export const getFetchPriceInfoRegex = (validSeries) =>
 // has two capturing groups (Group 1)-(Group 2), so when incorporating this into other regex's, adjust accordingly
 const arbitrary_dates = `((?:1[0-2]|0?[1-9])\\/(?:3[01]|[12][0-9]|0?[1-9])(?:\\/(?:[0-9]{2})?[0-9]{2})?)(?:-((?:1[0-2]|0?[1-9])\\/(?:3[01]|[12][0-9]|0?[1-9])(?:\\/(?:[0-9]{2})?[0-9]{2})?))?`;
 
+export const getArbitraryDatesRegex = () => new RegExp(arbitrary_dates, "i");
+
 export const getFetchHistoricalPricesRegex = (validSeries) =>
   new RegExp(
     `^(${validSeries.join(

@@ -9,6 +9,7 @@ import {
   getOHLC,
   getPrevDayTrades,
 } from "../utils/updates.js";
+import { getArbitraryDatesRegex } from "../utils/regex.js";
 
 export const createPricesUpdate = async (data, options) => {
   console.log("in createPricesUpdate controller");
@@ -191,7 +192,7 @@ export const fetchPricingData = async (series) => {
 export const fetchHistoricalPrices = async (series, period) => {
   try {
     console.log("in fetchHistoricalPrices: ");
-    // period should either be a keyword (last week, last 2 weeks, weekly, 2 weeks, monthly, etc.) or an object with two properties {beg: Date, end: Date}
+    // period should either be a keyword (last week, last 2 weeks, weekly, 2 weeks, monthly, etc.) or a range like "MM/DD-MM/DD", which will be auto formatted into a beg and end date object
 
     // array of dayObj's
     let array = [];
@@ -364,9 +365,25 @@ export const fetchHistoricalPrices = async (series, period) => {
 };
 
 const getPeriod = (period) => {
-  // check if custom format (blank, weekly, last week)
-  // check if arbitrary format (MM/DD, MM/DD/YY, MM/DD/YYYY)
-  // return {start, end}
+  console.log("in getPeriod: ");
+  try {
+    const regex = getArbitraryDatesRegex();
+    const [full, beg, end] = period.match(regex);
+
+    const result = {
+      beg: null,
+      end: null,
+    };
+
+    if (!end) {
+      // means just a solo date
+      // get the start and end of that date
+    } else {
+      // get the start of the beg date, and the end of the end date
+    }
+  } catch (e) {
+    return e;
+  }
 };
 
 // Gets the time and sales data for that period (series can be specified
@@ -380,11 +397,17 @@ export const fetchTimeAndSales = async (period, series) => {
 
     let date = null;
 
-    if (period) {
-      date = dayjs(period, "MM/DD").toDate();
-    } else {
+    // getPeriod("11/01/2021-11/02");
+
+    if (!period) {
       date = dayjs().toDate();
+    } else {
+      // check if period matches the "MM/DD-MM/DD" regex
+
+      date = dayjs(period, "MM/DD").toDate();
     }
+
+    console.log("date: ", date);
 
     const startOfDay = dayjs(date).startOf("day").toDate();
     const endOfDay = dayjs(startOfDay).add(1, "day").toDate();
@@ -468,9 +491,10 @@ export const fetchTimeAndSales = async (period, series) => {
 
 export const fetchSummary = async (period) => {
   console.log("in fetchSummary: ");
+  console.log("period: ", period);
   const isins = await getAllIsins({ watchlist_only: true });
   const series_array = isins.map((isin) => isin.series);
-  let summaries = [];
+  let array = [];
   let summary = {};
 
   if (
@@ -478,7 +502,7 @@ export const fetchSummary = async (period) => {
       period
     )
   ) {
-    summaries = await Promise.all(
+    array = await Promise.all(
       series_array.map(async (series) => {
         const { summary } = await fetchHistoricalPrices(series, period);
         return {
@@ -489,10 +513,9 @@ export const fetchSummary = async (period) => {
     );
   } else {
     // else if blank or has a date, use fetchTimeAndSales (1 period only)
-    summaries = await Promise.all(
+    array = await Promise.all(
       series_array.map(async (series) => {
         const { summary } = await fetchTimeAndSales(period, series);
-        console.log("summary: ", summary);
         return {
           series,
           summary,
@@ -500,9 +523,10 @@ export const fetchSummary = async (period) => {
       })
     );
 
-    summary = await fetchTimeAndSales(period);
+    summary = (await fetchTimeAndSales(period)).summary;
   }
-  return { period, summaries, summary };
+
+  return { period, array, summary };
 };
 
 export const deleteLastDealts = async (date) => {

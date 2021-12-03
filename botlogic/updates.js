@@ -641,13 +641,12 @@ export const fetchSummariesLogic = async (userProfile, match) => {
   }
 
   // else (even if its beg) just do it normally like before
-  const { summaries, summary } = await fetchSummary(period);
-  console.log("summaries: ", summaries);
-  console.log("646 summary: ", summary);
+  const { array, summary } = await fetchSummary(period);
+  console.log("array: ", array);
 
-  const renderSummary = (summaryInput) => {
+  const render_isin_summary = (summaryInput) => {
     const { series, summary } = summaryInput;
-    console.log("in renderSummary");
+    console.log("in render_isin_summary");
     console.log("series: ", series);
 
     let priceDataString = null;
@@ -699,7 +698,7 @@ export const fetchSummariesLogic = async (userProfile, match) => {
     return `\n\n${series}:\n${priceDataString}`;
   };
 
-  const renderSummaries = (summaries) => {
+  const render_isin_summaries = (array) => {
     let periodIntro = null;
 
     if (
@@ -707,7 +706,7 @@ export const fetchSummariesLogic = async (userProfile, match) => {
         period
       )
     ) {
-      const { startOfPeriod, endOfPeriod } = summaries[0].summary;
+      const { startOfPeriod, endOfPeriod } = array[0].summary;
       const startPd = dayjs(startOfPeriod).format("MM/DD");
       const endPd = dayjs(endOfPeriod).format("MM/DD");
 
@@ -724,13 +723,23 @@ export const fetchSummariesLogic = async (userProfile, match) => {
 
       periodIntro = `Summary for ${dayOfWeek}, ${shortDate}: `;
     }
-    return `${periodIntro}${summaries
-      .map((summary) => renderSummary(summary))
+    return `${periodIntro}${array
+      .map((summary) => render_isin_summary(summary))
       .join("")}`;
   };
 
+  const render_total_summary = (summary) => {
+    if (summary) {
+      return `\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
+    } else {
+      return "";
+    }
+  };
+
   bot.sendMessage(userProfile, [
-    new Message.Text(`${renderSummaries(summaries)}`),
+    new Message.Text(
+      `${render_isin_summaries(array)}${render_total_summary(summary)}`
+    ),
   ]);
 
   return;

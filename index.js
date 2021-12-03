@@ -74,6 +74,7 @@ import {
   getOffPricesRegex,
 } from "./utils/regex.js";
 import { updateAdmins, updateUsers } from "./botlogic/broadcast.js";
+import { fetchSummary } from "./controllers/updates.js";
 
 // SETTINGS
 const settings = { update_users: false };
@@ -99,6 +100,9 @@ const time_and_sales_func = (res) => {
   }
 };
 // uploadTimeAndSales("12-02-2021").then(time_and_sales_func);
+
+// functions to test locally
+// fetchSummary("12/02").then((res) => console.log("fetchSummary res: ", res));
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)
