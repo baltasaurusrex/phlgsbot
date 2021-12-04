@@ -99,7 +99,7 @@ const time_and_sales_func = (res) => {
       );
   }
 };
-// uploadTimeAndSales("12-02-2021").then(time_and_sales_func);
+// uploadTimeAndSales("12-03-2021").then(time_and_sales_func);
 
 // functions to test locally
 // fetchSummary("12/02").then((res) => console.log("fetchSummary res: ", res));
