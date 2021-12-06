@@ -52,9 +52,9 @@ export const formatPrice = (price) => {
 export const getBrokers = (string) => {
   // loop through the string
   try {
-    if (!string) return "MOSB";
-
     let broker_array = [];
+
+    if (!string) broker_array.push("MOSB");
 
     for (let i = 0; i < string.length; i++) {
       let char = string.charAt(i);
