@@ -191,8 +191,10 @@ export const dealtUpdateLogic = async (userProfile, match, user) => {
   const price = formatPrice(priceInput);
   const volume = volInput ? Number.parseFloat(volInput) : 50;
   console.log("volume: ", volume);
-  const broker = brokerInput ? getBroker(brokerInput) : "MOSB";
+  // const broker = brokerInput ? getBroker(brokerInput) : "MOSB";
   const brokers = getBrokers(brokerInput);
+
+  console.log("brokers: ", brokers);
 
   let messages = await Promise.all(
     brokers.map(async (broker) => {
