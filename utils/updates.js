@@ -27,7 +27,7 @@ export const formatPrice = (price) => {
     console.log("proper_format: ", proper_format);
     if (!proper_format.test(price)) {
       console.log("!proper_format.test(price)");
-      throw "Price not formatted properly";
+      throw new Error("Price not formatted properly");
     }
 
     // if it's formatted properly:
@@ -51,14 +51,20 @@ export const formatPrice = (price) => {
 
 export const getBrokers = (string) => {
   // loop through the string
-  let broker_array = [];
+  try {
+    if (!string) return "MOSB";
 
-  for (let i = 0; i < string.length; i++) {
-    let char = string.charAt(i);
-    broker_array.push(getBroker(char));
+    let broker_array = [];
+
+    for (let i = 0; i < string.length; i++) {
+      let char = string.charAt(i);
+      broker_array.push(getBroker(char));
+    }
+
+    return broker_array;
+  } catch (err) {
+    return err;
   }
-
-  return broker_array;
 };
 
 export const getBroker = (code) => {
