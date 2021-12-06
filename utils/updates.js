@@ -54,7 +54,10 @@ export const getBrokers = (string) => {
   try {
     let broker_array = [];
 
-    if (!string) broker_array.push("MOSB");
+    if (!string) {
+      broker_array.push("MOSB");
+      return;
+    }
 
     for (let i = 0; i < string.length; i++) {
       let char = string.charAt(i);
