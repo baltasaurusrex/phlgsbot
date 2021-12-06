@@ -250,3 +250,17 @@ export const getPrevDayTrades = async (series, startingDate) => {
 
   return prevDayDeals;
 };
+
+export const getTotalVol = (array) => {
+  try {
+    if (!array) throw new Error("No array.");
+    console.log("array[0]: ", array[0]);
+    let sum = 0;
+    for (const deal of array) {
+      sum = sum + deal.lastDealtVol;
+    }
+    return sum.toFixed(2);
+  } catch (err) {
+    return err;
+  }
+};

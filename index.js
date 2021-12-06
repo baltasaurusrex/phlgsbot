@@ -58,6 +58,7 @@ import {
   getBroker,
   formatTime,
   getBrokers,
+  getTotalVol,
 } from "./utils/updates.js";
 
 import {
@@ -87,22 +88,17 @@ const time_and_sales_func = (res) => {
     console.log("last_deal: ", last_deal);
     console.log("last_deal.time: ", last_deal.time);
     const time = dayjs(last_deal.time).format("h:mm A");
+    const date = dayjs(last_deal.time).format("MM/DD/YY");
     console.log("time: ", time);
+    const total_vol = getTotalVol(deals.map((deal) => deal.value));
+    console.log("total_vol: ", total_vol);
     // add total vol to this
-    updateAdmins(
-      `Time and sales updated as of ${time}\n${deals.length} deals added`
-    );
-    if (settings.update_users)
-      updateUsers(
-        "time_and_sales",
-        `Time and sales updated as of ${time}\n${deals.length} deals added`
-      );
+    const spiel = `Time and sales updated as of:\n${time}, ${date}\n${deals.length} deals added\nTotal vol: ${total_vol} Mn`;
+    updateAdmins(spiel);
+    if (settings.update_users) updateUsers("time_and_sales", spiel);
   }
 };
-uploadTimeAndSales("12-06-2021").then(time_and_sales_func);
-
-// functions to test locally
-// fetchSummary("12/02").then((res) => console.log("fetchSummary res: ", res));
+// uploadTimeAndSales("12-06-2021").then(time_and_sales_func);
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)
