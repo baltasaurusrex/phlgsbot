@@ -189,9 +189,23 @@ export const fetchPricingData = async (series) => {
   }
 };
 
+export const validate_period = async (period) => {
+  try {
+    if (!period) throw new Error("No period was supplied.");
+  } catch (err) {
+    return err;
+  }
+};
+
 export const fetchHistoricalPrices = async (series, period) => {
   try {
+    // validate the series
+    if (!series) throw new Error("A series must be supplied.");
+    // validate the period
+
     console.log("in fetchHistoricalPrices: ");
+    console.log("series: ", series);
+    console.log("period: ", period);
     // period should either be a keyword (last week, last 2 weeks, weekly, 2 weeks, monthly, etc.) or a range like "MM/DD-MM/DD", which will be auto formatted into a beg and end date object
 
     // array of dayObj's
