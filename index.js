@@ -75,7 +75,7 @@ import {
   getOffPricesRegex,
 } from "./utils/regex.js";
 import { updateAdmins, updateUsers } from "./botlogic/broadcast.js";
-import { fetchSummary } from "./controllers/updates.js";
+import { fetchHistoricalPrices, fetchSummary } from "./controllers/updates.js";
 
 // SETTINGS
 const settings = { update_users: false };
@@ -697,6 +697,8 @@ mongoose
   })
   .then(() => console.log("Now connected to MongoDB"))
   .catch((error) => console.log(error));
+
+fetchHistoricalPrices("311", "weekly").then((res) => console.log(res));
 
 app.listen(port, async () => {
   // CHANGE THIS WHEN TESTING LOCALLY/ON HEROKU

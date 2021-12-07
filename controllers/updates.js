@@ -215,41 +215,99 @@ export const fetchHistoricalPrices = async (series, period) => {
     const allTrades = [];
     let summary = {};
 
-    let startOfToday = null;
+    let today = null;
 
     if (period === "last week" || period === "last 2 weeks") {
-      let sunday = dayjs().day(0).startOf("day");
-      startOfToday = sunday.subtract(2, "days").toDate();
+      let sunday = dayjs().day(0).startOf("day").toDate();
+      today = dayjs(sunday).subtract(2, "days").toDate();
     } else {
-      startOfToday = dayjs().startOf("day").toDate();
+      today = dayjs().startOf("day").toDate();
     }
 
-    let daysLimit = null;
+    // end_date is the beginning of the last day of the series
+    const end_date = dayjs(today).startOf("day").toDate();
+
+    // start_date is the beginning of the first day of the series
+    let start_date = null;
 
     if (["weekly", "1 week"].includes(period)) {
-      daysLimit = 7;
+      start_date = dayjs(end_date).subtract(7, "days").toDate();
     } else if (period === "2 weeks") {
-      daysLimit = 14;
+      start_date = dayjs(end_date).subtract(14, "days").toDate();
     } else if (["1 month", "monthly"].includes(period)) {
-      daysLimit = 30;
+      start_date = dayjs(end_date).subtract(30, "days").toDate();
     } else if (period === "last week") {
-      daysLimit = 4;
+      start_date = dayjs(end_date).subtract(4, "days").toDate();
     } else if (period === "last 2 weeks") {
-      daysLimit = 4 + 7;
+      start_date = dayjs(end_date)
+        .subtract(4 + 7, "days")
+        .toDate();
     }
 
-    const endOfPeriod = dayjs(startOfToday).startOf("day").toDate();
-    const startOfPeriod = dayjs(endOfPeriod)
-      .subtract(daysLimit, "days")
-      .toDate();
+    for (
+      let pointer_date = end_date;
+      pointer_date >= start_date;
+      pointer_date = dayjs(pointer_date).subtract(1, "days").toDate()
+    ) {
+      console.log("end_date: ", end_date);
+      console.log("pointer_date: ", pointer_date);
+      console.log("start_date: ", start_date);
+      const day_of_week = dayjs(pointer_date).format("ddd");
+      const day_end = dayjs(pointer_date).add(1, "days").toDate();
+      const is_weekend = ["Sun", "Sat"].includes(day_of_week);
+      console.log("day_of_week: ", day_of_week);
+      console.log("is_weekend: ", is_weekend);
+      console.log("day_end: ", day_end);
+      if (is_weekend) continue;
+
+      let day_obj = { date: pointer_date, day: day_of_week };
+
+      const pointer_date_deals = await Update.find({
+        series,
+        type: "last_dealt",
+        lastDealtVol: { $gte: 50 },
+        time: {
+          $gte: pointer_date,
+          $lt: day_end,
+        },
+      });
+
+      const trades = pointer_date_deals.length;
+
+      if (trades > 0) {
+        allTrades.push(...pointer_date_deals);
+        const { vwap, totalVol } = getVWAP(pointer_date_deals);
+        const { open, high, low, close } = getOHLC(pointer_date_deals);
+
+        day_obj = {
+          ...day_obj,
+          open,
+          high,
+          low,
+          close,
+          vwap,
+          totalVol,
+          trades,
+        };
+      } else {
+        day_obj = {
+          ...day_obj,
+          trades,
+        };
+      }
+
+      array.push(day_obj);
+    }
+
+    return "test end";
 
     // create first run of dayObj's (OHLC, vwap, totalVol, trades)
     for (let daysAgo = 0; daysAgo <= daysLimit; daysAgo++) {
-      const date = dayjs(startOfToday).subtract(daysAgo, "days").toDate();
+      const date = dayjs(today).subtract(daysAgo, "days").toDate();
 
       const dayOfTheWeek = dayjs(date).day();
 
-      const daysEnd = dayjs(startOfToday)
+      const daysEnd = dayjs(today)
         .subtract(daysAgo - 1, "days")
         .toDate();
 
@@ -343,8 +401,8 @@ export const fetchHistoricalPrices = async (series, period) => {
     );
 
     summary.trades = allTrades.length;
-    summary.endOfPeriod = endOfPeriod;
-    summary.startOfPeriod = startOfPeriod;
+    summary.endOfPeriod = end_date;
+    summary.startOfPeriod = start_date;
 
     if (allTrades.length > 0) {
       summary.vwap = getVWAP(allTrades).vwap;
