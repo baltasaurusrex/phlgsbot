@@ -75,7 +75,7 @@ import {
   getOffPricesRegex,
 } from "./utils/regex.js";
 import { updateAdmins, updateUsers } from "./botlogic/broadcast.js";
-import { fetchSummary } from "./controllers/updates.js";
+import { fetchHistoricalPrices, fetchSummary } from "./controllers/updates.js";
 
 // SETTINGS
 const settings = { update_users: false };
@@ -690,6 +690,10 @@ app.get("/", (req, res) => {
 // CHANGE THIS WHEN TESTING LOCALLY/ON HEROKU
 const connection = process.env.MONGODB_ATLAS;
 
+// mongodb+srv://baltiearaneta:mongoBaltie123@cluster0.c7tdl.mongodb.net/bpi-app?retryWrites=true&w=majority
+
+console.log("connection: ", connection);
+
 mongoose
   .connect(connection, {
     useNewUrlParser: true,
@@ -697,6 +701,8 @@ mongoose
   })
   .then(() => console.log("Now connected to MongoDB"))
   .catch((error) => console.log(error));
+
+fetchHistoricalPrices("311", "weekly").then((res) => console.log(res));
 
 app.listen(port, async () => {
   // CHANGE THIS WHEN TESTING LOCALLY/ON HEROKU
