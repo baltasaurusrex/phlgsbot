@@ -197,11 +197,13 @@ export const validate_period = async (period) => {
   }
 };
 
-export const fetchHistoricalPrices = async (series, period) => {
+export const fetchHistoricalPrices = async (series_input, period) => {
   try {
     // validate the series
     if (!series) throw new Error("A series must be supplied.");
     // validate the period
+
+    const series = await getSeries(series_input);
 
     console.log("in fetchHistoricalPrices: ");
     console.log("series: ", series);
