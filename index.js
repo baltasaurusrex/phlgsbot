@@ -700,7 +700,7 @@ mongoose
   .then(() => console.log("Now connected to MongoDB"))
   .catch((error) => console.log(error));
 
-fetchHistoricalPrices("311", "weekly").then((res) => console.log(res));
+fetchHistoricalPrices("514", "weekly").then((res) => console.log(res));
 
 app.listen(port, async () => {
   // CHANGE THIS WHEN TESTING LOCALLY/ON HEROKU

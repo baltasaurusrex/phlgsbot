@@ -199,11 +199,10 @@ export const validate_period = async (period) => {
 
 export const fetchHistoricalPrices = async (series_input, period) => {
   try {
+    const series = await getSeries(series_input);
     // validate the series
     if (!series) throw new Error("A series must be supplied.");
     // validate the period
-
-    const series = await getSeries(series_input);
 
     console.log("in fetchHistoricalPrices: ");
     console.log("series: ", series);
@@ -359,7 +358,7 @@ export const fetchHistoricalPrices = async (series_input, period) => {
       summary.low = getOHLC(all_trades).low;
       summary.close = getOHLC(all_trades).close;
 
-      const prev_day_trades = await getPrevDayTrades(series, startOfPeriod);
+      const prev_day_trades = await getPrevDayTrades(series, start_date);
       const good_vol = prev_day_trades.filter((el) => el.lastDealtVol >= 50);
       const { vwap: vwap_prev } = getVWAP(good_vol);
       const { close: close_prev } = getOHLC(good_vol);
