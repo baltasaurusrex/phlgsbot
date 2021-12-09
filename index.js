@@ -13,6 +13,8 @@ dayjs.extend(RelativeTime);
 import dotenv from "dotenv";
 dotenv.config();
 
+console.log("env: ", process.env);
+
 export const bot = new Bot({
   authToken: process.env.AUTH_TOKEN,
   name: "PHL GS Bot",
