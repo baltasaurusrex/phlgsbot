@@ -197,8 +197,9 @@ export const validate_period = async (period) => {
   }
 };
 
-export const fetchHistoricalPrices = async (series, period) => {
+export const fetchHistoricalPrices = async (series_input, period) => {
   try {
+    const series = await getSeries(series_input);
     // validate the series
     if (!series) throw new Error("A series must be supplied.");
     // validate the period
@@ -212,93 +213,96 @@ export const fetchHistoricalPrices = async (series, period) => {
     let array = [];
 
     // for period summary
-    const allTrades = [];
+    const all_trades = [];
     let summary = {};
 
-    let startOfToday = null;
+    let today = null;
 
     if (period === "last week" || period === "last 2 weeks") {
-      let sunday = dayjs().day(0).startOf("day");
-      startOfToday = sunday.subtract(2, "days").toDate();
+      let sunday = dayjs().day(0).startOf("day").toDate();
+      today = dayjs(sunday).subtract(2, "days").toDate();
     } else {
-      startOfToday = dayjs().startOf("day").toDate();
+      today = dayjs().startOf("day").toDate();
     }
 
-    let daysLimit = null;
+    // end_date is the beginning of the last day of the series
+    const end_date = dayjs(today).startOf("day").toDate();
+
+    // start_date is the beginning of the first day of the series
+    let start_date = null;
 
     if (["weekly", "1 week"].includes(period)) {
-      daysLimit = 7;
+      start_date = dayjs(end_date).subtract(7, "days").toDate();
     } else if (period === "2 weeks") {
-      daysLimit = 14;
+      start_date = dayjs(end_date).subtract(14, "days").toDate();
     } else if (["1 month", "monthly"].includes(period)) {
-      daysLimit = 30;
+      start_date = dayjs(end_date).subtract(30, "days").toDate();
     } else if (period === "last week") {
-      daysLimit = 4;
+      start_date = dayjs(end_date).subtract(4, "days").toDate();
     } else if (period === "last 2 weeks") {
-      daysLimit = 4 + 7;
+      start_date = dayjs(end_date)
+        .subtract(4 + 7, "days")
+        .toDate();
     }
 
-    const endOfPeriod = dayjs(startOfToday).startOf("day").toDate();
-    const startOfPeriod = dayjs(endOfPeriod)
-      .subtract(daysLimit, "days")
-      .toDate();
+    for (
+      let pointer_date = end_date;
+      pointer_date >= start_date;
+      pointer_date = dayjs(pointer_date).subtract(1, "days").toDate()
+    ) {
+      console.log("end_date: ", end_date);
+      console.log("pointer_date: ", pointer_date);
+      console.log("start_date: ", start_date);
+      const day_of_week = dayjs(pointer_date).format("ddd");
+      const day_end = dayjs(pointer_date).add(1, "days").toDate();
+      const is_weekend = ["Sun", "Sat"].includes(day_of_week);
+      console.log("day_of_week: ", day_of_week);
+      console.log("is_weekend: ", is_weekend);
+      console.log("day_end: ", day_end);
+      if (is_weekend) continue;
 
-    // create first run of dayObj's (OHLC, vwap, totalVol, trades)
-    for (let daysAgo = 0; daysAgo <= daysLimit; daysAgo++) {
-      const date = dayjs(startOfToday).subtract(daysAgo, "days").toDate();
+      let day_obj = { date: pointer_date, day: day_of_week };
 
-      const dayOfTheWeek = dayjs(date).day();
+      const pointer_date_deals = await Update.find({
+        series,
+        type: "last_dealt",
+        lastDealtVol: { $gte: 50 },
+        time: {
+          $gte: pointer_date,
+          $lt: day_end,
+        },
+      });
 
-      const daysEnd = dayjs(startOfToday)
-        .subtract(daysAgo - 1, "days")
-        .toDate();
+      const trades = pointer_date_deals.length;
 
-      const weekend = [0, 6].includes(dayOfTheWeek);
+      if (trades > 0) {
+        all_trades.push(...pointer_date_deals);
+        const { vwap, totalVol } = getVWAP(pointer_date_deals);
+        const { open, high, low, close } = getOHLC(pointer_date_deals);
 
-      let dayObj = { date, day: dayOfTheWeek };
-
-      if (!weekend) {
-        const dealsThatDay = await Update.find({
-          series,
-          type: "last_dealt",
-          lastDealtVol: { $gte: 50 },
-          time: {
-            $gte: date,
-            $lt: daysEnd,
-          },
-        });
-
-        const trades = dealsThatDay.length;
-
-        if (trades > 0) {
-          allTrades.push(...dealsThatDay);
-          const { vwap, totalVol } = getVWAP(dealsThatDay);
-          const { open, high, low, close } = getOHLC(dealsThatDay);
-
-          dayObj = {
-            ...dayObj,
-            open,
-            high,
-            low,
-            close,
-            vwap,
-            totalVol,
-            trades,
-          };
-        } else {
-          dayObj = {
-            ...dayObj,
-            trades,
-          };
-        }
-
-        array.push(dayObj);
+        day_obj = {
+          ...day_obj,
+          open,
+          high,
+          low,
+          close,
+          vwap,
+          totalVol,
+          trades,
+        };
+      } else {
+        day_obj = {
+          ...day_obj,
+          trades,
+        };
       }
+
+      array.push(day_obj);
     }
 
     // adding D-o-D change objects to the dayObj's
-    const arrayWithChange = await Promise.all(
-      array.map(async (dayObj, i, array) => {
+    const array_with_change = await Promise.all(
+      array.map(async (day_obj, i, array) => {
         let change = {
           close: null,
           vwap: null,
@@ -306,14 +310,14 @@ export const fetchHistoricalPrices = async (series, period) => {
 
         // loop through the rest until you find an element with trades > 0
         for (let j = i + 1; j < array.length; j++) {
-          let prevDayObj = array[j];
-          if (prevDayObj.trades > 0) {
+          let prev_day_obj = array[j];
+          if (prev_day_obj.trades > 0) {
             change = {
               close: (
-                parseFloat(dayObj.close) - parseFloat(prevDayObj.close)
+                parseFloat(day_obj.close) - parseFloat(prev_day_obj.close)
               ).toFixed(4),
               vwap: (
-                parseFloat(dayObj.vwap) - parseFloat(prevDayObj.vwap)
+                parseFloat(day_obj.vwap) - parseFloat(prev_day_obj.vwap)
               ).toFixed(4),
             };
             break;
@@ -323,43 +327,41 @@ export const fetchHistoricalPrices = async (series, period) => {
         }
 
         // if after that, it still has no change object, then just query it from mongodb
-        if (dayObj.trades > 0 && !change.close && !change.vwap) {
-          const startDate = dayjs(dayObj.date).startOf("day").toDate();
-          const prevDayDeals = await getPrevDayTrades(series, startDate);
+        if (day_obj.trades > 0 && !change.close && !change.vwap) {
+          const start_date = dayjs(day_obj.date).startOf("day").toDate();
+          const prev_day_deals = await getPrevDayTrades(series, start_date);
 
-          const { vwap } = getVWAP(prevDayDeals);
-          const { close } = getOHLC(prevDayDeals);
+          const { vwap } = getVWAP(prev_day_deals);
+          const { close } = getOHLC(prev_day_deals);
           change = {
-            close: (parseFloat(dayObj.close) - parseFloat(close)).toFixed(4),
-            vwap: (parseFloat(dayObj.vwap) - parseFloat(vwap)).toFixed(4),
+            close: (parseFloat(day_obj.close) - parseFloat(close)).toFixed(4),
+            vwap: (parseFloat(day_obj.vwap) - parseFloat(vwap)).toFixed(4),
           };
         }
 
         return {
-          ...dayObj,
+          ...day_obj,
           change,
         };
       })
     );
 
-    summary.trades = allTrades.length;
-    summary.endOfPeriod = endOfPeriod;
-    summary.startOfPeriod = startOfPeriod;
+    summary.trades = all_trades.length;
+    summary.endOfPeriod = end_date;
+    summary.startOfPeriod = start_date;
 
-    if (allTrades.length > 0) {
-      summary.vwap = getVWAP(allTrades).vwap;
-      summary.totalVol = getVWAP(allTrades).totalVol;
-      summary.open = getOHLC(allTrades).open;
-      summary.high = getOHLC(allTrades).high;
-      summary.low = getOHLC(allTrades).low;
-      summary.close = getOHLC(allTrades).close;
+    if (all_trades.length > 0) {
+      summary.vwap = getVWAP(all_trades).vwap;
+      summary.totalVol = getVWAP(all_trades).totalVol;
+      summary.open = getOHLC(all_trades).open;
+      summary.high = getOHLC(all_trades).high;
+      summary.low = getOHLC(all_trades).low;
+      summary.close = getOHLC(all_trades).close;
 
-      const prevDayTrades = await getPrevDayTrades(series, startOfPeriod);
-      const prevDayTrades_goodVol = prevDayTrades.filter(
-        (el) => el.lastDealtVol >= 50
-      );
-      const { vwap: vwap_prev } = getVWAP(prevDayTrades_goodVol);
-      const { close: close_prev } = getOHLC(prevDayTrades_goodVol);
+      const prev_day_trades = await getPrevDayTrades(series, start_date);
+      const good_vol = prev_day_trades.filter((el) => el.lastDealtVol >= 50);
+      const { vwap: vwap_prev } = getVWAP(good_vol);
+      const { close: close_prev } = getOHLC(good_vol);
 
       console.log("summary.close: ", summary.close);
       console.log("close_prev: ", close_prev);
@@ -372,7 +374,7 @@ export const fetchHistoricalPrices = async (series, period) => {
     }
 
     console.log("summary: ", summary);
-    return { array: arrayWithChange, summary };
+    return { array: array_with_change, summary };
   } catch (err) {
     return err;
   }
@@ -475,14 +477,12 @@ export const fetchTimeAndSales = async (period, series) => {
         summary.close = close;
       }
 
-      const prevDayTrades = await getPrevDayTrades(series, startOfDay);
+      const prev_day_trades = await getPrevDayTrades(series, startOfDay);
 
-      if (goodVolTrades.length > 0 && prevDayTrades.length > 0) {
-        const prevDayTrades_goodVol = prevDayTrades.filter(
-          (el) => el.lastDealtVol >= 50
-        );
-        const { vwap, totalVol } = getVWAP(prevDayTrades_goodVol);
-        const { open, high, low, close } = getOHLC(prevDayTrades_goodVol);
+      if (goodVolTrades.length > 0 && prev_day_trades.length > 0) {
+        const good_vol = prev_day_trades.filter((el) => el.lastDealtVol >= 50);
+        const { vwap, totalVol } = getVWAP(good_vol);
+        const { open, high, low, close } = getOHLC(good_vol);
         console.log("summary.vwap: ", summary.vwap);
         console.log("prev vwap: ", vwap);
         console.log("summary.close: ", summary.close);

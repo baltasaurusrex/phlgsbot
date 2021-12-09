@@ -7,11 +7,13 @@ const { Bot, Events, Message } = pkg;
 import dayjs from "dayjs";
 import CustomParseFormat from "dayjs/plugin/customParseFormat.js";
 dayjs.extend(CustomParseFormat);
-import RelativeTime from "dayjs/plugin/relativeTime.js";
+import RelativeTime from "sdayjs/plugin/relativeTime.js";
 dayjs.extend(RelativeTime);
 
 import dotenv from "dotenv";
 dotenv.config();
+
+console.log("env: ", process.env);
 
 export const bot = new Bot({
   authToken: process.env.AUTH_TOKEN,
@@ -702,7 +704,8 @@ mongoose
   .then(() => console.log("Now connected to MongoDB"))
   .catch((error) => console.log(error));
 
-// fetchHistoricalPrices("311", "weekly").then((res) => console.log(res));
+// for testing
+// fetchHistoricalPrices("514", "weekly").then((res) => console.log(res));
 
 app.listen(port, async () => {
   // CHANGE THIS WHEN TESTING LOCALLY/ON HEROKU
