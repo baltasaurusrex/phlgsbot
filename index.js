@@ -7,7 +7,7 @@ const { Bot, Events, Message } = pkg;
 import dayjs from "dayjs";
 import CustomParseFormat from "dayjs/plugin/customParseFormat.js";
 dayjs.extend(CustomParseFormat);
-import RelativeTime from "sdayjs/plugin/relativeTime.js";
+import RelativeTime from "dayjs/plugin/relativeTime.js";
 dayjs.extend(RelativeTime);
 
 import dotenv from "dotenv";
