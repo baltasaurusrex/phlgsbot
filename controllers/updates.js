@@ -197,16 +197,70 @@ export const validate_period = async (period) => {
   }
 };
 
-export const fetchHistoricalPrices = async (series_input, period) => {
+export const getPeriod = (period) => {
+  console.log("in getPeriod: ");
+  try {
+    const regex = getArbitraryDatesRegex();
+
+    let today = null;
+    let end_date = null;
+    let start_date = null;
+
+    if (period.match(regex)) {
+      const [full, beg, end] = period.match(regex);
+
+      // get the date format of the beg and end
+      const beg_date = dayjs(beg).toDate();
+
+      if (!end) {
+        // means just a solo date
+        // get the start and end of that date
+      } else {
+        // get the start of the beg date, and the end of the end date
+      }
+    } else {
+      if (period === "last week" || period === "last 2 weeks") {
+        let sunday = dayjs().day(0).startOf("day").toDate();
+        today = dayjs(sunday).subtract(2, "days").toDate();
+      } else {
+        today = dayjs().startOf("day").toDate();
+      }
+
+      end_date = dayjs(today).startOf("day").toDate();
+
+      if (["weekly", "1 week"].includes(period)) {
+        start_date = dayjs(end_date).subtract(7, "days").toDate();
+      } else if (period === "2 weeks") {
+        start_date = dayjs(end_date).subtract(14, "days").toDate();
+      } else if (["1 month", "monthly"].includes(period)) {
+        start_date = dayjs(end_date).subtract(30, "days").toDate();
+      } else if (period === "last week") {
+        start_date = dayjs(end_date).subtract(4, "days").toDate();
+      } else if (period === "last 2 weeks") {
+        start_date = dayjs(end_date)
+          .subtract(4 + 7, "days")
+          .toDate();
+      }
+    }
+
+    return { start_date, end_date };
+  } catch (e) {
+    return e;
+  }
+};
+
+export const fetchHistoricalPrices = async (series_input, period_input) => {
   try {
     const series = await getSeries(series_input);
+    const { start_date, end_date } = getPeriod(period_input);
     // validate the series
     if (!series) throw new Error("A series must be supplied.");
     // validate the period
 
     console.log("in fetchHistoricalPrices: ");
     console.log("series: ", series);
-    console.log("period: ", period);
+    console.log("start_date: ", start_date);
+    console.log("end_date: ", end_date);
     // period should either be a keyword (last week, last 2 weeks, weekly, 2 weeks, monthly, etc.) or a range like "MM/DD-MM/DD", which will be auto formatted into a beg and end date object
 
     // array of dayObj's
@@ -215,35 +269,6 @@ export const fetchHistoricalPrices = async (series_input, period) => {
     // for period summary
     const all_trades = [];
     let summary = {};
-
-    let today = null;
-
-    if (period === "last week" || period === "last 2 weeks") {
-      let sunday = dayjs().day(0).startOf("day").toDate();
-      today = dayjs(sunday).subtract(2, "days").toDate();
-    } else {
-      today = dayjs().startOf("day").toDate();
-    }
-
-    // end_date is the beginning of the last day of the series
-    const end_date = dayjs(today).startOf("day").toDate();
-
-    // start_date is the beginning of the first day of the series
-    let start_date = null;
-
-    if (["weekly", "1 week"].includes(period)) {
-      start_date = dayjs(end_date).subtract(7, "days").toDate();
-    } else if (period === "2 weeks") {
-      start_date = dayjs(end_date).subtract(14, "days").toDate();
-    } else if (["1 month", "monthly"].includes(period)) {
-      start_date = dayjs(end_date).subtract(30, "days").toDate();
-    } else if (period === "last week") {
-      start_date = dayjs(end_date).subtract(4, "days").toDate();
-    } else if (period === "last 2 weeks") {
-      start_date = dayjs(end_date)
-        .subtract(4 + 7, "days")
-        .toDate();
-    }
 
     for (
       let pointer_date = end_date;
@@ -377,28 +402,6 @@ export const fetchHistoricalPrices = async (series_input, period) => {
     return { array: array_with_change, summary };
   } catch (err) {
     return err;
-  }
-};
-
-const getPeriod = (period) => {
-  console.log("in getPeriod: ");
-  try {
-    const regex = getArbitraryDatesRegex();
-    const [full, beg, end] = period.match(regex);
-
-    const result = {
-      beg: null,
-      end: null,
-    };
-
-    if (!end) {
-      // means just a solo date
-      // get the start and end of that date
-    } else {
-      // get the start of the beg date, and the end of the end date
-    }
-  } catch (e) {
-    return e;
   }
 };
 
