@@ -206,27 +206,54 @@ export const getPeriod = (period) => {
     let end_date = null;
     let start_date = null;
 
-    if (period.match(regex)) {
+    if (!period) {
+      const day_of_week = dayjs().format("ddd");
+      const is_weekend = ["Sun", "Sat"].includes(day_of_week);
+      if (is_weekend) {
+        // if date lies on a weekend, get the most recent weekday instead
+        end_date = dayjs().day(5).startOf("day").toDate();
+        start_date = dayjs().day(5).startOf("day").toDate();
+      }
+    } else if (period.match(regex)) {
       const [full, beg, end] = period.match(regex);
 
       // get the date format of the beg and end
-      const beg_date = dayjs(beg).toDate();
+      const beg_date_input = dayjs(beg, [
+        "MM/DD/YYYY",
+        "MM/DD/YY",
+        "MM/DD",
+      ]).toDate();
 
       if (!end) {
         // means just a solo date
         // get the start and end of that date
+        end_date = beg_date_input;
+        start_date = beg_date_input;
       } else {
         // get the start of the beg date, and the end of the end date
+        start_date = beg_date_input;
+
+        const end_date_input = dayjs(end, [
+          "MM/DD/YYYY",
+          "MM/DD/YY",
+          "MM/DD",
+        ]).toDate();
+
+        // check if error in dates
+        if (beg_date_input > end_date_input)
+          throw new Error(
+            `Start date should precede end date. Your input was: ${period}`
+          );
+        end_date = end_date_input;
       }
     } else {
-      if (period === "last week" || period === "last 2 weeks") {
+      // If not using the arbitrary dates format
+      if (["last week", "last 2 weeks"].includes(period)) {
         let sunday = dayjs().day(0).startOf("day").toDate();
-        today = dayjs(sunday).subtract(2, "days").toDate();
+        end_date = dayjs(sunday).subtract(2, "days").toDate();
       } else {
-        today = dayjs().startOf("day").toDate();
+        end_date = dayjs(today).startOf("day").toDate();
       }
-
-      end_date = dayjs(today).startOf("day").toDate();
 
       if (["weekly", "1 week"].includes(period)) {
         start_date = dayjs(end_date).subtract(7, "days").toDate();
@@ -279,7 +306,7 @@ export const fetchHistoricalPrices = async (series_input, period_input) => {
       console.log("pointer_date: ", pointer_date);
       console.log("start_date: ", start_date);
       const day_of_week = dayjs(pointer_date).format("ddd");
-      const day_end = dayjs(pointer_date).add(1, "days").toDate();
+      const day_end = dayjs(pointer_date).endOf("day").toDate();
       const is_weekend = ["Sun", "Sat"].includes(day_of_week);
       console.log("day_of_week: ", day_of_week);
       console.log("is_weekend: ", is_weekend);
@@ -294,7 +321,7 @@ export const fetchHistoricalPrices = async (series_input, period_input) => {
         lastDealtVol: { $gte: 50 },
         time: {
           $gte: pointer_date,
-          $lt: day_end,
+          $lte: day_end,
         },
       });
 
@@ -405,31 +432,36 @@ export const fetchHistoricalPrices = async (series_input, period_input) => {
   }
 };
 
-// Gets the time and sales data for that period (series can be specified
-// for period, accepts:
-// 1. formats in getDate() function: ["MM/DD", "MM/DD/YY", "MM/DD/YYYY"]
-export const fetchTimeAndSales = async (period, series) => {
+export const fetchTimeAndSales = async (period_input, series_input) => {
   try {
+    const series = await getSeries(series_input);
+
+    // validate the period
+
     console.log("in fetchTimeAndSales: ");
-    console.log("period: ", period);
     console.log("series: ", series);
 
     let date = null;
 
-    // getPeriod("11/01/2021-11/02");
-
-    if (!period) {
-      date = dayjs().toDate();
+    // if no period was supplied, just use the current day, or if on a weekend, the latest friday
+    if (!period_input) {
+      const day_of_week = dayjs(date).format("ddd");
+      const is_weekend = ["Sun", "Sat"].includes(day_of_week);
+      if (is_weekend) {
+        // if date lies on a weekend, get the most recent weekday instead
+        date = dayjs().day(5).startOf("day").toDate();
+      } else {
+        // else just get the current date
+        date = dayjs().toDate();
+      }
     } else {
-      // check if period matches the "MM/DD-MM/DD" regex
-
-      date = dayjs(period, "MM/DD").toDate();
+      date = dayjs(period_input, ["MM/DD", "MM/DD/YY", "MM/DD/YYYY"]).toDate();
     }
 
     console.log("date: ", date);
 
-    const startOfDay = dayjs(date).startOf("day").toDate();
-    const endOfDay = dayjs(startOfDay).add(1, "day").toDate();
+    const day_beg = dayjs(date).startOf("day").toDate();
+    const day_end = dayjs(date).endOf("day").toDate();
 
     let summary = {};
     let array = [];
@@ -438,7 +470,7 @@ export const fetchTimeAndSales = async (period, series) => {
       console.log("!series");
       const mongoQuery = {
         type: "last_dealt",
-        time: { $gte: startOfDay, $lt: endOfDay },
+        time: { $gte: day_beg, $lte: day_end },
       };
 
       const unsorted = await Update.find(mongoQuery);
@@ -457,7 +489,7 @@ export const fetchTimeAndSales = async (period, series) => {
       const mongoQuery = {
         series,
         type: "last_dealt",
-        time: { $gte: startOfDay, $lt: endOfDay },
+        time: { $gte: day_beg, $lte: day_end },
       };
 
       const unsorted = await Update.find(mongoQuery);
@@ -480,7 +512,7 @@ export const fetchTimeAndSales = async (period, series) => {
         summary.close = close;
       }
 
-      const prev_day_trades = await getPrevDayTrades(series, startOfDay);
+      const prev_day_trades = await getPrevDayTrades(series, day_beg);
 
       if (goodVolTrades.length > 0 && prev_day_trades.length > 0) {
         const good_vol = prev_day_trades.filter((el) => el.lastDealtVol >= 50);
@@ -499,7 +531,9 @@ export const fetchTimeAndSales = async (period, series) => {
       }
     }
 
+    console.log("array: ", array);
     console.log("summary: ", summary);
+
     return { array, summary };
   } catch (err) {
     return err;
@@ -514,34 +548,15 @@ export const fetchSummary = async (period) => {
   let array = [];
   let summary = {};
 
-  if (
-    ["weekly", "1 week", "2 weeks", "last week", "last 2 weeks"].includes(
-      period
-    )
-  ) {
-    array = await Promise.all(
-      series_array.map(async (series) => {
-        const { summary } = await fetchHistoricalPrices(series, period);
-        return {
-          series,
-          summary,
-        };
-      })
-    );
-  } else {
-    // else if blank or has a date, use fetchTimeAndSales (1 period only)
-    array = await Promise.all(
-      series_array.map(async (series) => {
-        const { summary } = await fetchTimeAndSales(period, series);
-        return {
-          series,
-          summary,
-        };
-      })
-    );
-
-    summary = (await fetchTimeAndSales(period)).summary;
-  }
+  array = await Promise.all(
+    series_array.map(async (series) => {
+      const { summary } = await fetchHistoricalPrices(series, period);
+      return {
+        series,
+        summary,
+      };
+    })
+  );
 
   return { period, array, summary };
 };
