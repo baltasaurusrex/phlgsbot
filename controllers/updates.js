@@ -581,8 +581,10 @@ export const fetchSummary = async (period) => {
     const date = dayjs(pointer_date).format("MM/DD/YYYY");
     const { summary: day_summary } = await fetchTimeAndSales(date);
 
-    summary.totalVol += parseFloat(day_summary.totalVol);
-    summary.trades += parseFloat(day_summary.trades);
+    summary.totalVol += day_summary.totalVol
+      ? parseFloat(day_summary.totalVol)
+      : 0;
+    summary.totalVol += day_summary.trades ? parseFloat(day_summary.trades) : 0;
   }
 
   summary.totalVol = summary.totalVol.toFixed(2);
