@@ -645,6 +645,7 @@ export const fetchSummariesLogic = async (userProfile, match) => {
   // else (even if its beg) just do it normally like before
   const { array, summary } = await fetchSummary(period);
   console.log("array: ", array);
+  console.log("summary: ", summary);
 
   const render_isin_summary = (summaryInput) => {
     const { series, summary } = summaryInput;
