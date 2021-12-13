@@ -546,7 +546,7 @@ export const fetchSummary = async (period) => {
   const isins = await getAllIsins({ watchlist_only: true });
   const series_array = isins.map((isin) => isin.series);
   let array = [];
-  let summary = {};
+  let summary = { totalVol: 0, trades: 0 };
 
   array = await Promise.all(
     series_array.map(async (series) => {
@@ -557,6 +557,35 @@ export const fetchSummary = async (period) => {
       };
     })
   );
+
+  // fill summary {totalVol, trades}
+
+  const { start_date, end_date } = getPeriod(period);
+
+  for (
+    let pointer_date = end_date;
+    pointer_date >= start_date;
+    pointer_date = dayjs(pointer_date).subtract(1, "days").toDate()
+  ) {
+    console.log("end_date: ", end_date);
+    console.log("pointer_date: ", pointer_date);
+    console.log("start_date: ", start_date);
+    const day_of_week = dayjs(pointer_date).format("ddd");
+    const day_end = dayjs(pointer_date).endOf("day").toDate();
+    const is_weekend = ["Sun", "Sat"].includes(day_of_week);
+    console.log("day_of_week: ", day_of_week);
+    console.log("is_weekend: ", is_weekend);
+    console.log("day_end: ", day_end);
+    if (is_weekend) continue;
+
+    const date = dayjs(pointer_date).format("MM/DD/YYYY");
+    const { summary: day_summary } = await fetchTimeAndSales(date);
+
+    summary.totalVol += parseFloat(day_summary.totalVol);
+    summary.trades += parseFloat(day_summary.trades);
+  }
+
+  summary.totalVol = summary.totalVol.toFixed(2);
 
   return { period, array, summary };
 };
