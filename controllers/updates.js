@@ -202,19 +202,25 @@ export const getPeriod = (period) => {
   try {
     const regex = getArbitraryDatesRegex();
 
-    let today = null;
+    let today = dayjs().toDate();
     let end_date = null;
     let start_date = null;
 
+    // if there is no period given
     if (!period) {
+      // get today's date
       const day_of_week = dayjs().format("ddd");
       const is_weekend = ["Sun", "Sat"].includes(day_of_week);
+      // if today is a weekend, get the most recent weekday instead
       if (is_weekend) {
-        // if date lies on a weekend, get the most recent weekday instead
         end_date = dayjs().day(5).startOf("day").toDate();
         start_date = dayjs().day(5).startOf("day").toDate();
+      } else {
+        end_date = dayjs(today).startOf("day").toDate();
+        start_date = dayjs(today).startOf("day").toDate();
       }
     } else if (period.match(regex)) {
+      // if there is a period given which matches the arbitrary dates regex
       const [full, beg, end] = period.match(regex);
 
       // get the date format of the beg and end
@@ -223,6 +229,8 @@ export const getPeriod = (period) => {
         "MM/DD/YY",
         "MM/DD",
       ]).toDate();
+
+      // if there is no "end" date in the arbitrary dates regex
 
       if (!end) {
         // means just a solo date
@@ -248,25 +256,24 @@ export const getPeriod = (period) => {
       }
     } else {
       // If not using the arbitrary dates format
+      end_date = dayjs(today).startOf("day").toDate();
       if (["last week", "last 2 weeks"].includes(period)) {
         let sunday = dayjs().day(0).startOf("day").toDate();
         end_date = dayjs(sunday).subtract(2, "days").toDate();
-      } else {
-        end_date = dayjs(today).startOf("day").toDate();
-      }
-
-      if (["weekly", "1 week"].includes(period)) {
+        if (period === "last week")
+          start_date = dayjs(end_date).subtract(4, "days").toDate();
+        if (period === "last 2 weeks")
+          start_date = dayjs(end_date)
+            .subtract(4 + 7, "days")
+            .toDate();
+      } else if (["weekly", "1 week"].includes(period)) {
         start_date = dayjs(end_date).subtract(7, "days").toDate();
       } else if (period === "2 weeks") {
         start_date = dayjs(end_date).subtract(14, "days").toDate();
       } else if (["1 month", "monthly"].includes(period)) {
         start_date = dayjs(end_date).subtract(30, "days").toDate();
-      } else if (period === "last week") {
-        start_date = dayjs(end_date).subtract(4, "days").toDate();
-      } else if (period === "last 2 weeks") {
-        start_date = dayjs(end_date)
-          .subtract(4 + 7, "days")
-          .toDate();
+      } else {
+        end_date = dayjs(today).startOf("day").toDate();
       }
     }
 
@@ -581,8 +588,10 @@ export const fetchSummary = async (period) => {
     const date = dayjs(pointer_date).format("MM/DD/YYYY");
     const { summary: day_summary } = await fetchTimeAndSales(date);
 
-    summary.totalVol += parseFloat(day_summary.totalVol);
-    summary.trades += parseFloat(day_summary.trades);
+    summary.totalVol += day_summary.totalVol
+      ? parseFloat(day_summary.totalVol)
+      : 0;
+    summary.totalVol += day_summary.trades ? parseFloat(day_summary.trades) : 0;
   }
 
   summary.totalVol = summary.totalVol.toFixed(2);

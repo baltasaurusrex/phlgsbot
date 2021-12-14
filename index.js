@@ -13,8 +13,6 @@ dayjs.extend(RelativeTime);
 import dotenv from "dotenv";
 dotenv.config();
 
-console.log("env: ", process.env);
-
 export const bot = new Bot({
   authToken: process.env.AUTH_TOKEN,
   name: "PHL GS Bot",
@@ -104,7 +102,7 @@ const time_and_sales_func = (res) => {
     if (settings.update_users) updateUsers("time_and_sales", spiel);
   }
 };
-// uploadTimeAndSales("12-10-2021").then(time_and_sales_func);
+// uploadTimeAndSales("12-13-2021").then(time_and_sales_func);
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)
@@ -706,11 +704,11 @@ mongoose
     useUnifiedTopology: true,
   })
   .then(() => console.log("Now connected to MongoDB"))
-  .catch((error) => console.log(error));
+  .catch((error) => console.log("Error connecting to MongoDB: ", error));
 
-// fetchHistoricalPrices("514", "12/10").then((res) => console.log(res));
+// fetchHistoricalPrices("765", "last week").then((res) => console.log(res));
 // fetchTimeAndSales("12/10", "513");
-fetchSummary("12/09-12/10");
+// fetchSummary("last week");
 
 app.listen(port, async () => {
   // CHANGE THIS WHEN TESTING LOCALLY/ON HEROKU
