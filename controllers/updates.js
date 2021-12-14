@@ -202,7 +202,7 @@ export const getPeriod = (period) => {
   try {
     const regex = getArbitraryDatesRegex();
 
-    let today = null;
+    let today = dayjs().toDate();
     let end_date = null;
     let start_date = null;
 
@@ -248,14 +248,11 @@ export const getPeriod = (period) => {
       }
     } else {
       // If not using the arbitrary dates format
+      end_date = dayjs(today).startOf("day").toDate();
       if (["last week", "last 2 weeks"].includes(period)) {
         let sunday = dayjs().day(0).startOf("day").toDate();
         end_date = dayjs(sunday).subtract(2, "days").toDate();
-      } else {
-        end_date = dayjs(today).startOf("day").toDate();
-      }
-
-      if (["weekly", "1 week"].includes(period)) {
+      } else if (["weekly", "1 week"].includes(period)) {
         start_date = dayjs(end_date).subtract(7, "days").toDate();
       } else if (period === "2 weeks") {
         start_date = dayjs(end_date).subtract(14, "days").toDate();
@@ -267,6 +264,8 @@ export const getPeriod = (period) => {
         start_date = dayjs(end_date)
           .subtract(4 + 7, "days")
           .toDate();
+      } else {
+        end_date = dayjs(today).startOf("day").toDate();
       }
     }
 
