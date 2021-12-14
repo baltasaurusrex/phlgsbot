@@ -708,7 +708,7 @@ mongoose
 
 // fetchHistoricalPrices("765", "last week").then((res) => console.log(res));
 // fetchTimeAndSales("12/10", "513");
-// fetchSummary("last week");
+fetchSummary("last week");
 
 app.listen(port, async () => {
   // CHANGE THIS WHEN TESTING LOCALLY/ON HEROKU
