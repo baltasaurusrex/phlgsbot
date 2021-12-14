@@ -13,8 +13,6 @@ dayjs.extend(RelativeTime);
 import dotenv from "dotenv";
 dotenv.config();
 
-console.log("env: ", process.env);
-
 export const bot = new Bot({
   authToken: process.env.AUTH_TOKEN,
   name: "PHL GS Bot",
@@ -706,7 +704,7 @@ mongoose
     useUnifiedTopology: true,
   })
   .then(() => console.log("Now connected to MongoDB"))
-  .catch((error) => console.log(error));
+  .catch((error) => console.log("Error connecting to MongoDB: ", error));
 
 // fetchHistoricalPrices("765", "weekly").then((res) => console.log(res));
 // fetchTimeAndSales("12/10", "513");
