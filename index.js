@@ -104,7 +104,7 @@ const time_and_sales_func = (res) => {
     if (settings.update_users) updateUsers("time_and_sales", spiel);
   }
 };
-uploadTimeAndSales("12-13-2021").then(time_and_sales_func);
+// uploadTimeAndSales("12-13-2021").then(time_and_sales_func);
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)
@@ -708,7 +708,7 @@ mongoose
   .then(() => console.log("Now connected to MongoDB"))
   .catch((error) => console.log(error));
 
-// fetchHistoricalPrices("514", "12/10").then((res) => console.log(res));
+fetchHistoricalPrices("765", "weekly").then((res) => console.log(res));
 // fetchTimeAndSales("12/10", "513");
 // fetchSummary("last week");
 
