@@ -102,7 +102,7 @@ const time_and_sales_func = (res) => {
     if (settings.update_users) updateUsers("time_and_sales", spiel);
   }
 };
-// uploadTimeAndSales("12-13-2021").then(time_and_sales_func);
+// uploadTimeAndSales("12-14-2021").then(time_and_sales_func);
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)
@@ -708,7 +708,7 @@ mongoose
 
 // fetchHistoricalPrices("765", "last week").then((res) => console.log(res));
 // fetchTimeAndSales("12/10", "513");
-fetchSummary("last week");
+// fetchSummary("last week");
 
 app.listen(port, async () => {
   // CHANGE THIS WHEN TESTING LOCALLY/ON HEROKU
