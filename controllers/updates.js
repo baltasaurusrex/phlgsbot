@@ -591,7 +591,7 @@ export const fetchSummary = async (period) => {
     summary.totalVol += day_summary.totalVol
       ? parseFloat(day_summary.totalVol)
       : 0;
-    summary.totalVol += day_summary.trades ? parseFloat(day_summary.trades) : 0;
+    summary.trades += day_summary.trades ? parseFloat(day_summary.trades) : 0;
   }
 
   summary.totalVol = summary.totalVol.toFixed(2);
