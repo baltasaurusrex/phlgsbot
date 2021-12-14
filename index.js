@@ -708,7 +708,7 @@ mongoose
   .then(() => console.log("Now connected to MongoDB"))
   .catch((error) => console.log(error));
 
-fetchHistoricalPrices("765", "weekly").then((res) => console.log(res));
+// fetchHistoricalPrices("765", "weekly").then((res) => console.log(res));
 // fetchTimeAndSales("12/10", "513");
 // fetchSummary("last week");
 
