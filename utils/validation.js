@@ -22,6 +22,7 @@ export const validCommand = (
   let flag = false;
   // if the flag is toggled to true, that means a valid command was hit
 
+  if (/^register/gi.test(text)) flag = true;
   if (/^help/gi.test(text)) flag = true;
   if (/^((admin)|(broker)|(dealer))/gi.test(text)) flag = true;
   if (/^test/gi.test(text)) flag = true;
