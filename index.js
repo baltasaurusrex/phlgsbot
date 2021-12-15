@@ -119,7 +119,7 @@ bot.onConversationStarted(
       console.log("user doesn't exist");
       onFinish(
         new Message.Text(
-          `Hi, ${userProfile.name}! Nice to meet you. Are you a dealer, or a broker?`
+          `Hi, ${userProfile.name}! Nice to meet you. Please type "register" to register as a user.`
         )
       );
     } else {
@@ -183,35 +183,22 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
     return;
   }
 
-  // if the user types "help"
-  if (/^help/gi.test(text)) {
-    // check if the user is registered
-    if (!user) {
-      // if the user isn't registered, ask them to register
+  console.log("register regex: ", /^register/gi.test(text));
+  if (/^register/gi.test(text)) {
+    if (user) {
       bot.sendMessage(userProfile, [
         new Message.Text(
-          `Hi, ${user.name}! Nice to meet you. It seems you aren't registered. Are you a dealer, or a broker?`
+          `Hi, ${user.name}! You're already registered as a${
+            user.role === "admin" ? "n" : ""
+          } ${user.role}.`
         ),
       ]);
-      // if the user is registered, show them help spiel
     } else {
-      const intro = new Message.Text(
-        `Hi, ${user.name}! Looks like you're a${
-          user.role === "admin" ? "n" : ""
-        } ${user.role}. Here's what you can do: `
-      );
-      if (user.role === "dealer") {
-        bot.sendMessage(userProfile, [intro, ...dealerSpiel]);
-      }
-
-      if (user.role === "broker") {
-        bot.sendMessage(userProfile, brokerSpiel);
-      }
-
-      if (user.role === "admin") {
-        bot.sendMessage(userProfile, [intro, ...adminSpiel]);
-      }
+      bot.sendMessage(userProfile, [
+        new Message.Text(`Hi, ${user.name}! Are you a dealer? Or a broker?`),
+      ]);
     }
+
     return;
   }
 
@@ -246,6 +233,37 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       );
     }
 
+    return;
+  }
+
+  if (/^help/gi.test(text)) {
+    // check if the user is registered
+    if (!user) {
+      // if the user isn't registered, ask them to register
+      bot.sendMessage(userProfile, [
+        new Message.Text(
+          `Hi, ${user.name}! Nice to meet you. It seems you aren't registered. Are you a dealer, or a broker?`
+        ),
+      ]);
+      // if the user is registered, show them help spiel
+    } else {
+      const intro = new Message.Text(
+        `Hi, ${user.name}! Looks like you're a${
+          user.role === "admin" ? "n" : ""
+        } ${user.role}. Here's what you can do: `
+      );
+      if (user.role === "dealer") {
+        bot.sendMessage(userProfile, [intro, ...dealerSpiel]);
+      }
+
+      if (user.role === "broker") {
+        bot.sendMessage(userProfile, brokerSpiel);
+      }
+
+      if (user.role === "admin") {
+        bot.sendMessage(userProfile, [intro, ...adminSpiel]);
+      }
+    }
     return;
   }
 
