@@ -729,8 +729,6 @@ mongoose
   .then(() => console.log("Now connected to MongoDB"))
   .catch((error) => console.log("Error connecting to MongoDB: ", error));
 
-// fetchHistoricalPrices("765", "last week").then((res) => console.log(res));
-
 app.listen(port, async () => {
   // CHANGE THIS WHEN TESTING LOCALLY/ON HEROKU
   const online = settings.online; // if testing locally, toggle this to false; else true if deployed on heroku
