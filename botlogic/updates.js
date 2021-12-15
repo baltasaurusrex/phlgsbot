@@ -510,9 +510,9 @@ export const fetchHistoricalPricesLogic = async (userProfile, match) => {
     const startPd = dayjs(summary.startOfPeriod).format("MM/DD");
     const endPd = dayjs(summary.endOfPeriod).format("MM/DD");
     if (summary.trades > 0) {
-      return `*Summary for ${startPd} - ${endPd}:* \nYTM: ${summary.ytm}\nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close} (${close_change} bps)\nVWAP: ${summary.vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
+      return `*Summary for ${startPd} - ${endPd}:* \nTenor: ${summary.tenor}\nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close} (${close_change} bps)\nVWAP: ${summary.vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
     } else {
-      return `*Summary for ${startPd} - ${endPd}*:\nYTM: ${summary.ytm}\nTrades: ${summary.trades}`;
+      return `*Summary for ${startPd} - ${endPd}*:\nTenor: ${summary.tenor}\nTrades: ${summary.trades}`;
     }
   };
 
@@ -693,7 +693,7 @@ export const fetchSummariesLogic = async (userProfile, match) => {
         } bps)`;
       }
 
-      priceDataString = `YTM: ${summary.ytm}\nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close} ${change_close}\nVWAP: ${summary.vwap} ${change_vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
+      priceDataString = `Tenor: ${summary.tenor}\nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close} ${change_close}\nVWAP: ${summary.vwap} ${change_vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
     } else {
       priceDataString = `No trades`;
     }
