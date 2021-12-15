@@ -102,7 +102,7 @@ const time_and_sales_func = (res) => {
     if (settings.update_users) updateUsers("time_and_sales", spiel);
   }
 };
-// uploadTimeAndSales("12-14-2021").then(time_and_sales_func);
+uploadTimeAndSales("12-15-2021").then(time_and_sales_func);
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)
@@ -706,7 +706,7 @@ mongoose
   .then(() => console.log("Now connected to MongoDB"))
   .catch((error) => console.log("Error connecting to MongoDB: ", error));
 
-fetchHistoricalPrices("765", "last week").then((res) => console.log(res));
+// fetchHistoricalPrices("765", "last week").then((res) => console.log(res));
 
 app.listen(port, async () => {
   // CHANGE THIS WHEN TESTING LOCALLY/ON HEROKU
