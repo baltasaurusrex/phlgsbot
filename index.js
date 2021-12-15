@@ -195,7 +195,9 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       ]);
     } else {
       bot.sendMessage(userProfile, [
-        new Message.Text(`Hi, ${user.name}! Are you a dealer? Or a broker?`),
+        new Message.Text(
+          `Hi, ${userProfile.name}! Are you a dealer? Or a broker?`
+        ),
       ]);
     }
 
