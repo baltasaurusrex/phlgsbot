@@ -47,7 +47,7 @@ import { broadcastMessage } from "./utils/messages.js";
 import { renderOrder } from "./utils/orders.js";
 import { populateIsins } from "./populators/isins.js";
 import { uploadTimeAndSales } from "./populators/timeAndSales.js";
-import { getValidSeries, getSeries, getYTM } from "./controllers/isins.js";
+import { getValidSeries, getSeries } from "./controllers/isins.js";
 import {
   getValidNicknames,
   getDesk,
