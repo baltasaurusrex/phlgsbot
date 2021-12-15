@@ -82,7 +82,7 @@ import {
 } from "./controllers/updates.js";
 
 // SETTINGS
-const settings = { update_users: false };
+const settings = { online: true, update_users: false };
 
 // populateIsins();
 const time_and_sales_func = (res) => {
@@ -733,7 +733,7 @@ mongoose
 
 app.listen(port, async () => {
   // CHANGE THIS WHEN TESTING LOCALLY/ON HEROKU
-  const online = false; // if testing locally, toggle this to false; else true if deployed on heroku
+  const online = settings.online; // if testing locally, toggle this to false; else true if deployed on heroku
   const herokuUrl = "https://phl-gs-chatbot-app.herokuapp.com";
   const webhookUrl = online ? herokuUrl : await ngrok();
   console.log("webhookUrl: ", webhookUrl);
