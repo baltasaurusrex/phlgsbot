@@ -693,12 +693,12 @@ export const fetchSummariesLogic = async (userProfile, match) => {
         } bps)`;
       }
 
-      priceDataString = `Tenor: ${summary.tenor}\nOpen: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close} ${change_close}\nVWAP: ${summary.vwap} ${change_vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
+      priceDataString = `Open: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close} ${change_close}\nVWAP: ${summary.vwap} ${change_vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
     } else {
       priceDataString = `No trades`;
     }
 
-    return `\n\n${series}:\n${priceDataString}`;
+    return `\n\n${series} / ${summary.tenor} yrs\n${priceDataString}`;
   };
 
   const render_isin_summaries = (array) => {
