@@ -115,7 +115,7 @@ export const getSeriesWithIsin = async (isin) => {
   }
 };
 
-export const getYTM = async (series, from_period) => {
+export const getTenor = async (series, from_period) => {
   // from_period, if blank, = today
   // otherwise, this is the period your getting the YTM for
   try {
