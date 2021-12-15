@@ -198,6 +198,8 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
         new Message.Text(`Hi, ${user.name}! Are you a dealer? Or a broker?`),
       ]);
     }
+
+    return;
   }
 
   // Step 2: when initially registering and the user responds w/ the correct response (admin/dealer/broker)
