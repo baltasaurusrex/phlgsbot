@@ -183,6 +183,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
     return;
   }
 
+  console.log("register regex: ", /^register/gi.test(text));
   if (/^register/gi.test(text)) {
     if (user) {
       bot.sendMessage(userProfile, [
