@@ -1,4 +1,7 @@
 import Isin from "../models/Isin.js";
+import dayjs from "dayjs";
+import RelativeTime from "dayjs/plugin/relativeTime.js";
+dayjs.extend(RelativeTime);
 
 export const createIsin = async (data) => {
   console.log("in createIsin");
@@ -107,6 +110,28 @@ export const getSeriesWithIsin = async (isin) => {
       isin: { $regex: `${isin}`, $options: "gi" },
     }).exec();
     return instrument?.series;
+  } catch (err) {
+    return err;
+  }
+};
+
+export const getYTM = async (series, from_period) => {
+  // from_period, if blank, = today
+  // otherwise, this is the period your getting the YTM for
+  try {
+    if (!series) throw new Error("Series must be supplied.");
+    const instrument = await Isin.findOne({
+      series,
+    });
+
+    if (!instrument)
+      throw new Error("No instrument matches the series supplied.");
+
+    const mat_date = dayjs(instrument.maturity);
+    const today = dayjs().format("YYYY-MM-DD");
+    let diff = mat_date.diff(today, "year", true);
+    diff = parseFloat(diff.toFixed(2));
+    return diff;
   } catch (err) {
     return err;
   }

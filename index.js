@@ -47,7 +47,7 @@ import { broadcastMessage } from "./utils/messages.js";
 import { renderOrder } from "./utils/orders.js";
 import { populateIsins } from "./populators/isins.js";
 import { uploadTimeAndSales } from "./populators/timeAndSales.js";
-import { getValidSeries, getSeries } from "./controllers/isins.js";
+import { getValidSeries, getSeries, getYTM } from "./controllers/isins.js";
 import {
   getValidNicknames,
   getDesk,
@@ -706,9 +706,7 @@ mongoose
   .then(() => console.log("Now connected to MongoDB"))
   .catch((error) => console.log("Error connecting to MongoDB: ", error));
 
-// fetchHistoricalPrices("765", "last week").then((res) => console.log(res));
-// fetchTimeAndSales("12/10", "513");
-// fetchSummary("last week");
+fetchHistoricalPrices("765", "last week").then((res) => console.log(res));
 
 app.listen(port, async () => {
   // CHANGE THIS WHEN TESTING LOCALLY/ON HEROKU

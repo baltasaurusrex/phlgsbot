@@ -1,5 +1,5 @@
 import Update from "../models/Update.js";
-import { getSeries, getAllIsins } from "./isins.js";
+import { getSeries, getAllIsins, getYTM } from "./isins.js";
 import dayjs from "dayjs";
 import CustomParseFormat from "dayjs/plugin/customParseFormat.js";
 dayjs.extend(CustomParseFormat);
@@ -432,6 +432,7 @@ export const fetchHistoricalPrices = async (series_input, period_input) => {
       summary.change = change;
     }
 
+    summary.ytm = await getYTM(series);
     console.log("summary: ", summary);
     return { array: array_with_change, summary };
   } catch (err) {
