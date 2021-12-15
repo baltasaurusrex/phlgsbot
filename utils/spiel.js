@@ -37,6 +37,7 @@ Note: If MM/DD is not specified, the date is assumed to be the current date`,
 };
 
 export const dealerSpiel = [
+  new Message.Text(`*===DEALER FUNCTIONS===*`),
   new Message.Text(instructions.fetchPriceInfo),
   new Message.Text(instructions.timeAndSales),
   new Message.Text(instructions.historicalPrices),

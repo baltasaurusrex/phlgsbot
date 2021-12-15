@@ -255,6 +255,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
         } ${user.role}. Here's what you can do: `
       );
       if (user.role === "dealer") {
+        console.log("user.role === dealer");
         bot.sendMessage(userProfile, [intro, ...dealerSpiel]);
       }
 
