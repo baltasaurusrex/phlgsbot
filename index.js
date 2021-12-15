@@ -158,7 +158,9 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
   if (user) {
     updateAdmins(`${user.name} sent a message:\n\n${text}`);
   } else {
-    updateAdmins(`${userProfile} sent a message:\n\n${text}`);
+    updateAdmins(
+      `${userProfile.name} (unregistered) sent a message:\n\n${text}`
+    );
   }
 
   const validSeries = await getValidSeries();
@@ -218,7 +220,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
     const role = text.toLowerCase();
     const reply = new Message.Text(
       `Got it ${userProfile.name}, you're a${
-        role === "admin" ? "n" : null
+        role === "admin" ? "n" : ""
       } ${role}.`
     );
     response.send(reply);
