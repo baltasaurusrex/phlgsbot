@@ -82,7 +82,7 @@ import {
 } from "./controllers/updates.js";
 
 // SETTINGS
-const settings = { online: false, update_users: false };
+const settings = { online: true, update_users: false };
 
 // populateIsins();
 const time_and_sales_func = (res) => {
@@ -105,7 +105,7 @@ const time_and_sales_func = (res) => {
 // uploadTimeAndSales("12-15-2021").then(time_and_sales_func);
 
 // getSeries("577").then((series) => getTenor(series, "12/01/2021"));
-fetchHistoricalPrices("577", "12/05-12/07");
+// fetchHistoricalPrices("577", "12/05-12/07");
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)
