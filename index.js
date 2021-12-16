@@ -47,7 +47,7 @@ import { broadcastMessage } from "./utils/messages.js";
 import { renderOrder } from "./utils/orders.js";
 import { populateIsins } from "./populators/isins.js";
 import { uploadTimeAndSales } from "./populators/timeAndSales.js";
-import { getValidSeries, getSeries } from "./controllers/isins.js";
+import { getValidSeries, getSeries, getTenor } from "./controllers/isins.js";
 import {
   getValidNicknames,
   getDesk,
@@ -103,6 +103,9 @@ const time_and_sales_func = (res) => {
   }
 };
 // uploadTimeAndSales("12-15-2021").then(time_and_sales_func);
+
+// getSeries("577").then((series) => getTenor(series, "12/01/2021"));
+fetchHistoricalPrices("577", "12/05-12/07");
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)

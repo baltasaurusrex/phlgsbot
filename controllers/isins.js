@@ -2,6 +2,7 @@ import Isin from "../models/Isin.js";
 import dayjs from "dayjs";
 import RelativeTime from "dayjs/plugin/relativeTime.js";
 dayjs.extend(RelativeTime);
+import { getArbitraryDatesRegex } from "../utils/regex.js";
 
 export const createIsin = async (data) => {
   console.log("in createIsin");
@@ -115,11 +116,33 @@ export const getSeriesWithIsin = async (isin) => {
   }
 };
 
-export const getTenor = async (series, from_period) => {
-  // from_period, if blank, = today
+export const getTenor = async (series, date_input) => {
+  // date_input, if blank, = today
   // otherwise, this is the period your getting the YTM for
+  // date_input should be formatted either ["MM"]
   try {
     if (!series) throw new Error("Series must be supplied.");
+
+    const date_regex = getArbitraryDatesRegex();
+
+    let date = null;
+
+    if (!date_input) {
+      date = dayjs().format("MM/DD/YYYY");
+    } else if (date_regex.test(date_input)) {
+      date = date_input;
+    } else {
+      throw new Error(
+        "Incorrectly formatted date. Please use MM/DD or MM/DD/YY or MM/DD/YYYY."
+      );
+    }
+
+    const from_period = dayjs(date, [
+      "MM/DD",
+      "MM/DD/YY",
+      "MM/DD/YYYY",
+    ]).toDate();
+
     const instrument = await Isin.findOne({
       series,
     });
@@ -128,9 +151,12 @@ export const getTenor = async (series, from_period) => {
       throw new Error("No instrument matches the series supplied.");
 
     const mat_date = dayjs(instrument.maturity);
-    const today = dayjs().format("YYYY-MM-DD");
+    const today = dayjs(date).format("YYYY-MM-DD");
     let diff = mat_date.diff(today, "year", true);
     diff = parseFloat(diff.toFixed(2));
+
+    if (diff < 0) throw new Error("Already matured.");
+
     return diff;
   } catch (err) {
     return err;

@@ -432,7 +432,8 @@ export const fetchHistoricalPrices = async (series_input, period_input) => {
       summary.change = change;
     }
 
-    summary.tenor = await getTenor(series);
+    const date_input = dayjs(end_date).format("MM/DD/YYYY");
+    summary.tenor = await getTenor(series, date_input);
     console.log("summary: ", summary);
     return { array: array_with_change, summary };
   } catch (err) {
