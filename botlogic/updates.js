@@ -689,7 +689,7 @@ export const fetchSummariesLogic = async (userProfile, match) => {
       priceDataString = `No trades for today\n\nLast trade date: ${prev_summary.date}\nOpen: ${prev_summary.open}\nHigh: ${prev_summary.high}\nLow: ${prev_summary.low}\nClose: ${prev_summary.close} ${change_close}\nVWAP: ${prev_summary.vwap} ${change_vwap}\nTotal vol: ${prev_summary.totalVol} Mn\nTrades: ${prev_summary.trades}`;
     }
 
-    return `\n\n${series} / ${summary.tenor} yrs\n${priceDataString}`;
+    return `\n\n*${series} / ${summary.tenor}* yrs\n${priceDataString}`;
   };
 
   const render_isin_summaries = (array) => {
