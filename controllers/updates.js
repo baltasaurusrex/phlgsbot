@@ -8,6 +8,7 @@ import {
   getVWAP,
   getOHLC,
   getPrevDayTrades,
+  getPrevGoodVol,
 } from "../utils/updates.js";
 import { getArbitraryDatesRegex } from "../utils/regex.js";
 
@@ -567,9 +568,34 @@ export const fetchSummary = async (period) => {
     })
   );
 
-  // fill summary {totalVol, trades}
-
   const { start_date, end_date } = getPeriod(period);
+
+  // get last traded date for those without trades
+  array = await Promise.all(
+    array.map(async (obj) => {
+      const { series, summary } = obj;
+      // if it has > 0 trades, that means it's complete, in which case, just return it
+      if (summary.trades > 0) return obj;
+      // if not, this code will run, and you have to fill in the summary with the most recent trades data
+      // get the trades from the most recent day with a good vol trade
+      const prev_good_vol = await getPrevGoodVol(series, end_date);
+      console.log(prev_good_vol);
+      if (prev_good_vol) {
+        const date_input = dayjs(prev_good_vol.time).format("MM/DD/YYYY");
+        let { summary: prev_summary } = await fetchTimeAndSales(
+          date_input,
+          series
+        );
+        prev_summary.date = date_input;
+        console.log("prev_summary: ", prev_summary);
+        return { series, summary, prev_summary };
+      } else {
+        return obj;
+      }
+    })
+  );
+
+  // fill summary {totalVol, trades}
 
   for (
     let pointer_date = end_date;

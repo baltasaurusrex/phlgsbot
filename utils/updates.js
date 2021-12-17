@@ -211,44 +211,50 @@ export const getOHLC = (array_input) => {
   return { open, high, low, close };
 };
 
-//
-export const getPrevDayTrades = async (series, startingDate) => {
+export const getPrevGoodVol = async (series, starting_date) => {
+  try {
+    const prev_good_vol = await Update.findOne({
+      series,
+      type: "last_dealt",
+      lastDealtVol: { $gte: 50 },
+      time: {
+        $lt: starting_date,
+      },
+    }).sort({ time: "desc" });
+
+    return prev_good_vol;
+  } catch (err) {
+    return err;
+  }
+};
+
+export const getPrevDayTrades = async (series, starting_date) => {
   // find the most recent good vol trade prior to the starting day
   console.log("in getPrevDayTrades: ");
-  const mostRecentPrev = await Update.findOne({
-    series,
-    type: "last_dealt",
-    lastDealtVol: { $gte: 50 },
-    time: {
-      $lt: startingDate,
-    },
-  }).sort({ time: "desc" });
-
-  console.log("mostRecentPrev: ", mostRecentPrev);
+  const prev_good_vol = await getPrevGoodVol(series, starting_date);
 
   let startOfDay = null;
   let endOfDay = null;
 
   // once found, use that trade's time to determine the start and end of that day
-  if (mostRecentPrev) {
-    startOfDay = dayjs(mostRecentPrev.time).startOf("day").toDate();
-
-    endOfDay = dayjs(startOfDay).add(1, "day").toDate();
+  if (prev_good_vol) {
+    startOfDay = dayjs(prev_good_vol.time).startOf("day").toDate();
+    endOfDay = dayjs(startOfDay).endOf("day").toDate();
   } else {
     return [];
   }
 
   // use the start and end of that day to get the trades of that day
-  const prevDayDeals = await Update.find({
+  const all_deals = await Update.find({
     series,
     type: "last_dealt",
     time: {
       $gte: startOfDay,
-      $lt: endOfDay,
+      $lte: endOfDay,
     },
   });
 
-  return prevDayDeals;
+  return all_deals;
 };
 
 export const getTotalVol = (array) => {

@@ -102,10 +102,11 @@ const time_and_sales_func = (res) => {
     if (settings.update_users) updateUsers("time_and_sales", spiel);
   }
 };
-// uploadTimeAndSales("12-16-2021").then(time_and_sales_func);
+// uploadTimeAndSales("12-17-2021").then(time_and_sales_func);
 
-// getSeries("577").then((series) => getTenor(series, "12/01/2021"));
-// fetchHistoricalPrices("577", "12/05-12/07");
+// fetchSummary();
+
+// fetchSummariesLogic(null, ["full", ""]);
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)

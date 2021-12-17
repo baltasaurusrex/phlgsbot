@@ -639,19 +639,16 @@ export const fetchSummariesLogic = async (userProfile, match) => {
   console.log("array: ", array);
   console.log("summary: ", summary);
 
-  const render_isin_summary = (summaryInput) => {
-    const { series, summary } = summaryInput;
+  const render_isin_summary = (summary_input) => {
+    const { series, summary } = summary_input;
     console.log("in render_isin_summary");
     console.log("series: ", series);
 
     let priceDataString = null;
 
-    if (summary.trades > 0) {
-      console.log("summary: ", summary);
-      console.log("summary.change: ", summary.change);
+    const get_change = (summary) => {
       let change_close = null;
       let change_vwap = null;
-
       if (summary.change) {
         change_close = parseFloat(summary.change.close) * 100;
         change_vwap = parseFloat(summary.change.vwap) * 100;
@@ -661,10 +658,6 @@ export const fetchSummariesLogic = async (userProfile, match) => {
         change_vwap =
           parseFloat(summary.vwap) * 100 - parseFloat(summary.open) * 100;
       }
-
-      console.log("change_close: ", change_close);
-      console.log("change_vwap: ", change_vwap);
-
       if (Number.isNaN(change_close)) {
         change_close = ``;
       } else {
@@ -684,10 +677,16 @@ export const fetchSummariesLogic = async (userProfile, match) => {
             : change_vwap.toFixed(2)
         } bps)`;
       }
+      return { change_close, change_vwap };
+    };
 
+    if (summary.trades > 0) {
+      const { change_close, change_vwap } = get_change(summary);
       priceDataString = `Open: ${summary.open}\nHigh: ${summary.high}\nLow: ${summary.low}\nClose: ${summary.close} ${change_close}\nVWAP: ${summary.vwap} ${change_vwap}\nTotal vol: ${summary.totalVol} Mn\nTrades: ${summary.trades}`;
     } else {
-      priceDataString = `No trades`;
+      const prev_summary = summary_input.prev_summary;
+      const { change_close, change_vwap } = get_change(prev_summary);
+      priceDataString = `No trades for today\nLast trade date: ${prev_summary.date}\nOpen: ${prev_summary.open}\nHigh: ${prev_summary.high}\nLow: ${prev_summary.low}\nClose: ${prev_summary.close} ${change_close}\nVWAP: ${prev_summary.vwap} ${change_vwap}\nTotal vol: ${prev_summary.totalVol} Mn\nTrades: ${prev_summary.trades}`;
     }
 
     return `\n\n${series} / ${summary.tenor} yrs\n${priceDataString}`;
