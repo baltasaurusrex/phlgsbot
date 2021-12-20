@@ -82,7 +82,7 @@ import {
 } from "./controllers/updates.js";
 
 // SETTINGS
-const settings = { online: false, update_users: false };
+const settings = { online: true, update_users: false };
 
 // populateIsins();
 const time_and_sales_func = (res) => {
@@ -102,9 +102,9 @@ const time_and_sales_func = (res) => {
     if (settings.update_users) updateUsers("time_and_sales", spiel);
   }
 };
-uploadTimeAndSales("12-20-2021").then(time_and_sales_func);
+// uploadTimeAndSales("12-20-2021").then(time_and_sales_func);
 
-fetchSummary();
+// fetchSummary();
 
 // fetchSummariesLogic(null, ["full", ""]);
 
