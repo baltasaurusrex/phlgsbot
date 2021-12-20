@@ -510,23 +510,23 @@ export const fetchSummary = async (period) => {
     })
   );
 
-  const getSpread = (subj_series, ref_series) => {
-    return subj_series.summary.tenor - ref_series.summary.tenor;
-  };
+  // const getSpread = (subj_series, ref_series) => {
+  //   return subj_series.summary.tenor - ref_series.summary.tenor;
+  // };
 
   // add spreads
-  array = await Promise.all(
-    array.map(async (obj, i, arr) => {
-      // if first, no spread, just return it as is
-      if (i === 0) return obj;
+  // array = await Promise.all(
+  //   array.map(async (obj, i, arr) => {
+  //     // if first, no spread, just return it as is
+  //     if (i === 0) return obj;
 
-      const summary = obj.summary;
+  //     const summary = obj.summary;
 
-      summary.spread = getSpread(obj, arr[i - 1]);
+  //     summary.spread = getSpread(obj, arr[i - 1]);
 
-      return { ...obj, summary };
-    })
-  );
+  //     return { ...obj, summary };
+  //   })
+  // );
 
   // fill summary {totalVol, trades}
 
