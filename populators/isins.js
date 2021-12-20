@@ -30,14 +30,14 @@ function ExcelDateToJSDate(serial) {
 export const populateIsins = async () => {
   const workbook = xlsx.readFile("isinData/isinData.xlsx");
   // console.log("workbook: ", workbook);
-  const worksheet = workbook.Sheets["Sheet1"];
+  const worksheet = workbook.Sheets["List"];
 
   const parsed = xlsx.utils.sheet_to_json(worksheet);
   console.log("parsed: ", parsed);
 
   const results = await Promise.allSettled(
     parsed.map(async (data) => {
-      data.maturity = ExcelDateToJSDate(data.maturity);
+      data.maturity_date = ExcelDateToJSDate(data.maturity_date);
       return await createIsin(data);
     })
   );
