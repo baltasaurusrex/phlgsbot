@@ -510,11 +510,11 @@ export const fetchSummary = async (period) => {
     })
   );
 
+  // add spreads
   // const getSpread = (subj_series, ref_series) => {
   //   return subj_series.summary.tenor - ref_series.summary.tenor;
   // };
 
-  // add spreads
   // array = await Promise.all(
   //   array.map(async (obj, i, arr) => {
   //     // if first, no spread, just return it as is

@@ -21,7 +21,9 @@ export const createIsin = async (data) => {
           series: data.series_mosb,
           aliases,
           isin: data.isin,
-          maturity: data.maturity,
+          coupon_rate: data.coupon_rate,
+          issue_date: data.issue_date,
+          maturity_date: data.maturity_date,
           watchlist: data.watchlist,
         },
         { new: true }
@@ -32,7 +34,7 @@ export const createIsin = async (data) => {
         series: data.series_mosb,
         aliases,
         isin: data.isin,
-        maturity: data.maturity,
+        maturity_date: data.maturity_date,
         watchlist: data.watchlist,
       });
 
@@ -56,7 +58,7 @@ export const getAllIsins = async (options) => {
 
     const all = await Isin.find(mongoQuery);
 
-    let sorted = all.sort((a, b) => a.maturity - b.maturity);
+    let sorted = all.sort((a, b) => a.maturity_date - b.maturity_date);
 
     return sorted;
   } catch (err) {
@@ -150,7 +152,7 @@ export const getTenor = async (series, date_input) => {
     if (!instrument)
       throw new Error("No instrument matches the series supplied.");
 
-    const mat_date = dayjs(instrument.maturity);
+    const mat_date = dayjs(instrument.maturity_date);
     const today = dayjs(date).format("YYYY-MM-DD");
     let diff = mat_date.diff(today, "year", true);
     diff = parseFloat(diff.toFixed(2));
