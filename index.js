@@ -104,7 +104,7 @@ const time_and_sales_func = (res) => {
 };
 // uploadTimeAndSales("12-17-2021").then(time_and_sales_func);
 
-// fetchSummary();
+fetchSummary();
 
 // fetchSummariesLogic(null, ["full", ""]);
 
