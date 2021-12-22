@@ -11,7 +11,9 @@ export const createIsin = async (data) => {
   if (data.series_short) aliases.push(data.series_short);
   try {
     // check if exists
-    let existing = await Isin.findOne({ series: data.series_mosb });
+    let existing = await Isin.findOne({
+      $or: [{ series: data.series_mosb }, { isin: data.isin }],
+    });
     let savedIsin = {};
     if (existing) {
       // if it exists already, then issue an update
@@ -21,7 +23,7 @@ export const createIsin = async (data) => {
           series: data.series_mosb,
           aliases,
           isin: data.isin,
-          coupon_rate: data.coupon_rate,
+          coupon_rate: isNaN(data.coupon_rate) ? null : data.coupon_rate,
           issue_date: data.issue_date,
           maturity_date: data.maturity_date,
           watchlist: data.watchlist,
@@ -34,6 +36,8 @@ export const createIsin = async (data) => {
         series: data.series_mosb,
         aliases,
         isin: data.isin,
+        coupon_rate: isNaN(data.coupon_rate) ? null : data.coupon_rate,
+        issue_date: data.issue_date,
         maturity_date: data.maturity_date,
         watchlist: data.watchlist,
       });
