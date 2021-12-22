@@ -84,7 +84,7 @@ import {
 // SETTINGS
 const settings = { online: false, update_users: false };
 
-populateIsins();
+// populateIsins();
 const time_and_sales_func = (res) => {
   const { deals } = res;
   if (deals) {
