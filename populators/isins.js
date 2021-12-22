@@ -28,24 +28,29 @@ function ExcelDateToJSDate(serial) {
 }
 
 export const populateIsins = async () => {
-  const workbook = xlsx.readFile("isinData/isinData.xlsx");
-  // console.log("workbook: ", workbook);
-  const worksheet = workbook.Sheets["List"];
+  try {
+    const workbook = xlsx.readFile("isinData/isinData.xlsx");
+    // console.log("workbook: ", workbook);
+    const worksheet = workbook.Sheets["List"];
 
-  const parsed = xlsx.utils.sheet_to_json(worksheet);
-  console.log("parsed: ", parsed);
+    const parsed = xlsx.utils.sheet_to_json(worksheet);
 
-  const results = await Promise.allSettled(
-    parsed.map(async (data) => {
-      data.maturity_date = ExcelDateToJSDate(data.maturity_date);
-      return await createIsin(data);
-    })
-  );
+    const results = await Promise.allSettled(
+      parsed.map(async (data, index) => {
+        data.maturity_date = ExcelDateToJSDate(data.maturity_date);
+        data.issue_date = ExcelDateToJSDate(data.issue_date);
+        return await createIsin(data);
+      })
+    );
 
-  let fulfilled = results.filter((el) => el.status === "fulfilled");
-  fulfilled = fulfilled.map((obj) => obj.value.keyword);
-  let rejected = results.filter((el) => el.status === "rejected");
-  rejected = rejected.map((err) => err.reason.keyValue.keyword);
+    let fulfilled = results.filter((obj) => obj.status === "fulfilled");
+    console.log("fulfilled[0]: ", fulfilled[0]);
+    fulfilled = fulfilled.map((obj) => obj.value);
+    let rejected = results.filter((obj) => obj.status === "rejected");
+    rejected = rejected.map((err) => err.reason.keyValue);
 
-  return { fulfilled, rejected };
+    return { fulfilled, rejected };
+  } catch (err) {
+    return err;
+  }
 };
