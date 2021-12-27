@@ -102,7 +102,7 @@ const time_and_sales_func = (res) => {
     if (settings.update_users) updateUsers("time_and_sales", spiel);
   }
 };
-// uploadTimeAndSales("12-22-2021").then(time_and_sales_func);
+// uploadTimeAndSales("12-27-2021").then(time_and_sales_func);
 
 // fetchSummary();
 
