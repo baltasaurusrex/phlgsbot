@@ -12,6 +12,7 @@ import {
   getPeriod,
 } from "../utils/updates.js";
 import { getArbitraryDatesRegex } from "../utils/regex.js";
+import { getComparable } from "./isins.js";
 
 export const createPricesUpdate = async (data, options) => {
   console.log("in createPricesUpdate controller");
@@ -511,6 +512,8 @@ export const fetchSummary = async (period) => {
   );
 
   // add spreads
+  const comparable_security = getComparable();
+
   // const getSpread = (subj_series, ref_series) => {
   //   return subj_series.summary.tenor - ref_series.summary.tenor;
   // };

@@ -8,6 +8,7 @@ const IsinSchema = new mongoose.Schema({
   issue_date: { type: Date },
   maturity_date: { type: Date },
   watchlist: { type: Boolean, default: false },
+  on_the_run: { type: Number },
 });
 
 export default mongoose.model("Isin", IsinSchema);

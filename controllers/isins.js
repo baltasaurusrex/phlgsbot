@@ -168,3 +168,28 @@ export const getTenor = async (series, date_input) => {
     return err;
   }
 };
+
+export const getComparable = async (identifier_input, years_input) => {
+  // if no years input, just assume it's a step down
+  try {
+    if (!identifier_input) throw new Error("No identifier given.");
+    const yrs_diff = years_input ? years_input : -1;
+
+    const security = await Isin.findOne({
+      $or: [
+        { series: identifier_input },
+        { aliases: identifier_input },
+        { isin: identifier_input },
+      ],
+    });
+
+    if (!security)
+      throw new Error(
+        `No matching security for given identifier: ${identifer_input}`
+      );
+
+    return security;
+  } catch (err) {
+    return err;
+  }
+};
