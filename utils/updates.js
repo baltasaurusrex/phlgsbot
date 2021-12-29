@@ -332,7 +332,11 @@ export const getPeriod = (period) => {
     } else {
       // If not using the arbitrary dates format
       end_date = dayjs(today).startOf("day").toDate();
-      if (["last week", "last 2 weeks"].includes(period)) {
+      if (["wtd"].includes(period)) {
+        let monday = dayjs().day(1).startOf("day").toDate();
+        start_date = monday;
+        end_date = dayjs().startOf("day").toDate();
+      } else if (["last week", "last 2 weeks"].includes(period)) {
         let sunday = dayjs().day(0).startOf("day").toDate();
         end_date = dayjs(sunday).subtract(2, "days").toDate();
         if (period === "last week")

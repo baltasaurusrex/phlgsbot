@@ -34,6 +34,15 @@ export const getFetchPriceInfoRegex = (validSeries) =>
 
 // has two capturing groups (Group 1)-(Group 2), so when incorporating this into other regex's, adjust accordingly
 const arbitrary_dates = `((?:1[0-2]|0?[1-9])\\/(?:3[01]|[12][0-9]|0?[1-9])(?:\\/(?:[0-9]{2})?[0-9]{2})?)(?:-((?:1[0-2]|0?[1-9])\\/(?:3[01]|[12][0-9]|0?[1-9])(?:\\/(?:[0-9]{2})?[0-9]{2})?))?`;
+const period_shortcuts = [
+  "wtd",
+  "weekly",
+  "1 week",
+  "2 weeks",
+  "1 month",
+  "last week",
+  "last 2 weeks",
+];
 
 export const getArbitraryDatesRegex = () => new RegExp(arbitrary_dates, "i");
 
@@ -41,7 +50,7 @@ export const getFetchHistoricalPricesRegex = (validSeries) =>
   new RegExp(
     `^(${validSeries.join(
       "|"
-    )})(?:\\s+)?(${arbitrary_dates}|weekly|1 week|2 weeks|1 month|last week|last 2 weeks)(?:\\s+)?$`,
+    )})(?:\\s+)?(${arbitrary_dates}|${period_shortcuts.join("|")})(?:\\s+)?$`,
     "i"
   );
 
@@ -55,7 +64,9 @@ export const getFetchTimeAndSalesRegex = (validSeries) =>
 
 export const getFetchSummariesRegex = () =>
   new RegExp(
-    `^(?:summary)(?:\\s*)(?:\\s(${arbitrary_dates}|weekly|1 week|2 weeks|last week|last 2 weeks))?(?:\\s+)?$`,
+    `^(?:summary)(?:\\s*)(?:\\s(${arbitrary_dates}|${period_shortcuts.join(
+      "|"
+    )}))?(?:\\s+)?$`,
     "i"
   );
 
