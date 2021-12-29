@@ -26,6 +26,7 @@ import {
   getBrokers,
   formatTime,
   getDate,
+  getPeriod,
 } from "../utils/updates.js";
 
 import {
@@ -36,6 +37,8 @@ import {
 } from "../controllers/orders.js";
 
 import { getValidSeries, getSeries } from "../controllers/isins.js";
+
+import { getArbitraryDatesRegex } from "../utils/regex.js";
 
 export const showBot = () => {
   console.log("bot: ", bot);
@@ -695,14 +698,15 @@ export const fetchSummariesLogic = async (userProfile, match) => {
   const render_isin_summaries = (array) => {
     let periodIntro = null;
 
-    if (
-      ["weekly", "1 week", "2 weeks", "last week", "last 2 weeks"].includes(
-        period
-      )
-    ) {
-      const { startOfPeriod, endOfPeriod } = array[0].summary;
-      const startPd = dayjs(startOfPeriod).format("MM/DD");
-      const endPd = dayjs(endOfPeriod).format("MM/DD");
+    const { start_date, end_date } = getPeriod(period);
+
+    console.log("start_date: ", start_date);
+    console.log("end_date: ", end_date);
+
+    if (start_date < end_date) {
+      // const { startOfPeriod, endOfPeriod } = array[0].summary;
+      const startPd = dayjs(start_date).format("MM/DD");
+      const endPd = dayjs(end_date).format("MM/DD");
 
       periodIntro = `Summary for ${startPd} - ${endPd}: `;
     } else {

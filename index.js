@@ -106,7 +106,23 @@ const time_and_sales_func = (res) => {
 
 // fetchSummary();
 
-// fetchSummariesLogic(null, ["full", ""]);
+const testing = async (text) => {
+  const fetchSummariesRegex = getFetchSummariesRegex();
+
+  if (fetchSummariesRegex.test(text)) {
+    console.log(`regex triggered: fetchSummariesRegex.test(text)`);
+    const match = text.match(fetchSummariesRegex);
+    console.log("match: ", match);
+
+    await fetchSummariesLogic("testing", match);
+
+    console.log("sample");
+
+    return;
+  }
+};
+
+testing("summary 12/27-12/29");
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)
