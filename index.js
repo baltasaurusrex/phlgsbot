@@ -122,7 +122,7 @@ const testing = async (text) => {
   }
 };
 
-testing("summary 12/27-12/29");
+// testing("summary 12/27-12/29");
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)
