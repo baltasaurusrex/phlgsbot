@@ -381,7 +381,7 @@ export const fetchTimeAndSales = async (period_input, series_input) => {
         date = dayjs().toDate();
       }
     } else {
-      date = dayjs(period_input, ["MM/DD", "MM/DD/YY", "MM/DD/YYYY"]).toDate();
+      date = dayjs(period_input, ["MM/DD/YYYY", "MM/DD/YY", "MM/DD"]).toDate();
     }
 
     console.log("date: ", date);
@@ -476,6 +476,7 @@ export const fetchSummary = async (period) => {
 
   array = await Promise.all(
     series_array.map(async (series) => {
+      console.log("series: ", series);
       const { summary } = await fetchHistoricalPrices(series, period);
       return {
         series,
@@ -498,6 +499,7 @@ export const fetchSummary = async (period) => {
       console.log(prev_good_vol);
       if (prev_good_vol) {
         const date_input = dayjs(prev_good_vol.time).format("MM/DD/YYYY");
+        console.log("date_input: ", date_input);
         let { summary: prev_summary } = await fetchTimeAndSales(
           date_input,
           series
@@ -550,6 +552,7 @@ export const fetchSummary = async (period) => {
     if (is_weekend) continue;
 
     const date = dayjs(pointer_date).format("MM/DD/YYYY");
+
     const { summary: day_summary } = await fetchTimeAndSales(date);
 
     summary.totalVol += day_summary.totalVol

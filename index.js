@@ -102,7 +102,7 @@ const time_and_sales_func = (res) => {
     if (settings.update_users) updateUsers("time_and_sales", spiel);
   }
 };
-uploadTimeAndSales("01-03-2022").then(time_and_sales_func);
+// uploadTimeAndSales("01-03-2022").then(time_and_sales_func);
 
 // fetchSummary();
 
@@ -122,7 +122,7 @@ const testing = async (text) => {
   }
 };
 
-// testing("summary wtd");
+// testing("summary 01/03");
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)
