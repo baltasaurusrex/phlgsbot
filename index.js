@@ -82,7 +82,7 @@ import {
 } from "./controllers/updates.js";
 
 // SETTINGS
-const settings = { online: true, update_users: false };
+const settings = { online: false, update_users: false };
 
 // populateIsins();
 const time_and_sales_func = (res) => {
