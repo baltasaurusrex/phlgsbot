@@ -15,7 +15,7 @@ import { getBBAId } from "../utils/admin.js";
 export const uploadTimeAndSales = async (filename) => {
   try {
     const validIsins = await getValidIsins();
-    console.log("validIsins: ", validIsins);
+    // console.log("validIsins: ", validIsins);
     // get the date from the filename
     if (!/^(\d{2})-(\d{2})-(\d{4})$/.test(filename))
       throw "Incorrectly formatted filename";
@@ -36,10 +36,15 @@ export const uploadTimeAndSales = async (filename) => {
 
     const BBAId = await getBBAId();
 
+    let invalidIsins = [];
+
     const deals = (
       await Promise.all(
         parsed.map(async (deal) => {
-          if (!validIsins.includes(deal.isin)) return null;
+          if (!validIsins.includes(deal.isin)) {
+            if (!invalidIsins.includes(deal.isin)) invalidIsins.push(deal.isin);
+            return null;
+          }
 
           let time = dayjs(deal.time, "h:mm:ss A")
             .set("month", month - 1) //gotta be zero indexed
@@ -63,6 +68,8 @@ export const uploadTimeAndSales = async (filename) => {
         })
       )
     ).filter((deal) => deal !== null);
+
+    console.log("invalidIsins: ", invalidIsins);
 
     const attempts = await Promise.allSettled(
       deals.slice().map(async (deal) => {

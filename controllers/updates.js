@@ -487,7 +487,7 @@ export const fetchSummary = async (period) => {
 
   const { start_date, end_date } = getPeriod(period);
 
-  // get last traded date for those without trades
+  // GET LAST TRADED DATE FOR THOSE WITHOUT TRADES
   array = await Promise.all(
     array.map(async (obj) => {
       const { series, summary } = obj;

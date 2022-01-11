@@ -44,10 +44,10 @@ export const populateIsins = async () => {
     );
 
     let fulfilled = results.filter((obj) => obj.status === "fulfilled");
-    console.log("fulfilled[0]: ", fulfilled[0]);
     fulfilled = fulfilled.map((obj) => obj.value);
     let rejected = results.filter((obj) => obj.status === "rejected");
     rejected = rejected.map((err) => err.reason.keyValue);
+    console.log("rejected: ", rejected);
 
     return { fulfilled, rejected };
   } catch (err) {

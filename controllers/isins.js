@@ -43,6 +43,8 @@ export const createIsin = async (data) => {
       });
 
       savedIsin = await newIsin.save();
+
+      console.log("new isin created: ", savedIsin);
     }
 
     return savedIsin;
