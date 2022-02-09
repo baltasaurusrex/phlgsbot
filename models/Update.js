@@ -19,6 +19,7 @@ const UpdateSchema = new mongoose.Schema(
     direction: {
       type: String,
       enum: ["taken", "given", "taken", "lifted", "mapped"],
+      default: "mapped",
     },
     broker: {
       type: String,

@@ -44,6 +44,13 @@ const period_shortcuts = [
   "last 2 weeks",
 ];
 
+const PDSDateFormat = `([0-9]{4})-(1[0-2]|0?[1-9])-(3[01]|[12][0-9]|0?[1-9])`;
+export const getPDSDateFormat = () => new RegExp(PDSDateFormat, "gi");
+
+export const PDSDataExtraction = `angular.callbacks._j\\(([\\s\\S]+)\\)`;
+export const getPDSDataExtractionRegex = () =>
+  new RegExp(PDSDataExtraction, "i");
+
 export const getArbitraryDatesRegex = () => new RegExp(arbitrary_dates, "i");
 
 export const getFetchHistoricalPricesRegex = (validSeries) =>

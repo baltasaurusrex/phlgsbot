@@ -75,11 +75,11 @@ import {
   getOffPricesRegex,
 } from "./utils/regex.js";
 import { updateAdmins, updateUsers } from "./botlogic/broadcast.js";
+
 import {
-  fetchHistoricalPrices,
-  fetchSummary,
-  fetchTimeAndSales,
-} from "./controllers/updates.js";
+  getTimeAndSalesCSV,
+  uploadTimeAndSalesCSV,
+} from "./controllers/timeAndSales.js";
 
 // SETTINGS
 const settings = { online: false, update_users: false };
@@ -102,27 +102,32 @@ const time_and_sales_func = (res) => {
     if (settings.update_users) updateUsers("time_and_sales", spiel);
   }
 };
-// uploadTimeAndSales("01-07-2022").then(time_and_sales_func);
+// uploadTimeAndSales("01-28-2022").then(time_and_sales_func);
 
 // fetchSummary();
 
-const testing = async (text) => {
-  const fetchSummariesRegex = getFetchSummariesRegex();
+const testing = async (date) => {
+  // YYYY-MM-DD
+  const res = await getTimeAndSalesCSV(date);
 
-  if (fetchSummariesRegex.test(text)) {
-    console.log(`regex triggered: fetchSummariesRegex.test(text)`);
-    const match = text.match(fetchSummariesRegex);
-    console.log("match: ", match);
+  if (res.invalidIsins.length > 0)
+    updateAdmins(`Invalid isins: ${res.invalidIsins.join(", ")}`);
 
-    await fetchSummariesLogic("testing", match);
+  // if there's an invalid isin, notify the admin
+  // but then continue to upload the rest
+  const { spiel, uploaded_trades } = await uploadTimeAndSalesCSV(
+    res.trades_with_series
+  );
 
-    console.log("sample");
+  updateAdmins(spiel);
 
-    return;
-  }
+  if (settings.update_users) updateUsers("time_and_sales", spiel);
+
+  return;
 };
 
-// testing("summary 12/31/2021");
+// YYYY-MM-DD
+// testing("2022-02-08");
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)
@@ -724,7 +729,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
   response.send(reply);
 });
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 3000;
 
 const app = express();
 

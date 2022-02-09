@@ -29,6 +29,7 @@ function ExcelDateToJSDate(serial) {
 
 export const populateIsins = async () => {
   try {
+    console.log(process.cwd());
     const workbook = xlsx.readFile("isinData/isinData.xlsx");
     // console.log("workbook: ", workbook);
     const worksheet = workbook.Sheets["List"];
