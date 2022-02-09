@@ -127,7 +127,7 @@ const testing = async (date) => {
 };
 
 // YYYY-MM-DD
-// testing("2022-02-08");
+testing("2022-02-08");
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)
