@@ -110,6 +110,8 @@ const testing = async (date) => {
   // YYYY-MM-DD
   const res = await getTimeAndSalesCSV(date);
 
+  if (res.trades_with_series.length < 1) updateAdmins(res.message);
+
   if (res.invalidIsins.length > 0)
     updateAdmins(`Invalid isins: ${res.invalidIsins.join(", ")}`);
 
