@@ -110,6 +110,8 @@ const testing = async (date) => {
   // YYYY-MM-DD
   const res = await getTimeAndSalesCSV(date);
 
+  if (res.trades_with_series.length < 1) updateAdmins(res.message);
+
   if (res.invalidIsins.length > 0)
     updateAdmins(`Invalid isins: ${res.invalidIsins.join(", ")}`);
 
@@ -130,7 +132,7 @@ const testing = async (date) => {
 };
 
 // YYYY-MM-DD
-testing("2022-02-02");
+testing("2022-02-01");
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)

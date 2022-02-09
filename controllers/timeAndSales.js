@@ -55,7 +55,17 @@ export const getTimeAndSalesCSV = async (trade_date) => {
 
     const { stats, items } = data;
 
-    if (stats.count <= 0) return "no trades to upload";
+    if (items.length == 0) {
+      const mmddyy_date = dayjs(trade_date, "YYYY-MM-DD", true).format(
+        "MM/DD/YY"
+      );
+      return {
+        message: `No trades to upload for ${mmddyy_date}`,
+        trades_no_series: [],
+        trades_with_series: [],
+        invalidIsins: [],
+      };
+    }
 
     const BBAId = await getBBAId();
 
