@@ -82,7 +82,7 @@ import {
 } from "./controllers/timeAndSales.js";
 
 // SETTINGS
-const settings = { online: false, update_users: false };
+const settings = { online: true, update_users: false };
 
 // populateIsins();
 const time_and_sales_func = (res) => {
@@ -130,11 +130,7 @@ const testing = async (date) => {
 };
 
 // YYYY-MM-DD
-<<<<<<< HEAD
 // testing("2022-02-07");
-=======
-testing("2022-02-02");
->>>>>>> dev
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)
