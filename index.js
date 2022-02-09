@@ -82,7 +82,7 @@ import {
 } from "./controllers/timeAndSales.js";
 
 // SETTINGS
-const settings = { online: true, update_users: false };
+const settings = { online: false, update_users: false };
 
 // populateIsins();
 const time_and_sales_func = (res) => {
@@ -115,6 +115,9 @@ const testing = async (date) => {
 
   // if there's an invalid isin, notify the admin
   // but then continue to upload the rest
+
+  if (!res.trades_with_series) updateAdmins(res);
+
   const { spiel, uploaded_trades } = await uploadTimeAndSalesCSV(
     res.trades_with_series
   );
@@ -127,7 +130,11 @@ const testing = async (date) => {
 };
 
 // YYYY-MM-DD
+<<<<<<< HEAD
 // testing("2022-02-07");
+=======
+testing("2022-02-02");
+>>>>>>> dev
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)
@@ -756,12 +763,12 @@ mongoose
 
 app.listen(port, async () => {
   // CHANGE THIS WHEN TESTING LOCALLY/ON HEROKU
-  const online = settings.online; // if testing locally, toggle this to false; else true if deployed on heroku
-  const herokuUrl = "https://phl-gs-chatbot-app.herokuapp.com";
-  const webhookUrl = online ? herokuUrl : await ngrok();
-  console.log("webhookUrl: ", webhookUrl);
-
   try {
+    const online = settings.online; // if testing locally, toggle this to false; else true if deployed on heroku
+    const herokuUrl = "https://phl-gs-chatbot-app.herokuapp.com";
+    const webhookUrl = online ? herokuUrl : await ngrok();
+    console.log("webhookUrl: ", webhookUrl);
+
     // Setting the webhook will be done by calling the set_webhook API with a valid & certified URL.
     // Once a set_webhook request is sent Viber will send a callback to the webhook to check its availability and return a response to the user. (https://developers.viber.com/docs/api/rest-bot-api/#get-started)
     console.log("setting webhook to this url: ", `${webhookUrl}/viber/webhook`);
@@ -769,7 +776,7 @@ app.listen(port, async () => {
     console.log(`Bot API is now online on port ${port}`);
     console.log("res: ", res);
   } catch (err) {
-    console.log("Cannot set webhook on following server. Is it running?");
     console.error(err);
+    console.log("Cannot set webhook on following server. Is it running?");
   }
 });

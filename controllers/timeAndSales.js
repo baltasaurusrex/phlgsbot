@@ -21,8 +21,6 @@ const default_params = {
 
 export const getTimeAndSalesCSV = async (trade_date) => {
   try {
-    console.log("in getTimeAndSalesCSV");
-
     let params_obj = {
       ...default_params,
     };
