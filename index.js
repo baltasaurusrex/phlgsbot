@@ -772,7 +772,7 @@ app.listen(port, async () => {
     console.log(`Bot API is now online on port ${port}`);
     console.log("res: ", res);
   } catch (err) {
-    console.log("Cannot set webhook on following server. Is it running?");
     console.error(err);
+    console.log("Cannot set webhook on following server. Is it running?");
   }
 });
