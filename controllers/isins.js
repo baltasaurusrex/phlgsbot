@@ -15,31 +15,31 @@ export const createIsin = async (data) => {
       $or: [{ series: data.series_mosb }, { isin: data.isin }],
     });
     let savedIsin = {};
+
+    let update_obj = {
+      series: data.series_mosb,
+      aliases,
+      isin: data.isin,
+      coupon_rate: isNaN(data.coupon_rate) ? null : data.coupon_rate,
+      issue_date: data.issue_date,
+      maturity_date: data.maturity_date,
+    };
+
+    if (data.watchlist) update_obj.watchlist = data.watchlist;
+
     if (existing) {
       // if it exists already, then issue an update
       savedIsin = await Isin.findByIdAndUpdate(
         existing._id,
         {
-          series: data.series_mosb,
-          aliases,
-          isin: data.isin,
-          coupon_rate: isNaN(data.coupon_rate) ? null : data.coupon_rate,
-          issue_date: data.issue_date,
-          maturity_date: data.maturity_date,
-          watchlist: data.watchlist,
+          ...update_obj,
         },
         { new: true }
       );
     } else {
       //if not, create a new one
       const newIsin = new Isin({
-        series: data.series_mosb,
-        aliases,
-        isin: data.isin,
-        coupon_rate: isNaN(data.coupon_rate) ? null : data.coupon_rate,
-        issue_date: data.issue_date,
-        maturity_date: data.maturity_date,
-        watchlist: data.watchlist,
+        ...update_obj,
       });
 
       savedIsin = await newIsin.save();
