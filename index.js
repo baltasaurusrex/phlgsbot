@@ -73,6 +73,7 @@ import {
   getFetchTimeAndSalesRegex,
   getFetchSummariesRegex,
   getOffPricesRegex,
+  getUploadTimeAndSalesRegex,
 } from "./utils/regex.js";
 import { updateAdmins, updateUsers } from "./botlogic/broadcast.js";
 
@@ -106,33 +107,43 @@ const time_and_sales_func = (res) => {
 
 // fetchSummary();
 
-const testing = async (date) => {
+const testing = async (text) => {
   // YYYY-MM-DD
-  const res = await getTimeAndSalesCSV(date);
 
-  if (res.trades_with_series.length < 1) updateAdmins(res.message);
+  const regex = getUploadTimeAndSalesRegex();
 
-  if (res.invalidIsins.length > 0)
-    updateAdmins(`Invalid isins: ${res.invalidIsins.join(", ")}`);
+  if (regex.test(text)) {
+    console.log(`regex triggered: uploadTimeAndSalesRegex.test(text)`);
+    const match = text.match(regex);
+    console.log("match: ", match);
 
-  // if there's an invalid isin, notify the admin
-  // but then continue to upload the rest
+    let date = null;
 
-  if (!res.trades_with_series) updateAdmins(res);
+    if (match[1]) {
+      // reformat date to YYYY-MM-DD
+      date = dayjs(match[1], ["MM/DD", "MM/DD/YYYY"], true).format(
+        "YYYY-MM-DD"
+      );
+    }
 
-  const { spiel, uploaded_trades } = await uploadTimeAndSalesCSV(
-    res.trades_with_series
-  );
-
-  updateAdmins(spiel);
-
-  if (settings.update_users) updateUsers("time_and_sales", spiel);
-
-  return;
+    const res = await getTimeAndSalesCSV(date);
+    if (res.trades_with_series.length < 1) updateAdmins(res.message);
+    if (res.invalidIsins.length > 0)
+      updateAdmins(`Invalid isins: ${res.invalidIsins.join(", ")}`);
+    // if there's an invalid isin, notify the admin
+    // but then continue to upload the rest
+    if (!res.trades_with_series) updateAdmins(res);
+    const { spiel, uploaded_trades } = await uploadTimeAndSalesCSV(
+      res.trades_with_series
+    );
+    updateAdmins(spiel);
+    if (settings.update_users) updateUsers("time_and_sales", spiel);
+    return;
+  }
 };
 
 // YYYY-MM-DD
-// testing("2022-02-07");
+// testing();
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)
@@ -400,6 +411,8 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
   const fetchHistoricalPricesRegex = getFetchHistoricalPricesRegex(validSeries);
 
+  const uploadTimeAndSalesRegex = getUploadTimeAndSalesRegex();
+
   const fetchTimeAndSalesRegex = getFetchTimeAndSalesRegex(validSeries);
 
   const fetchSummariesRegex = getFetchSummariesRegex();
@@ -495,6 +508,35 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
       await fetchTimeAndSalesLogic(userProfile, match);
 
+      return;
+    }
+
+    if (uploadTimeAndSalesRegex.test(text)) {
+      console.log(`regex triggered: uploadTimeAndSalesRegex.test(text)`);
+      const match = text.match(uploadTimeAndSalesRegex);
+      console.log("match: ", match);
+
+      let date = null;
+
+      if (match[1]) {
+        // reformat date to YYYY-MM-DD
+        date = dayjs(match[1], ["MM/DD", "MM/DD/YYYY"], true).format(
+          "YYYY-MM-DD"
+        );
+      }
+
+      const res = await getTimeAndSalesCSV(date);
+      if (res.trades_with_series.length < 1) updateAdmins(res.message);
+      if (res.invalidIsins.length > 0)
+        updateAdmins(`Invalid isins: ${res.invalidIsins.join(", ")}`);
+      // if there's an invalid isin, notify the admin
+      // but then continue to upload the rest
+      if (!res.trades_with_series) updateAdmins(res);
+      const { spiel, uploaded_trades } = await uploadTimeAndSalesCSV(
+        res.trades_with_series
+      );
+      updateAdmins(spiel);
+      if (settings.update_users) updateUsers("time_and_sales", spiel);
       return;
     }
 
