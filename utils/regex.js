@@ -69,6 +69,13 @@ export const getFetchTimeAndSalesRegex = (validSeries) =>
     "i"
   );
 
+export const getUploadTimeAndSalesRegex = () => {
+  return new RegExp(
+    `(?:upload time and sales)(?:\\s((?:1[0-2]|0?[1-9])\\/(?:3[01]|[12][0-9]|0?[1-9])(?:\\/(?:[0-9]{2})?[0-9]{2})?))?(?:\\s*)$`,
+    "i"
+  );
+};
+
 export const getFetchSummariesRegex = () =>
   new RegExp(
     `^(?:summary)(?:\\s*)(?:\\s(${arbitrary_dates}|${period_shortcuts.join(
