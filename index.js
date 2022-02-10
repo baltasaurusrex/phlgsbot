@@ -83,7 +83,7 @@ import {
 } from "./controllers/timeAndSales.js";
 
 // SETTINGS
-const settings = { online: true, update_users: false };
+const settings = { online: false, update_users: false };
 
 // populateIsins();
 const time_and_sales_func = (res) => {
@@ -136,10 +136,12 @@ const testing = async (text) => {
       updateAdmins(res.message);
       return;
     }
+
     if (res.invalidIsins.length > 0)
       updateAdmins(`Invalid isins: ${res.invalidIsins.join(", ")}`);
     // if there's an invalid isin, notify the admin
     // but then continue to upload the rest
+
     const { spiel, uploaded_trades } = await uploadTimeAndSalesCSV(
       res.trades_with_series
     );
@@ -535,16 +537,27 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       }
 
       const res = await getTimeAndSalesCSV(date);
-      if (res.trades_with_series.length < 1) updateAdmins(res.message);
+      if (!res.trades_with_series) {
+        updateAdmins(res);
+        return;
+      }
+
+      if (res.trades_with_series.length < 1) {
+        updateAdmins(res.message);
+        return;
+      }
+
       if (res.invalidIsins.length > 0)
         updateAdmins(`Invalid isins: ${res.invalidIsins.join(", ")}`);
       // if there's an invalid isin, notify the admin
       // but then continue to upload the rest
-      if (!res.trades_with_series) updateAdmins(res);
+
       const { spiel, uploaded_trades } = await uploadTimeAndSalesCSV(
         res.trades_with_series
       );
+
       updateAdmins(spiel);
+
       if (settings.update_users) updateUsers("time_and_sales", spiel);
       return;
     }
