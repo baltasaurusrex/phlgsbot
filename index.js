@@ -513,7 +513,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
     if (uploadTimeAndSalesRegex.test(text)) {
       console.log(`regex triggered: uploadTimeAndSalesRegex.test(text)`);
-      const match = text.match(regex);
+      const match = text.match(uploadTimeAndSalesRegex);
       console.log("match: ", match);
 
       let date = null;
