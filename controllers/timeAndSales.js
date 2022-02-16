@@ -8,6 +8,7 @@ import CustomParseFormat from "dayjs/plugin/customParseFormat.js";
 dayjs.extend(CustomParseFormat);
 import { getBBAId } from "../utils/admin.js";
 import { getTotalVol } from "../utils/updates.js";
+import { getTimeAndSales } from "../api/PDSMarketPage.js";
 
 const instance = axios.create({
   baseURL: "https://marketpage.pds.com.ph/",
@@ -32,17 +33,9 @@ export const getTimeAndSalesCSV = async (trade_date) => {
     let res = {};
 
     if (params_obj.trade_date) {
-      res = await instance.get("api/gs/historical/GetGovtTimeSales", {
-        params: {
-          ...params_obj,
-        },
-      });
+      res = await getTimeAndSales(params.obj_trade_date);
     } else {
-      res = await instance.get("api/gs/GetGovtTimeSales", {
-        params: {
-          ...params_obj,
-        },
-      });
+      res = await getTimeAndSales();
     }
 
     const PDSDataExtractionRegex = getPDSDataExtractionRegex();

@@ -3,13 +3,14 @@ import dayjs from "dayjs";
 import RelativeTime from "dayjs/plugin/relativeTime.js";
 dayjs.extend(RelativeTime);
 import { getArbitraryDatesRegex } from "../utils/regex.js";
+import axios from "axios";
 
 export const createIsin = async (data) => {
-  console.log("in createIsin");
-  console.log("data: ", data);
-  const aliases = [data.series_mosb];
-  if (data.series_short) aliases.push(data.series_short);
   try {
+    console.log("in createIsin");
+    console.log("data: ", data);
+    const aliases = [data.series_mosb];
+    if (data.series_short) aliases.push(data.series_short);
     // check if exists
     let existing = await Isin.findOne({
       $or: [{ series: data.series_mosb }, { isin: data.isin }],
@@ -194,4 +195,17 @@ export const getComparable = async (identifier_input, years_input) => {
   } catch (err) {
     return err;
   }
+};
+
+export const updateIsins = async () => {
+  try {
+    // fetch ISIN data from the PDS endpoint
+  } catch (err) {
+    return err;
+  }
+
+  // check for invalid isins
+  // filter out valid isins
+  // create new ISINs for the invalid isins
+  // pull:
 };
