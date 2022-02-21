@@ -47,7 +47,12 @@ import { broadcastMessage } from "./utils/messages.js";
 import { renderOrder } from "./utils/orders.js";
 import { populateIsins } from "./populators/isins.js";
 import { uploadTimeAndSales } from "./populators/timeAndSales.js";
-import { getValidSeries, getSeries, getTenor } from "./controllers/isins.js";
+import {
+  getValidSeries,
+  getSeries,
+  getTenor,
+  updateIsins,
+} from "./controllers/isins.js";
 import {
   getValidNicknames,
   getDesk,
@@ -107,54 +112,12 @@ const time_and_sales_func = (res) => {
 
 // fetchSummary();
 
-const testing = async (text) => {
-  // YYYY-MM-DD
-
-  const regex = getUploadTimeAndSalesRegex();
-
-  if (regex.test(text)) {
-    console.log(`regex triggered: uploadTimeAndSalesRegex.test(text)`);
-    const match = text.match(regex);
-    console.log("match: ", match);
-
-    let date = null;
-
-    if (match[1]) {
-      // reformat date to YYYY-MM-DD
-      date = dayjs(match[1], ["MM/DD", "MM/DD/YYYY"], true).format(
-        "YYYY-MM-DD"
-      );
-    }
-
-    const res = await getTimeAndSalesCSV(date);
-    if (!res.trades_with_series) {
-      updateAdmins(res);
-      return;
-    }
-
-    if (res.trades_with_series.length < 1) {
-      updateAdmins(res.message);
-      return;
-    }
-
-    if (res.invalidIsins.length > 0)
-      updateAdmins(`Invalid isins: ${res.invalidIsins.join(", ")}`);
-    // if there's an invalid isin, notify the admin
-    // but then continue to upload the rest
-
-    const { spiel, uploaded_trades } = await uploadTimeAndSalesCSV(
-      res.trades_with_series
-    );
-
-    updateAdmins(spiel);
-
-    if (settings.update_users) updateUsers("time_and_sales", spiel);
-    return;
-  }
+const testing = async () => {
+  updateIsins();
 };
 
 // YYYY-MM-DD
-// testing("Upload time and sales");
+testing();
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)

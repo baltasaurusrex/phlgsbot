@@ -2,10 +2,22 @@ import Isin from "../models/Isin.js";
 import dayjs from "dayjs";
 import RelativeTime from "dayjs/plugin/relativeTime.js";
 dayjs.extend(RelativeTime);
-import { getArbitraryDatesRegex } from "../utils/regex.js";
-import axios from "axios";
+import {
+  getArbitraryDatesRegex,
+  getPDSDataExtractionRegex,
+} from "../utils/regex.js";
+import { getISINData } from "../api/PDSMarketPage.js";
 
 export const createIsin = async (data) => {
+  // data = {
+  //   series_mosb: String,
+  //   series_short: String,
+  //   isin: String,
+  //   coupon_rate: Number,
+  //   issue_date: Date,
+  //   maturity_date: Date,
+  //   watchlist: Boolean,
+  // }
   try {
     console.log("in createIsin");
     console.log("data: ", data);
@@ -197,9 +209,61 @@ export const getComparable = async (identifier_input, years_input) => {
   }
 };
 
+export const formatLocalId = (localId) => {
+  try {
+    let series_mosb = null;
+    let series_short = null;
+    if (/fxtn/i.test(localId)) {
+      // if FXTN
+      series_mosb = localId.replace(/fxtn /i, "");
+      if (series_mosb[0] == "0") {
+        // if type FXTN 07-65, etc.
+        series_mosb = series_mosb.slice(1);
+      } else {
+        // if type FXTN 10-65, etc.
+        series_mosb = series_mosb.replace("-", "");
+      }
+    } else if (/rtb/i.test(localId)) {
+      // if RTB
+      if (/rtb 0/i.test(localId)) {
+        // if type RTB 03-11, etc.
+        series_mosb = localId.replace(/rtb 0/i, "R");
+      } else if (/-0/i.test(localId)) {
+        // if type RTB 25-01, etc.
+        series_mosb = localId.replace(/rtb /i, "R");
+        series_mosb = series_mosb.replace(/-0/, "");
+      }
+    } else if (/rptb 0 /i.test(localId)) {
+      // if RPTB
+      series_mosb = localId.replace(/rptb 0 /i, "");
+    } else {
+      return "Unknown LocalId";
+    }
+    return {
+      series_mosb,
+      series_short,
+    };
+  } catch (err) {
+    return err;
+  }
+};
+
 export const updateIsins = async () => {
   try {
-    // fetch ISIN data from the PDS endpoint
+    const res = await getISINData();
+
+    const PDSDataExtractionRegex = getPDSDataExtractionRegex();
+    const data_string = res.data.match(PDSDataExtractionRegex)[1];
+    const data = JSON.parse(data_string);
+
+    if (data.items.length > 0) {
+      data.items.forEach(async (item) => {
+        console.log("item: ", item);
+        const { series_mosb, series_short } = formatLocalId(item.localId);
+      });
+    } else {
+      throw new Error("No items in response.");
+    }
   } catch (err) {
     return err;
   }

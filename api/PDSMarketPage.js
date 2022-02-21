@@ -7,7 +7,6 @@ const instance = axios.create({
 
 const default_params = {
   callback: "angular.callbacks._j",
-  participant: "all",
   token: "7VpYt1atB86CHE5MPLYU",
 };
 
@@ -15,6 +14,7 @@ export const getTimeAndSales = async (trade_date) => {
   try {
     let params_obj = {
       ...default_params,
+      participant: "all",
     };
 
     let res = null;
@@ -41,6 +41,12 @@ export const getTimeAndSales = async (trade_date) => {
 
 export const getISINData = async () => {
   try {
+    const res = await instance.get(
+      "https://marketpage.pds.com.ph/api/gs/GetGovtSecBoards",
+      { params: { ...default_params } }
+    );
+
+    return res;
   } catch (err) {
     return err;
   }
