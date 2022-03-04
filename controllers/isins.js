@@ -233,6 +233,9 @@ export const formatLocalId = (localId) => {
         series_mosb = localId.replace(/rtb /i, "R");
         series_mosb = series_mosb.replace(/-0/, "");
       }
+
+      series_short = series_mosb.replace("R", "");
+      if (/-/i.test(series_short)) series_short = series_short.replace("-", "");
     } else if (/rptb 0 /i.test(localId)) {
       // if RPTB
       series_mosb = localId.replace(/rptb 0 /i, "");
@@ -256,14 +259,36 @@ export const updateIsins = async () => {
     const data_string = res.data.match(PDSDataExtractionRegex)[1];
     const data = JSON.parse(data_string);
 
+    let uploaded_isins = [];
+
     if (data.items.length > 0) {
-      data.items.forEach(async (item) => {
-        console.log("item: ", item);
-        const { series_mosb, series_short } = formatLocalId(item.localId);
-      });
+      uploaded_isins = await Promise.all(
+        data.items.map(async (item) => {
+          console.log("item: ", item);
+          const { series_mosb, series_short } = formatLocalId(item.localId);
+
+          const maturity_date = dayjs(item.matDate, ["YYYY-MM-DD"]).toDate();
+          const issue_date = dayjs(item.issueDate, ["YYYY-MM-DD"]).toDate();
+          let coupon_rate = parseFloat(item.coupon);
+          coupon_rate = coupon_rate !== 0 ? coupon_rate : null;
+
+          let data = {
+            series_mosb,
+            series_short,
+            isin: item.secCode,
+            issue_date,
+            maturity_date,
+            coupon_rate,
+          };
+
+          return await createIsin(data);
+        })
+      );
     } else {
       throw new Error("No items in response.");
     }
+
+    return uploaded_isins;
   } catch (err) {
     return err;
   }
