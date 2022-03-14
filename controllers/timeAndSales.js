@@ -21,6 +21,7 @@ const default_params = {
 };
 
 export const getTimeAndSalesCSV = async (trade_date) => {
+  // trade_date should be formatted like this: YYYY-MM-DD
   try {
     let params_obj = {
       ...default_params,
