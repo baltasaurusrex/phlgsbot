@@ -7,6 +7,7 @@ import {
   getPDSDataExtractionRegex,
 } from "../utils/regex.js";
 import { getISINData } from "../api/PDSMarketPage.js";
+import { isins } from "../utils/test_data.js";
 
 export const createIsin = async (data) => {
   // data = {
@@ -228,6 +229,7 @@ export const formatLocalId = (localId) => {
       if (/rtb 0/i.test(localId)) {
         // if type RTB 03-11, etc.
         series_mosb = localId.replace(/rtb 0/i, "R");
+        series_mosb = series_mosb.replace(/-/, "");
       } else if (/-0/i.test(localId)) {
         // if type RTB 25-01, etc.
         series_mosb = localId.replace(/rtb /i, "R");
@@ -253,7 +255,8 @@ export const formatLocalId = (localId) => {
 
 export const updateIsins = async () => {
   try {
-    const res = await getISINData();
+    // const res = await getISINData();
+    const res = { data: isins };
 
     const PDSDataExtractionRegex = getPDSDataExtractionRegex();
     const data_string = res.data.match(PDSDataExtractionRegex)[1];
