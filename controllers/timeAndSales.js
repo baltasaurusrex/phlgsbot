@@ -33,7 +33,7 @@ export const getTimeAndSalesCSV = async (trade_date) => {
     let res = {};
 
     if (params_obj.trade_date) {
-      res = await getTimeAndSales(params_obj_trade_date);
+      res = await getTimeAndSales(params_obj.trade_date);
     } else {
       res = await getTimeAndSales();
     }
