@@ -23,6 +23,7 @@ export const getTimeAndSales = async (trade_date) => {
       res = await instance.get("api/gs/historical/GetGovtTimeSales", {
         params: {
           ...params_obj,
+          trade_date,
         },
       });
     } else {
