@@ -113,7 +113,8 @@ const time_and_sales_func = (res) => {
 // fetchSummary();
 
 const testing = async () => {
-  updateIsins();
+  // updateIsins();
+  getTimeAndSalesCSV("2022-03-11");
 };
 
 // YYYY-MM-DD
