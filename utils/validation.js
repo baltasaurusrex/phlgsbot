@@ -11,6 +11,7 @@ import {
   getFetchSummariesRegex,
   getOffPricesRegex,
   getUploadTimeAndSalesRegex,
+  getUpdateISINsRegex,
 } from "./regex.js";
 
 export const validCommand = (
@@ -51,6 +52,10 @@ export const validCommand = (
   const fetchTimeAndSalesRegex = getFetchTimeAndSalesRegex(validSeries);
 
   if (fetchTimeAndSalesRegex.test(text)) flag = true;
+
+  const updateIsinsRegex = getUpdateISINsRegex();
+
+  if (updateIsinsRegex.test(text)) flag = true;
 
   const uploadTimeAndSalesRegex = getUploadTimeAndSalesRegex();
 

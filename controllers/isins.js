@@ -291,7 +291,7 @@ export const updateIsins = async () => {
       throw new Error("No items in response.");
     }
 
-    return uploaded_isins;
+    return uploaded_isins.map((obj) => obj.isin);
   } catch (err) {
     return err;
   }
