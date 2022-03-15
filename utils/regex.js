@@ -69,6 +69,10 @@ export const getFetchTimeAndSalesRegex = (validSeries) =>
     "i"
   );
 
+export const getUpdateISINsRegex = () => {
+  return new RegExp(`update isins?`, "i");
+};
+
 export const getUploadTimeAndSalesRegex = () => {
   return new RegExp(
     `(?:upload time and sales)(?:\\s((?:1[0-2]|0?[1-9])\\/(?:3[01]|[12][0-9]|0?[1-9])(?:\\/(?:[0-9]{2})?[0-9]{2})?))?(?:\\s*)$`,

@@ -79,6 +79,7 @@ import {
   getFetchSummariesRegex,
   getOffPricesRegex,
   getUploadTimeAndSalesRegex,
+  getUpdateISINsRegex,
 } from "./utils/regex.js";
 import { updateAdmins, updateUsers } from "./botlogic/broadcast.js";
 
@@ -388,6 +389,8 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
   const uploadTimeAndSalesRegex = getUploadTimeAndSalesRegex();
 
+  const updateISINsRegex = getUpdateISINsRegex();
+
   const fetchTimeAndSalesRegex = getFetchTimeAndSalesRegex(validSeries);
 
   const fetchSummariesRegex = getFetchSummariesRegex();
@@ -484,6 +487,17 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       await fetchTimeAndSalesLogic(userProfile, match);
 
       return;
+    }
+
+    if (updateISINsRegex.test(text)) {
+      const res = await updateIsins();
+      let msg = null;
+      if (Array.isArray(res) && res.length > 0) {
+        msg = `ISINs uploaded: ${res.join(", ")}`;
+      } else {
+        msg = `Error uploading ISINs: ${msg}`;
+      }
+      updateAdmins(msg);
     }
 
     if (uploadTimeAndSalesRegex.test(text)) {
