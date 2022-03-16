@@ -89,7 +89,7 @@ import {
 } from "./controllers/timeAndSales.js";
 
 // SETTINGS
-const settings = { online: true, update_users: false };
+const settings = { online: false, update_users: false };
 
 // populateIsins();
 const time_and_sales_func = (res) => {
@@ -786,7 +786,7 @@ app.get("/", (req, res) => {
   res.send("BPI app online");
 });
 
-// app.use("/api/data");
+app.use("/api/data");
 
 // CHANGE THIS WHEN TESTING LOCALLY/ON HEROKU
 const connection = process.env.MONGODB_ATLAS;
