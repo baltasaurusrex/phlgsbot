@@ -786,6 +786,8 @@ app.get("/", (req, res) => {
   res.send("BPI app online");
 });
 
+// app.use("/api/data");
+
 // CHANGE THIS WHEN TESTING LOCALLY/ON HEROKU
 const connection = process.env.MONGODB_ATLAS;
 
