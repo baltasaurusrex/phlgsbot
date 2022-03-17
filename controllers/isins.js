@@ -255,8 +255,8 @@ export const formatLocalId = (localId) => {
 
 export const updateIsins = async () => {
   try {
-    // const res = await getISINData();
-    const res = { data: isins };
+    const res = await getISINData();
+    // const res = { data: isins };
 
     const PDSDataExtractionRegex = getPDSDataExtractionRegex();
     const data_string = res.data.match(PDSDataExtractionRegex)[1];
@@ -290,6 +290,14 @@ export const updateIsins = async () => {
     } else {
       throw new Error("No items in response.");
     }
+
+    const sort_func = (a, b) => {
+      return b.issue_date - a.issue_date;
+    };
+
+    uploaded_isins = uploaded_isins.sort(sort_func);
+
+    console.log("uploaded_isins: ", uploaded_isins);
 
     return uploaded_isins.map((obj) => obj.isin);
   } catch (err) {

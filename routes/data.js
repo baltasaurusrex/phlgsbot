@@ -1,11 +1,14 @@
 import express from "express";
+import dayjs from "dayjs";
+import CustomParseFormat from "dayjs/plugin/customParseFormat.js";
+dayjs.extend(CustomParseFormat);
+import RelativeTime from "dayjs/plugin/relativeTime.js";
+dayjs.extend(RelativeTime);
+
+import { getHistogramData } from "../controllers/chartingData.js";
 
 const router = express.Router();
 
-router.get("/histogram", async (req, res) => {
-  try {
-    res.status(200).send("/histogram hit");
-  } catch (err) {
-    res.status(400).send("error");
-  }
-});
+router.get("/histogram", getHistogramData);
+
+export default router;

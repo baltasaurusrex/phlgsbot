@@ -274,6 +274,7 @@ export const getTotalVol = (array) => {
 
 export const getPeriod = (period) => {
   console.log("in getPeriod: ");
+  // MM/DD/YYYY-MM/DD/YYYY
   try {
     const regex = getArbitraryDatesRegex();
 

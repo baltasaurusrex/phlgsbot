@@ -13,6 +13,8 @@ dayjs.extend(RelativeTime);
 import dotenv from "dotenv";
 dotenv.config();
 
+import dataRoutes from "./routes/data.js";
+
 export const bot = new Bot({
   authToken: process.env.AUTH_TOKEN,
   name: "PHL GS Bot",
@@ -115,7 +117,7 @@ const time_and_sales_func = (res) => {
 
 const testing = async () => {
   // updateIsins();
-  getTimeAndSalesCSV("2022-03-11");
+  // getTimeAndSalesCSV("2022-03-11");
 };
 
 // YYYY-MM-DD
@@ -786,7 +788,7 @@ app.get("/", (req, res) => {
   res.send("BPI app online");
 });
 
-app.use("/api/data");
+app.use("/api/data", dataRoutes);
 
 // CHANGE THIS WHEN TESTING LOCALLY/ON HEROKU
 const connection = process.env.MONGODB_ATLAS;
