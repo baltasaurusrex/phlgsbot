@@ -220,9 +220,13 @@ export const formatLocalId = (localId) => {
       if (series_mosb[0] == "0") {
         // if type FXTN 07-65, etc.
         series_mosb = series_mosb.slice(1);
+        // 07-65 -> 7-65
+        // if 7-65 -> short should be 765
+        series_short = series_mosb.replace("-", "");
       } else {
         // if type FXTN 10-65, etc.
         series_mosb = series_mosb.replace("-", "");
+        // 10-65 -> 1065
       }
     } else if (/rtb/i.test(localId)) {
       // if RTB
