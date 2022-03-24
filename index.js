@@ -194,12 +194,12 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
   // While there are PendingQueries, those queries have to be answered before normal functions can be carried out
   const pending = await checkPendingQueries(user);
 
-  // if (/^cron test$/i.test(text)) {
-  //   const job_status = job_status();
-  //   updateAdmins(job_status);
-  //   const toggle_result = toggle_job();
-  //   updateAdmins(toggle_result);
-  // }
+  if (/^cron test$/i.test(text)) {
+    const job_status = job_status();
+    updateAdmins(job_status);
+    const toggle_result = toggle_job();
+    updateAdmins(toggle_result);
+  }
 
   // check if valid command
   if (!validCommand(text, validSeries, validNicknames, validDesks, pending)) {
