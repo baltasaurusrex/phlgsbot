@@ -1,19 +1,19 @@
 import { CronJob } from "cron";
 import dayjs from "dayjs";
 
-export const test_job = new CronJob(
-  "*/15 * * * * *",
-  function () {
-    console.log("time: ", dayjs().format(`MM/DD/YY hh:mm:ss`));
-  },
-  "Asia/Manila"
-);
+export const test_job = new CronJob("0 */1 * * * *", function () {
+  console.log("time: ", dayjs().format(`MM/DD/YY hh:mm:ss`));
+});
 
-export const job_status = () => {
-  return test_job.running;
+export const get_job_status = () => {
+  console.log("in get_job_status");
+  console.log("test_job.running: ", test_job.running);
+  return test_job.running ? test_job.running : false;
 };
 
 export const toggle_job = () => {
+  console.log("in toggle_job");
+  console.log("test_job.running: ", test_job.running);
   try {
     if (test_job.running) {
       test_job.stop();
@@ -23,6 +23,7 @@ export const toggle_job = () => {
       return "job started";
     }
   } catch (err) {
+    console.log("err: ", err);
     return err.message;
   }
 };

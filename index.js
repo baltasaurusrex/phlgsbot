@@ -90,7 +90,7 @@ import {
   uploadTimeAndSalesCSV,
 } from "./controllers/timeAndSales.js";
 
-import { test_job, toggle_job, job_status } from "./controllers/cron.js";
+import { test_job, toggle_job, get_job_status } from "./controllers/cron.js";
 
 // SETTINGS
 const settings = { online: false, update_users: false };
@@ -194,11 +194,18 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
   // While there are PendingQueries, those queries have to be answered before normal functions can be carried out
   const pending = await checkPendingQueries(user);
 
-  if (/^cron test$/i.test(text)) {
-    const job_status = job_status();
+  if (/^cron status$/i.test(text)) {
+    const job_status = get_job_status();
     updateAdmins(job_status);
+
+    return;
+  }
+
+  if (/^cron test$/i.test(text)) {
     const toggle_result = toggle_job();
     updateAdmins(toggle_result);
+
+    return;
   }
 
   // check if valid command
