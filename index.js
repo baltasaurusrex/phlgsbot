@@ -93,7 +93,7 @@ import {
 import { test_job, toggle_job, get_job_status } from "./controllers/cron.js";
 
 // SETTINGS
-const settings = { online: false, update_users: false };
+const settings = { online: true, update_users: false };
 
 // populateIsins();
 const time_and_sales_func = (res) => {
