@@ -90,10 +90,15 @@ import {
   uploadTimeAndSalesCSV,
 } from "./controllers/timeAndSales.js";
 
-import { test_job, toggle_job, get_job_status } from "./controllers/cron.js";
+import {
+  timeAndSales_job,
+  toggle_job,
+  get_job_status,
+} from "./controllers/cron.js";
 
 // SETTINGS
-const settings = { online: false, update_users: false };
+// export const settings = { online: false, update_users: false };
+import { settings } from "./settings.js";
 
 // populateIsins();
 const time_and_sales_func = (res) => {
