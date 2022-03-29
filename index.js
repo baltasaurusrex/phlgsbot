@@ -82,6 +82,7 @@ import {
   getOffPricesRegex,
   getUploadTimeAndSalesRegex,
   getUpdateISINsRegex,
+  getAutoUploadRegex,
 } from "./utils/regex.js";
 import { updateAdmins, updateUsers } from "./botlogic/broadcast.js";
 
@@ -90,10 +91,11 @@ import {
   uploadTimeAndSalesCSV,
 } from "./controllers/timeAndSales.js";
 
-import { test_job, toggle_job, get_job_status } from "./controllers/cron.js";
+import { toggle_job, get_job_status } from "./controllers/cron.js";
 
 // SETTINGS
-const settings = { online: true, update_users: false };
+// export const settings = { online: false, update_users: false };
+import { settings } from "./settings.js";
 
 // populateIsins();
 const time_and_sales_func = (res) => {
@@ -193,20 +195,6 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
   // Check if there are PendingQueries tied to that user
   // While there are PendingQueries, those queries have to be answered before normal functions can be carried out
   const pending = await checkPendingQueries(user);
-
-  if (/^cron status$/i.test(text)) {
-    const job_status = get_job_status();
-    updateAdmins(job_status);
-
-    return;
-  }
-
-  if (/^cron test$/i.test(text)) {
-    const toggle_result = toggle_job();
-    updateAdmins(toggle_result);
-
-    return;
-  }
 
   // check if valid command
   if (!validCommand(text, validSeries, validNicknames, validDesks, pending)) {
@@ -396,31 +384,21 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
 
   // REGEX
   const pricesUpdateRegex = getAdminPricesUpdateRegex(validSeries);
-
   const dealtUpdateRegex = getAdminDealtUpdateRegex(validSeries);
-
   const fetchPriceInfoRegex = getFetchPriceInfoRegex(validSeries);
-
   const offPricesRegex = getOffPricesRegex(validSeries);
-
   const fetchHistoricalPricesRegex = getFetchHistoricalPricesRegex(validSeries);
-
-  const uploadTimeAndSalesRegex = getUploadTimeAndSalesRegex();
-
   const updateISINsRegex = getUpdateISINsRegex();
-
+  const uploadTimeAndSalesRegex = getUploadTimeAndSalesRegex();
+  const autoUploadRegex = getAutoUploadRegex();
   const fetchTimeAndSalesRegex = getFetchTimeAndSalesRegex(validSeries);
-
   const fetchSummariesRegex = getFetchSummariesRegex();
-
   const createOrderRegex = getCreateOrderRegex(validSeries, validNicknames);
-
   const showOrdersRegex = getShowOrdersRegex(
     validSeries,
     validDesks,
     validNicknames
   );
-
   const offOrdersRegex = getOffOrdersRegex(
     validSeries,
     validDesks,
@@ -507,6 +485,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       return;
     }
 
+    // Updating ISINs
     if (updateISINsRegex.test(text)) {
       const res = await updateIsins();
       let msg = null;
@@ -518,6 +497,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       updateAdmins(msg);
     }
 
+    // Uploading time and sales manually
     if (uploadTimeAndSalesRegex.test(text)) {
       console.log(`regex triggered: uploadTimeAndSalesRegex.test(text)`);
       const match = text.match(uploadTimeAndSalesRegex);
@@ -555,6 +535,25 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       updateAdmins(spiel);
 
       if (settings.update_users) updateUsers("time_and_sales", spiel);
+      return;
+    }
+
+    if (autoUploadRegex.test(text)) {
+      const match = text.match(autoUploadRegex);
+      console.log("match: ", match);
+
+      const instruction = match[1];
+
+      if (/on/i.test(instruction)) {
+        const toggle_result = toggle_job(true);
+        updateAdmins(toggle_result);
+      } else if (/off/i.test(instruction)) {
+        const toggle_result = toggle_job(false);
+        updateAdmins(toggle_result);
+      } else if (/status/i.test(instruction)) {
+        const job_status = get_job_status();
+        updateAdmins(job_status);
+      }
       return;
     }
 
