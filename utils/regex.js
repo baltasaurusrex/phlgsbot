@@ -142,3 +142,7 @@ export const getPendingDealtOrderRegex = () => {
     "i"
   );
 };
+
+export const getAutoUploadRegex = () => {
+  return new RegExp(`^auto upload (on|off|status)$`, "i");
+};

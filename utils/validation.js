@@ -12,6 +12,7 @@ import {
   getOffPricesRegex,
   getUploadTimeAndSalesRegex,
   getUpdateISINsRegex,
+  getAutoUploadRegex,
 } from "./regex.js";
 
 export const validCommand = (
@@ -84,6 +85,10 @@ export const validCommand = (
   );
 
   if (offOrdersRegex.test(text)) flag = true;
+
+  const autoUploadRegex = getAutoUploadRegex();
+
+  if (autoUploadRegex.test(text)) flag = true;
 
   if (pending.length > 0) {
     const pendingDealtOrderRegex = getPendingDealtOrderRegex();
