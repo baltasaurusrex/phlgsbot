@@ -12,7 +12,7 @@ export const createUser = async (userDetails, role) => {
 };
 
 export const findUser = async (viberId) => {
-  const user = await User.findOne({ viberId }).exec();
+  const user = await User.findOne({ viberId });
 
   return user;
 };
