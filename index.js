@@ -93,6 +93,8 @@ import {
 
 import { toggle_job, get_job_status } from "./controllers/cron.js";
 
+import { create_settings } from "./controllers/settings.js";
+
 // SETTINGS
 // export const settings = { online: false, update_users: false };
 import { settings } from "./settings.js";
@@ -545,13 +547,13 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
       const instruction = match[1];
 
       if (/on/i.test(instruction)) {
-        const toggle_result = toggle_job(true);
+        const toggle_result = await toggle_job(true);
         updateAdmins(toggle_result);
       } else if (/off/i.test(instruction)) {
-        const toggle_result = toggle_job(false);
+        const toggle_result = await toggle_job(false);
         updateAdmins(toggle_result);
       } else if (/status/i.test(instruction)) {
-        const job_status = get_job_status();
+        const job_status = await get_job_status();
         updateAdmins(job_status);
       }
       return;

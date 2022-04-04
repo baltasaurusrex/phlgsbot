@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import { updateAdmins, updateUsers } from "../botlogic/broadcast.js";
 import { getTimeAndSalesCSV, uploadTimeAndSalesCSV } from "./timeAndSales.js";
 import { settings } from "../settings.js";
+import { fetch_settings, toggle_auto_upload } from "./settings.js";
 import axios from "axios";
 
 export const test = new CronJob("*/15 * * * * *", async function () {
@@ -80,10 +81,16 @@ export const end_of_session = new CronJob(
   upload_function
 );
 
-export const get_job_status = () => {
+export const get_job_status = async () => {
   console.log("in get_job_status: ");
   console.log("intraday.running: ", intraday.running);
   console.log("end_of_session.running: ", end_of_session.running);
+
+  const settings = await fetch_settings();
+
+  console.log("settings: ", settings);
+
+  updateAdmins(`MongoDB auto_upload: ${settings.auto_upload}`);
 
   if (intraday.running) updateAdmins("intraday running");
   if (end_of_session.running) updateAdmins("end_of_session running");
@@ -92,29 +99,42 @@ export const get_job_status = () => {
   return running ? running : false;
 };
 
-export const toggle_job = (turn_on) => {
-  console.log("in toggle_job: ", turn_on);
+export const toggle_job = async (on, initial_run) => {
+  console.log("in toggle_job: ", on);
+  console.log("initial_run: ", initial_run);
   const running = intraday.running && end_of_session.running;
 
   try {
-    if (typeof turn_on !== "boolean") {
+    if (typeof on !== "boolean") {
       throw new Error(
         "Wrong argument supplied. Must be a Boolean. True for turn on, False for turn off."
       );
     }
 
     if (running) {
-      if (!turn_on) {
+      if (!on) {
+        // if running, and "auto upload off"
         intraday.stop();
         end_of_session.stop();
+        if (!initial_run) {
+          // if its initial run, no need to toggle (would be redundant)
+          const updated_settings = await toggle_auto_upload(false);
+          updateAdmins(`MongoDB auto_upload: ${updated_settings.auto_upload}`);
+        }
         return "job stopped";
       } else {
         return "job already running";
       }
     } else {
-      if (turn_on) {
+      if (on) {
+        // if not running, and "auto upload on"
         intraday.start();
         end_of_session.start();
+        if (!initial_run) {
+          // if its initial run, no need to toggle (would be redundant)
+          const updated_settings = await toggle_auto_upload(true);
+          updateAdmins(`MongoDB auto_upload: ${updated_settings.auto_upload}`);
+        }
         return "job started";
       } else {
         return "no job running";
@@ -126,7 +146,11 @@ export const toggle_job = (turn_on) => {
   }
 };
 
-// console.log("job: ", job);
-// job.start();
-// job2.start();
-// job.stop();
+const update_local_cron_settings = async () => {
+  // pull settings from MongoDB
+  const settings = await fetch_settings();
+  toggle_job(settings.auto_upload, true);
+};
+
+// run it on initialization
+update_local_cron_settings();
