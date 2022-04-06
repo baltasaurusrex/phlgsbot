@@ -151,7 +151,7 @@ export const fetchPricingData = async (series) => {
         type: "last_dealt",
         lastDealtVol: { $gte: 50 },
       }).sort({ time: "desc" })
-    ).time;
+    )?.time;
 
     console.log("mostRecentDate: ", mostRecentDate);
 
