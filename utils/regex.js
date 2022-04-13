@@ -33,6 +33,8 @@ export const getFetchPriceInfoRegex = (validSeries) =>
   new RegExp(`^(?:(${validSeries.join("|")})\\s*?)+$`, "i");
 
 // has two capturing groups (Group 1)-(Group 2), so when incorporating this into other regex's, adjust accordingly
+// MM/DD/YY-MM/DD/YY
+//
 const arbitrary_dates = `((?:1[0-2]|0?[1-9])\\/(?:3[01]|[12][0-9]|0?[1-9])(?:\\/(?:[0-9]{2})?[0-9]{2})?)(?:-((?:1[0-2]|0?[1-9])\\/(?:3[01]|[12][0-9]|0?[1-9])(?:\\/(?:[0-9]{2})?[0-9]{2})?))?`;
 const period_shortcuts = [
   "wtd",

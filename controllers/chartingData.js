@@ -3,6 +3,7 @@ import CustomParseFormat from "dayjs/plugin/customParseFormat.js";
 dayjs.extend(CustomParseFormat);
 import RelativeTime from "dayjs/plugin/relativeTime.js";
 dayjs.extend(RelativeTime);
+import { fetchTimeAndSales } from "./updates";
 
 export const getHistogramData = async (req, res) => {
   try {
@@ -18,9 +19,14 @@ export const getHistogramData = async (req, res) => {
     if (query.series == null) errors.push("No series inputted.");
     if (query.period_start == null) errors.push("No period start.");
     if (query.period_end == null) errors.push("No period end.");
+
+    // check if series exists
+    // check the format of the dates (should be MM/DD, MM/DD/YY, or MM/DD/YYYY)
     if (errors.length > 0) throw new Error(errors);
 
     // get the time and sales data of that isin for that period
+    const { array } = await fetchTimeAndSales();
+
     // const mosb_data = await fetchTimeAndSales()
     // turn that data into a histogram form
 
