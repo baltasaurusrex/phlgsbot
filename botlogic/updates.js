@@ -36,7 +36,11 @@ import {
   fillOrder,
 } from "../controllers/orders.js";
 
-import { getValidSeries, getSeries } from "../controllers/isins.js";
+import {
+  getValidSeries,
+  getSeries,
+  getISINWithSeries,
+} from "../controllers/isins.js";
 
 import { getArbitraryDatesRegex } from "../utils/regex.js";
 
@@ -191,6 +195,7 @@ export const dealtUpdateLogic = async (userProfile, match, user) => {
   console.log("match: ", match);
 
   const series = await getSeries(seriesInput);
+  const isin = await getISINWithSeries(series);
   const price = formatPrice(priceInput);
   const volume = volInput ? Number.parseFloat(volInput) : 50;
   console.log("volume: ", volume);
@@ -215,6 +220,7 @@ export const dealtUpdateLogic = async (userProfile, match, user) => {
       // Create the "last_dealt" update
       const update = await createDealtUpdate({
         series,
+        isin,
         price,
         action,
         volume,

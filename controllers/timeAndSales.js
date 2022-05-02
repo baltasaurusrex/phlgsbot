@@ -76,7 +76,7 @@ export const getTimeAndSalesCSV = async (trade_date) => {
       }
 
       const trade_obj = {
-        isin: item.secCode,
+        isin: item.secCode, // this is where the isin gets included
         type: "last_dealt",
         action: "mapped",
         price: Number.parseFloat(item.yield),

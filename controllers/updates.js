@@ -84,6 +84,7 @@ export const createPricesUpdate = async (data, options) => {
 export const createDealtUpdate = async (data) => {
   try {
     const {
+      isin,
       series,
       action,
       price,
@@ -97,6 +98,7 @@ export const createDealtUpdate = async (data) => {
 
     const newUpdate = new Update({
       type: "last_dealt",
+      isin,
       series,
       creator,
       direction: action,
@@ -363,7 +365,6 @@ export const fetchTimeAndSales = async (period_input, series_input) => {
     const series = await getSeries(series_input);
 
     // validate the period
-
     console.log("in fetchTimeAndSales: ");
     console.log("series: ", series);
 

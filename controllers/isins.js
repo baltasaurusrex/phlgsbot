@@ -138,6 +138,17 @@ export const getSeriesWithIsin = async (isin) => {
   }
 };
 
+export const getISINWithSeries = async (series) => {
+  try {
+    const instrument = await Isin.findOne({
+      series: { $regex: `${series}`, $options: "gi" },
+    }).exec();
+    return instrument?.isin;
+  } catch (err) {
+    return err;
+  }
+};
+
 export const getTenor = async (series, date_input) => {
   // date_input, if blank, = today
   // otherwise, this is the period your getting the YTM for

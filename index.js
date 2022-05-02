@@ -4,6 +4,8 @@ import ngrok from "./utils/getPublicUrl.js";
 import pkg from "viber-bot";
 const { Bot, Events, Message } = pkg;
 
+import cors from "cors";
+
 import dayjs from "dayjs";
 import CustomParseFormat from "dayjs/plugin/customParseFormat.js";
 dayjs.extend(CustomParseFormat);
@@ -95,11 +97,8 @@ import { toggle_job, get_job_status } from "./controllers/cron.js";
 
 import { create_settings } from "./controllers/settings.js";
 
-// SETTINGS
-// export const settings = { online: false, update_users: false };
 import { settings } from "./settings.js";
 
-// populateIsins();
 const time_and_sales_func = (res) => {
   const { deals } = res;
   if (deals) {
@@ -117,14 +116,8 @@ const time_and_sales_func = (res) => {
     if (settings.update_users) updateUsers("time_and_sales", spiel);
   }
 };
-// uploadTimeAndSales("01-28-2022").then(time_and_sales_func);
 
-// fetchSummary();
-
-const testing = async () => {
-  // updateIsins();
-  // getTimeAndSalesCSV("2022-03-11");
-};
+const testing = async () => {};
 
 // YYYY-MM-DD
 // testing();
@@ -795,7 +788,7 @@ bot.on(Events.MESSAGE_RECEIVED, async (message, response) => {
   response.send(reply);
 });
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 
 const app = express();
 
@@ -804,6 +797,8 @@ app.use("/viber/webhook", bot.middleware());
 app.get("/", (req, res) => {
   res.send("BPI app online");
 });
+
+app.use(cors());
 
 app.use("/api/data", dataRoutes);
 

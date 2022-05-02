@@ -3,7 +3,21 @@ import CustomParseFormat from "dayjs/plugin/customParseFormat.js";
 dayjs.extend(CustomParseFormat);
 import RelativeTime from "dayjs/plugin/relativeTime.js";
 dayjs.extend(RelativeTime);
-import { fetchTimeAndSales } from "./updates";
+import { fetchTimeAndSales } from "./updates.js";
+import { getAllIsins } from "./isins.js";
+
+export const getSecurityList = async (req, res) => {
+  try {
+    const seriesList = (await getAllIsins()).map(({ series, isin }) => ({
+      series,
+      isin,
+    }));
+
+    res.status(200).send(seriesList);
+  } catch (err) {
+    res.status(400).send(err.message);
+  }
+};
 
 export const getHistogramData = async (req, res) => {
   try {

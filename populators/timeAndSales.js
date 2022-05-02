@@ -56,6 +56,7 @@ export const uploadTimeAndSales = async (filename) => {
 
           const { yield: price, vol: volume } = deal;
           return {
+            isin: deal.isin,
             series,
             type: "last_dealt",
             action: "mapped",

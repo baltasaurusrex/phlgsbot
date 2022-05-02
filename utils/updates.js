@@ -157,16 +157,27 @@ export const getBestBidOffer = (updateArray) => {
   return result;
 };
 
-export const getVWAP = (array) => {
-  console.log("in getVWAP");
+export const getVWAP = (array_input, option_arg) => {
+  console.log("in getVWAP: ");
+
+  // default options
+  let goodVolOnly = true;
+
+  if (option_arg) {
+    goodVolOnly = options.goodVolOnly;
+  }
 
   let num = 0;
   let den = 0;
 
-  let vwap = "no good vol";
+  let vwap = goodVolOnly ? "no good vol" : null;
   let totalVol = null;
 
-  if (array.length === 0) return { vwap, totalVol };
+  if (array_input.length === 0) return { vwap, totalVol };
+
+  const array = goodVolOnly
+    ? array_input.filter((el) => el.lastDealtVol >= 50)
+    : array_input;
 
   array.forEach((deal) => {
     num += deal.lastDealt * deal.lastDealtVol;
@@ -180,14 +191,24 @@ export const getVWAP = (array) => {
 };
 
 // Only get's OHLC of good vol trades
-export const getOHLC = (array_input) => {
+export const getOHLC = (array_input, option_arg) => {
   console.log("in getOHLC: ");
-  let open = "no good vol";
-  let high = "no good vol";
-  let low = "no good vol";
-  let close = "no good vol";
 
-  const array = array_input.filter((el) => el.lastDealtVol >= 50);
+  // default options
+  let goodVolOnly = true;
+
+  if (option_arg) {
+    goodVolOnly = options.goodVolOnly;
+  }
+
+  let open = goodVolOnly ? "no good vol" : null;
+  let high = goodVolOnly ? "no good vol" : null;
+  let low = goodVolOnly ? "no good vol" : null;
+  let close = goodVolOnly ? "no good vol" : null;
+
+  const array = goodVolOnly
+    ? array_input.filter((el) => el.lastDealtVol >= 50)
+    : array_input;
 
   const getOpenClose = (array) => {
     const sorted = array.sort((a, b) => {
@@ -195,6 +216,7 @@ export const getOHLC = (array_input) => {
     });
     return { open: sorted[0], close: sorted[sorted.length - 1] };
   };
+
   const getHighLow = (array) => {
     const sorted = array.sort((a, b) => {
       return b.lastDealt - a.lastDealt;
@@ -360,5 +382,16 @@ export const getPeriod = (period) => {
     return { start_date, end_date };
   } catch (e) {
     return e;
+  }
+};
+
+export const sortByTime = (array) => {
+  // oldest [0] to newest [array[array.length - 1]]
+  try {
+    return array.sort((a, b) => {
+      return a.time - b.time;
+    });
+  } catch (err) {
+    return err;
   }
 };
