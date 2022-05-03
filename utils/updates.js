@@ -311,57 +311,57 @@ export const getPeriod = (period) => {
       const is_weekend = ["Sun", "Sat"].includes(day_of_week);
       // if today is a weekend, get the most recent weekday instead
       if (is_weekend) {
-        end_date = dayjs().day(5).startOf("day").toDate();
         start_date = dayjs().day(5).startOf("day").toDate();
+        end_date = dayjs().day(5).endOf("day").toDate();
       } else {
-        end_date = dayjs(today).startOf("day").toDate();
         start_date = dayjs(today).startOf("day").toDate();
+        end_date = dayjs(today).endOf("day").toDate();
       }
     } else if (period.match(regex)) {
       // if there is a period given which matches the arbitrary dates regex
-      const [full, beg, end] = period.match(regex);
+      const [full, beg_input, end_input] = period.match(regex);
 
       // get the date format of the beg and end
-      const beg_date_input = dayjs(beg, [
-        "MM/DD/YYYY",
-        "MM/DD/YY",
-        "MM/DD",
-      ]).toDate();
+      const beg = dayjs(beg_input, ["MM/DD/YYYY", "MM/DD/YY", "MM/DD"])
+        .startOf("day")
+        .toDate();
 
       // if there is no "end" date in the arbitrary dates regex
-
-      if (!end) {
+      if (!end_input) {
         // means just a solo date
         // get the start and end of that date
-        end_date = beg_date_input;
-        start_date = beg_date_input;
+        start_date = beg;
+        end_date = dayjs(beg).endOf("day").toDate();
       } else {
         // get the start of the beg date, and the end of the end date
-        start_date = beg_date_input;
+        start_date = beg;
 
-        const end_date_input = dayjs(end, [
-          "MM/DD/YYYY",
-          "MM/DD/YY",
-          "MM/DD",
-        ]).toDate();
+        const end = dayjs(end_input, ["MM/DD/YYYY", "MM/DD/YY", "MM/DD"])
+          .endOf("day")
+          .toDate();
 
         // check if error in dates
-        if (beg_date_input > end_date_input)
+        if (beg > end)
           throw new Error(
             `Start date should precede end date. Your input was: ${period}`
           );
-        end_date = end_date_input;
+
+        end_date = end;
       }
+    } else if (period instanceof Date) {
+      start_date = dayjs(period).startOf("day").toDate();
+      end_date = dayjs(period).endOf("day").toDate();
     } else {
-      // If not using the arbitrary dates format
-      end_date = dayjs(today).startOf("day").toDate();
+      // If not using the arbitrary dates format (using linguistic format)
+      start_date = dayjs(today).startOf("day").toDate();
+      end_date = dayjs(today).endOf("day").toDate();
+
       if (["wtd"].includes(period)) {
         let monday = dayjs().day(1).startOf("day").toDate();
         start_date = monday;
-        end_date = dayjs().startOf("day").toDate();
       } else if (["last week", "last 2 weeks"].includes(period)) {
         let sunday = dayjs().day(0).startOf("day").toDate();
-        end_date = dayjs(sunday).subtract(2, "days").toDate();
+        end_date = dayjs(sunday).subtract(2, "days").endOf("day").toDate();
         if (period === "last week")
           start_date = dayjs(end_date).subtract(4, "days").toDate();
         if (period === "last 2 weeks")
@@ -374,8 +374,8 @@ export const getPeriod = (period) => {
         start_date = dayjs(end_date).subtract(14, "days").toDate();
       } else if (["1 month", "monthly"].includes(period)) {
         start_date = dayjs(end_date).subtract(30, "days").toDate();
-      } else {
-        end_date = dayjs(today).startOf("day").toDate();
+      } else if (["mtd"].includes(period)) {
+        start_date = dayjs().date(1).startOf("day").toDate();
       }
     }
 

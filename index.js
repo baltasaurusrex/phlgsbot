@@ -99,6 +99,8 @@ import { create_settings } from "./controllers/settings.js";
 
 import { settings } from "./settings.js";
 
+import testing from "./testing.js";
+
 const time_and_sales_func = (res) => {
   const { deals } = res;
   if (deals) {
@@ -117,10 +119,14 @@ const time_and_sales_func = (res) => {
   }
 };
 
-const testing = async () => {};
+const sandbox = async () => {
+  console.log("in sandbox: ");
+  const res = await testing();
+  console.log("res: ", res);
+};
 
 // YYYY-MM-DD
-// testing();
+// sandbox();
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)

@@ -4,7 +4,7 @@ import User from "./User.js";
 const UpdateSchema = new mongoose.Schema(
   {
     series: { type: String, required: true },
-    isin: { type: mongoose.Schema.Types.ObjectId, ref: "Isin" },
+    isin: { type: String, required: true },
     creator: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

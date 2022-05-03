@@ -709,13 +709,7 @@ export const fetchSummariesLogic = async (userProfile, match) => {
     console.log("start_date: ", start_date);
     console.log("end_date: ", end_date);
 
-    if (start_date < end_date) {
-      // const { startOfPeriod, endOfPeriod } = array[0].summary;
-      const startPd = dayjs(start_date).format("MM/DD");
-      const endPd = dayjs(end_date).format("MM/DD");
-
-      periodIntro = `Summary for ${startPd} - ${endPd}: `;
-    } else {
+    if (dayjs(start_date).isSame(end_date, "day")) {
       let day = null;
       if (period) {
         day = dayjs(period, "MM/DD").toDate();
@@ -726,6 +720,11 @@ export const fetchSummariesLogic = async (userProfile, match) => {
       const shortDate = dayjs(day).format("MM/DD");
 
       periodIntro = `Summary for ${dayOfWeek}, ${shortDate}: `;
+    } else {
+      const startPd = dayjs(start_date).format("MM/DD");
+      const endPd = dayjs(end_date).format("MM/DD");
+
+      periodIntro = `Summary for ${startPd} - ${endPd}: `;
     }
     return `${periodIntro}${array
       .map((summary) => render_isin_summary(summary))

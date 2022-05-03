@@ -1,5 +1,5 @@
 import Update from "../models/Update.js";
-import { getSeries, getAllIsins, getTenor } from "./isins.js";
+import { getSeries, getAllIsins, getValidIsins, getTenor } from "./isins.js";
 import dayjs from "dayjs";
 import CustomParseFormat from "dayjs/plugin/customParseFormat.js";
 dayjs.extend(CustomParseFormat);
@@ -117,10 +117,9 @@ export const createDealtUpdate = async (data) => {
   }
 };
 
+// finds all bid offer updates related to that series
 export const fetchPricingData = async (series) => {
   try {
-    // find all bid offer updates related to that series
-
     const startOfToday = dayjs().startOf("day").toDate();
     console.log("startOfToday: ", startOfToday);
 
@@ -191,14 +190,6 @@ export const fetchPricingData = async (series) => {
     };
   } catch (err) {
     return Promise.reject(err);
-  }
-};
-
-export const validate_period = async (period) => {
-  try {
-    if (!period) throw new Error("No period was supplied.");
-  } catch (err) {
-    return err;
   }
 };
 
@@ -360,6 +351,54 @@ export const fetchHistoricalPrices = async (series_input, period_input) => {
   }
 };
 
+// period should be MM/DD/YYYY
+export const fetchTrades = async (isin, period) => {
+  try {
+    // check if isin is valid (?) might take too long
+    const validIsins = await getValidIsins();
+    if (!validIsins.includes(isin)) throw new Error("Not a valid ISIN.");
+
+    if (!period)
+      throw new Error(
+        "Period must be supplied. Pass a date object, or a range using this format: MM/DD/YY[YY]-MM/DD/YY[YY]"
+      );
+
+    const regex = getArbitraryDatesRegex();
+    if (!period.match(regex) && period instanceof Date === false)
+      throw new Error(
+        "Proper period must be supplied. Please pass a date object, or a range using this format: MM/DD/YY[YY]-MM/DD/YY[YY]"
+      );
+
+    let start_date = null;
+    let end_date = null;
+
+    let { start_date: start, end_date: end } = getPeriod(period);
+    start_date = start;
+    end_date = end;
+
+    console.log(start_date instanceof Date);
+
+    const mongoQuery = {
+      isin,
+      type: "last_dealt",
+      time: { $gte: start_date, $lte: end_date },
+    };
+
+    let trades = [];
+
+    trades = await Update.find(mongoQuery).lean();
+
+    // this sorts the trades starting from the most recent
+    trades = trades.sort((a, b) => {
+      return b.time - a.time;
+    });
+
+    return trades;
+  } catch (err) {
+    return err.message;
+  }
+};
+
 export const fetchTimeAndSales = async (period_input, series_input) => {
   try {
     const series = await getSeries(series_input);
@@ -402,6 +441,7 @@ export const fetchTimeAndSales = async (period_input, series_input) => {
 
       const unsorted = await Update.find(mongoQuery);
 
+      // this sorts the trades starting from the most recent
       array = unsorted.sort((a, b) => {
         return b.time - a.time;
       });
