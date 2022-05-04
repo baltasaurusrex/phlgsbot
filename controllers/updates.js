@@ -376,13 +376,12 @@ export const fetchTrades = async (isin, period) => {
     start_date = start;
     end_date = end;
 
-    console.log(start_date instanceof Date);
+    let mongoQuery = { isin, type: "last_dealt" };
 
-    const mongoQuery = {
-      isin,
-      type: "last_dealt",
-      time: { $gte: start_date, $lte: end_date },
-    };
+    // only if getPeriod returns a start_date and end_date
+    // if not (i.e. if period = "all"), dont put time filter, let it just fetch all
+    if (start_date && end_date)
+      mongoQuery.time = { $gte: start_date, $lte: end_date };
 
     let trades = [];
 
@@ -624,6 +623,38 @@ export const deleteLastDealts = async (date) => {
     });
 
     return deleted;
+  } catch (err) {
+    return err;
+  }
+};
+
+export const getAllTradeDates = async (isin) => {
+  try {
+    const validIsins = await getValidIsins();
+    if (!validIsins.includes(isin)) throw new Error("Not a valid ISIN.");
+
+    const allTrades = await Update.find({ isin, type: "last_dealt" });
+
+    let dates = [];
+    let utc_dates = [];
+
+    allTrades.forEach((trade) => {
+      const date = dayjs(trade.time).format("MM/DD/YYYY");
+      // const utc_date = dayjs(trade.time).startOf("day").toDate();
+      if (!dates.includes(date)) {
+        dates.push(date);
+        // utc_dates.push(utc_date);
+      }
+      return;
+    });
+
+    let sorted = dates.sort((a, b) => {
+      let first = dayjs(a, ["MM/DD/YYYY"]).valueOf();
+      let second = dayjs(b, ["MM/DD/YYYY"]).valueOf();
+      return first - second;
+    });
+
+    return sorted;
   } catch (err) {
     return err;
   }

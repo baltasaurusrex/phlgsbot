@@ -157,13 +157,13 @@ export const getBestBidOffer = (updateArray) => {
   return result;
 };
 
-export const getVWAP = (array_input, option_arg) => {
+export const getVWAP = (array_input, options) => {
   console.log("in getVWAP: ");
 
   // default options
   let goodVolOnly = true;
 
-  if (option_arg) {
+  if (options) {
     goodVolOnly = options.goodVolOnly;
   }
 
@@ -191,13 +191,13 @@ export const getVWAP = (array_input, option_arg) => {
 };
 
 // Only get's OHLC of good vol trades
-export const getOHLC = (array_input, option_arg) => {
+export const getOHLC = (array_input, options) => {
   console.log("in getOHLC: ");
 
   // default options
   let goodVolOnly = true;
 
-  if (option_arg) {
+  if (options) {
     goodVolOnly = options.goodVolOnly;
   }
 
@@ -303,6 +303,8 @@ export const getPeriod = (period) => {
     let today = dayjs().toDate();
     let end_date = null;
     let start_date = null;
+
+    if (period == "all") return { end_date, start_date };
 
     // if there is no period given
     if (!period) {
