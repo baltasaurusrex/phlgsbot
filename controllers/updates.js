@@ -321,7 +321,7 @@ export const fetchHistoricalPrices = async (series_input, period_input) => {
 
     if (all_trades.length > 0) {
       summary.vwap = getVWAP(all_trades).vwap;
-      summary.totalVol = getVWAP(all_trades).totalVol;
+      summary.totalVol = getVWAP(all_trades, { goodVolOnly: false }).totalVol;
       summary.open = getOHLC(all_trades).open;
       summary.high = getOHLC(all_trades).high;
       summary.low = getOHLC(all_trades).low;
@@ -410,7 +410,7 @@ export const fetchTimeAndSales = async (period_input, series_input) => {
 
     // if no period was supplied, just use the current day, or if on a weekend, the latest friday
     if (!period_input) {
-      const day_of_week = dayjs(date).format("ddd");
+      const day_of_week = dayjs().format("ddd");
       const is_weekend = ["Sun", "Sat"].includes(day_of_week);
       if (is_weekend) {
         // if date lies on a weekend, get the most recent weekday instead
@@ -450,8 +450,9 @@ export const fetchTimeAndSales = async (period_input, series_input) => {
       summary.trades = array.length;
 
       console.log("array[0]: ", array[0]);
-      summary.totalVol = getVWAP(array)?.totalVol;
+      summary.totalVol = getVWAP(array, { goodVolOnly: false })?.totalVol;
     } else {
+      // if a series was supplied
       const mongoQuery = {
         series,
         type: "last_dealt",
@@ -469,9 +470,9 @@ export const fetchTimeAndSales = async (period_input, series_input) => {
       const goodVolTrades = array.filter((el) => el.lastDealtVol >= 50);
 
       if (summary.trades > 0) {
-        summary.vwap = getVWAP(goodVolTrades)?.vwap;
-        summary.totalVol = getVWAP(array)?.totalVol;
-        const { open, high, low, close } = getOHLC(goodVolTrades);
+        summary.vwap = getVWAP(array, { goodVolOnly: false })?.vwap; //
+        summary.totalVol = getVWAP(array, { goodVolOnly: false })?.totalVol; //include all
+        const { open, high, low, close } = getOHLC(array); //only get the good vols for OHLC
         summary.open = open;
         summary.high = high;
         summary.low = low;
@@ -481,9 +482,9 @@ export const fetchTimeAndSales = async (period_input, series_input) => {
       const prev_day_trades = await getPrevDayTrades(series, day_beg);
 
       if (goodVolTrades.length > 0 && prev_day_trades.length > 0) {
-        const good_vol = prev_day_trades.filter((el) => el.lastDealtVol >= 50);
-        const { vwap, totalVol } = getVWAP(good_vol);
-        const { open, high, low, close } = getOHLC(good_vol);
+        // const good_vol = prev_day_trades.filter((el) => el.lastDealtVol >= 50);
+        const { vwap, totalVol } = getVWAP(prev_day_trades);
+        const { open, high, low, close } = getOHLC(prev_day_trades);
         console.log("summary.vwap: ", summary.vwap);
         console.log("prev vwap: ", vwap);
         console.log("summary.close: ", summary.close);
@@ -554,7 +555,7 @@ export const fetchSummary = async (period) => {
   );
 
   // add spreads
-  const comparable_security = getComparable();
+  // const comparable_security = getComparable();
 
   // const getSpread = (subj_series, ref_series) => {
   //   return subj_series.summary.tenor - ref_series.summary.tenor;

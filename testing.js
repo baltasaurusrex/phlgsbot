@@ -4,11 +4,11 @@ import {
   mapAllOHLCsOfSecurity,
   mapOHLCOfSecurity,
 } from "./controllers/OHLC.js";
+import { fetchTimeAndSales } from "./controllers/updates.js";
 
 const testing = async () => {
   // getPeriod("mtd");
-
-  const res = await mapAllOHLCsOfSecurity("PIID0324C115");
+  await fetchTimeAndSales();
 };
 
 export default testing;
