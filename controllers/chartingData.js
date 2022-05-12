@@ -4,7 +4,8 @@ dayjs.extend(CustomParseFormat);
 import RelativeTime from "dayjs/plugin/relativeTime.js";
 dayjs.extend(RelativeTime);
 import { fetchTimeAndSales } from "./updates.js";
-import { getAllIsins } from "./isins.js";
+import { getAllIsins, getValidIsins } from "./isins.js";
+import { getOHLCData } from "./OHLC.js";
 
 export const getSecurityList = async (req, res) => {
   try {
@@ -19,7 +20,24 @@ export const getSecurityList = async (req, res) => {
   }
 };
 
-export const getHistogramData = async (req, res) => {
+export const getOHLC = async (req, res) => {
+  try {
+    const { isin } = req.query;
+
+    const validIsins = await getValidIsins();
+    if (!validIsins.includes(isin)) throw new Error("Not a valid ISIN.");
+
+    let array = await getOHLCData(isin);
+
+    console.log("array: ", array);
+
+    res.status(200).json(array);
+  } catch (err) {
+    return res.status(400).send(err.message);
+  }
+};
+
+export const getHistogram = async (req, res) => {
   try {
     // query should be: {series, period_start, period_end}
     const { query } = req;
@@ -44,8 +62,8 @@ export const getHistogramData = async (req, res) => {
     // const mosb_data = await fetchTimeAndSales()
     // turn that data into a histogram form
 
-    res.status(200).send("/histogram hit");
+    return res.status(200).send("/histogram hit");
   } catch (err) {
-    res.status(400).send(err.message);
+    return res.status(400).send(err.message);
   }
 };

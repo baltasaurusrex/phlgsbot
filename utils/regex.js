@@ -44,6 +44,7 @@ const period_shortcuts = [
   "1 month",
   "last week",
   "last 2 weeks",
+  "mtd",
 ];
 
 const PDSDateFormat = `([0-9]{4})-(1[0-2]|0?[1-9])-(3[01]|[12][0-9]|0?[1-9])`;

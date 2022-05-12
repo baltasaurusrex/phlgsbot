@@ -2,7 +2,7 @@ import { CronJob } from "cron";
 import dayjs from "dayjs";
 import { updateAdmins, updateUsers } from "../botlogic/broadcast.js";
 import { getTimeAndSalesCSV, uploadTimeAndSalesCSV } from "./timeAndSales.js";
-import { settings } from "../settings.js";
+import { settings as local_settings } from "../settings.js";
 import { fetch_settings, toggle_auto_upload } from "./settings.js";
 import axios from "axios";
 
@@ -50,7 +50,7 @@ const upload_function = async function () {
 
     updateAdmins(spiel);
 
-    if (settings.update_users) updateUsers("time_and_sales", spiel);
+    if (local_settings.update_users) updateUsers("time_and_sales", spiel);
     return;
   } catch (err) {
     console.log("error in time_and_sales job: ", err);
@@ -86,11 +86,11 @@ export const get_job_status = async () => {
   console.log("intraday.running: ", intraday.running);
   console.log("end_of_session.running: ", end_of_session.running);
 
-  const settings = await fetch_settings();
+  const mongo_settings = await fetch_mongo_settings();
 
-  console.log("settings: ", settings);
+  console.log("mongo_settings: ", mongo_settings);
 
-  updateAdmins(`MongoDB auto_upload: ${settings.auto_upload}`);
+  updateAdmins(`MongoDB auto_upload: ${mongo_settings.auto_upload}`);
 
   if (intraday.running) updateAdmins("intraday running");
   if (end_of_session.running) updateAdmins("end_of_session running");
@@ -148,8 +148,14 @@ export const toggle_job = async (on, initial_run) => {
 
 const update_local_cron_settings = async () => {
   // pull settings from MongoDB
-  const settings = await fetch_settings();
-  toggle_job(settings.auto_upload, true);
+  const mongo_settings = await fetch_settings();
+
+  if (local_settings.testing) {
+    console.log("in testing environment. Avoiding running cron.");
+    return;
+  }
+
+  toggle_job(mongo_settings.auto_upload, true);
 };
 
 // run it on initialization

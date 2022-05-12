@@ -480,22 +480,31 @@ export const fetchHistoricalPricesLogic = async (userProfile, match) => {
 
       console.log("day: ", day);
 
-      if (day.trades === 0) {
+      if (day.trades === 0 || isNaN(parseFloat(day.change.close))) {
         return `${dayOfWeek}, ${shortDate}: No trades w/ good vol\n\n`;
       } else {
         let change = {
-          close: parseFloat(day.change.close) * 100,
-          vwap: parseFloat(day.change.vwap) * 100,
+          close: !isNaN(day.change.close)
+            ? parseFloat(day.change.close) * 100
+            : "",
+          vwap: !isNaN(day.change.vwap)
+            ? parseFloat(day.change.vwap) * 100
+            : "",
         };
 
-        change.close =
-          change.close > 0
-            ? "+" + change.close.toFixed(2)
-            : change.close.toFixed(2);
-        change.vwap =
-          change.vwap > 0
-            ? "+" + change.vwap.toFixed(2)
-            : change.vwap.toFixed(2);
+        if (!isNaN(change.close)) {
+          change.close =
+            change.close > 0
+              ? "+" + change.close.toFixed(2)
+              : change.close.toFixed(2);
+        }
+
+        if (!isNaN(change.vwap)) {
+          change.vwap =
+            change.vwap > 0
+              ? "+" + change.vwap.toFixed(2)
+              : change.vwap.toFixed(2);
+        }
 
         return `${dayOfWeek}, ${shortDate}:\nOpen: ${day.open}\nHigh: ${day.high}\nLow: ${day.low}\nClose: ${day.close} (${change.close} bps)\nVWAP: ${day.vwap} (${change.vwap} bps)\nTotal vol: ${day.totalVol} Mn\nTrades: ${day.trades}\n\n`;
       }
@@ -709,13 +718,7 @@ export const fetchSummariesLogic = async (userProfile, match) => {
     console.log("start_date: ", start_date);
     console.log("end_date: ", end_date);
 
-    if (start_date < end_date) {
-      // const { startOfPeriod, endOfPeriod } = array[0].summary;
-      const startPd = dayjs(start_date).format("MM/DD");
-      const endPd = dayjs(end_date).format("MM/DD");
-
-      periodIntro = `Summary for ${startPd} - ${endPd}: `;
-    } else {
+    if (dayjs(start_date).isSame(end_date, "day")) {
       let day = null;
       if (period) {
         day = dayjs(period, "MM/DD").toDate();
@@ -726,6 +729,11 @@ export const fetchSummariesLogic = async (userProfile, match) => {
       const shortDate = dayjs(day).format("MM/DD");
 
       periodIntro = `Summary for ${dayOfWeek}, ${shortDate}: `;
+    } else {
+      const startPd = dayjs(start_date).format("MM/DD");
+      const endPd = dayjs(end_date).format("MM/DD");
+
+      periodIntro = `Summary for ${startPd} - ${endPd}: `;
     }
     return `${periodIntro}${array
       .map((summary) => render_isin_summary(summary))

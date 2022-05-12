@@ -1,5 +1,5 @@
 import Update from "../models/Update.js";
-import { getSeries, getAllIsins, getTenor } from "./isins.js";
+import { getSeries, getAllIsins, getValidIsins, getTenor } from "./isins.js";
 import dayjs from "dayjs";
 import CustomParseFormat from "dayjs/plugin/customParseFormat.js";
 dayjs.extend(CustomParseFormat);
@@ -117,10 +117,9 @@ export const createDealtUpdate = async (data) => {
   }
 };
 
+// finds all bid offer updates related to that series
 export const fetchPricingData = async (series) => {
   try {
-    // find all bid offer updates related to that series
-
     const startOfToday = dayjs().startOf("day").toDate();
     console.log("startOfToday: ", startOfToday);
 
@@ -194,14 +193,6 @@ export const fetchPricingData = async (series) => {
   }
 };
 
-export const validate_period = async (period) => {
-  try {
-    if (!period) throw new Error("No period was supplied.");
-  } catch (err) {
-    return err;
-  }
-};
-
 export const fetchHistoricalPrices = async (series_input, period_input) => {
   try {
     const series = await getSeries(series_input);
@@ -232,10 +223,12 @@ export const fetchHistoricalPrices = async (series_input, period_input) => {
       console.log("pointer_date: ", pointer_date);
       console.log("start_date: ", start_date);
       const day_of_week = dayjs(pointer_date).format("ddd");
+      const day_beg = dayjs(pointer_date).startOf("day").toDate();
       const day_end = dayjs(pointer_date).endOf("day").toDate();
       const is_weekend = ["Sun", "Sat"].includes(day_of_week);
       console.log("day_of_week: ", day_of_week);
       console.log("is_weekend: ", is_weekend);
+      console.log("day_beg: ", day_beg);
       console.log("day_end: ", day_end);
       if (is_weekend) continue;
 
@@ -244,18 +237,19 @@ export const fetchHistoricalPrices = async (series_input, period_input) => {
       const pointer_date_deals = await Update.find({
         series,
         type: "last_dealt",
-        lastDealtVol: { $gte: 50 },
         time: {
-          $gte: pointer_date,
+          $gte: day_beg,
           $lte: day_end,
         },
-      });
+      }).lean();
 
       const trades = pointer_date_deals.length;
 
       if (trades > 0) {
         all_trades.push(...pointer_date_deals);
-        const { vwap, totalVol } = getVWAP(pointer_date_deals);
+        const { totalVol, vwap } = getVWAP(pointer_date_deals, {
+          goodVolOnly: false,
+        });
         const { open, high, low, close } = getOHLC(pointer_date_deals);
 
         day_obj = {
@@ -286,10 +280,31 @@ export const fetchHistoricalPrices = async (series_input, period_input) => {
           vwap: null,
         };
 
-        // loop through the rest until you find an element with trades > 0
+        // if day_obj doesn't have a close or vwap
+        if (
+          isNaN(parseFloat(day_obj.close)) ||
+          isNaN(parseFloat(day_obj.vwap))
+        ) {
+          return {
+            ...day_obj,
+            change,
+          };
+        }
+
+        // if it does, then:
+
+        // look for something that's already in the array by looping through it
         for (let j = i + 1; j < array.length; j++) {
           let prev_day_obj = array[j];
-          if (prev_day_obj.trades > 0) {
+          // until you find an object where there is a close & a vwap
+          if (
+            isNaN(parseFloat(prev_day_obj.close)) ||
+            isNaN(parseFloat(prev_day_obj.vwap))
+          ) {
+            // if prev_day_obj's close or vwap is "No good vol", then just skip
+            continue;
+          } else {
+            // if prev_day_obj's close or vwap is a number, then calculate the change
             change = {
               close: (
                 parseFloat(day_obj.close) - parseFloat(prev_day_obj.close)
@@ -299,21 +314,26 @@ export const fetchHistoricalPrices = async (series_input, period_input) => {
               ).toFixed(4),
             };
             break;
-          } else {
-            continue;
           }
         }
 
         // if after that, it still has no change object, then just query it from mongodb
         if (day_obj.trades > 0 && !change.close && !change.vwap) {
           const start_date = dayjs(day_obj.date).startOf("day").toDate();
-          const prev_day_deals = await getPrevDayTrades(series, start_date);
+          const prev_day_deals = await getPrevDayTrades(series, start_date); // this is all vol (both good and bad)
 
-          const { vwap } = getVWAP(prev_day_deals);
-          const { close } = getOHLC(prev_day_deals);
+          let { close } = getOHLC(prev_day_deals);
+          let { vwap } = getVWAP(prev_day_deals, { goodVolOnly: false });
+          let prev_close = parseFloat(close);
+          let prev_vwap = parseFloat(vwap);
+
           change = {
-            close: (parseFloat(day_obj.close) - parseFloat(close)).toFixed(4),
-            vwap: (parseFloat(day_obj.vwap) - parseFloat(vwap)).toFixed(4),
+            close: isNaN(prev_close)
+              ? null
+              : parseFloat(day_obj.close) - prev_close.toFixed(4),
+            vwap: isNaN(prev_vwap)
+              ? null
+              : parseFloat(day_obj.vwap) - prev_vwap.toFixed(4),
           };
         }
 
@@ -329,17 +349,19 @@ export const fetchHistoricalPrices = async (series_input, period_input) => {
     summary.startOfPeriod = start_date;
 
     if (all_trades.length > 0) {
-      summary.vwap = getVWAP(all_trades).vwap;
-      summary.totalVol = getVWAP(all_trades).totalVol;
+      summary.vwap = getVWAP(all_trades, { goodVolOnly: false })?.vwap;
+      summary.totalVol = getVWAP(all_trades, { goodVolOnly: false })?.totalVol;
       summary.open = getOHLC(all_trades).open;
       summary.high = getOHLC(all_trades).high;
       summary.low = getOHLC(all_trades).low;
       summary.close = getOHLC(all_trades).close;
 
       const prev_day_trades = await getPrevDayTrades(series, start_date);
-      const good_vol = prev_day_trades.filter((el) => el.lastDealtVol >= 50);
-      const { vwap: vwap_prev } = getVWAP(good_vol);
-      const { close: close_prev } = getOHLC(good_vol);
+      // const good_vol = prev_day_trades.filter((el) => el.lastDealtVol >= 50);
+      const { vwap: vwap_prev } = getVWAP(prev_day_trades, {
+        goodVolOnly: false,
+      });
+      const { close: close_prev } = getOHLC(prev_day_trades);
 
       console.log("summary.close: ", summary.close);
       console.log("close_prev: ", close_prev);
@@ -360,6 +382,53 @@ export const fetchHistoricalPrices = async (series_input, period_input) => {
   }
 };
 
+// period should be MM/DD/YYYY
+export const fetchTrades = async (isin, period) => {
+  try {
+    // check if isin is valid (?) might take too long
+    const validIsins = await getValidIsins();
+    if (!validIsins.includes(isin)) throw new Error("Not a valid ISIN.");
+
+    if (!period)
+      throw new Error(
+        "Period must be supplied. Pass a date object, or a range using this format: MM/DD/YY[YY]-MM/DD/YY[YY]"
+      );
+
+    const regex = getArbitraryDatesRegex();
+    if (!period.match(regex) && period instanceof Date === false)
+      throw new Error(
+        "Proper period must be supplied. Please pass a date object, or a range using this format: MM/DD/YY[YY]-MM/DD/YY[YY]"
+      );
+
+    let start_date = null;
+    let end_date = null;
+
+    let { start_date: start, end_date: end } = getPeriod(period);
+    start_date = start;
+    end_date = end;
+
+    let mongoQuery = { isin, type: "last_dealt" };
+
+    // only if getPeriod returns a start_date and end_date
+    // if not (i.e. if period = "all"), dont put time filter, let it just fetch all
+    if (start_date && end_date)
+      mongoQuery.time = { $gte: start_date, $lte: end_date };
+
+    let trades = [];
+
+    trades = await Update.find(mongoQuery).lean();
+
+    // this sorts the trades starting from the most recent
+    trades = trades.sort((a, b) => {
+      return b.time - a.time;
+    });
+
+    return trades;
+  } catch (err) {
+    return err.message;
+  }
+};
+
 export const fetchTimeAndSales = async (period_input, series_input) => {
   try {
     const series = await getSeries(series_input);
@@ -372,7 +441,7 @@ export const fetchTimeAndSales = async (period_input, series_input) => {
 
     // if no period was supplied, just use the current day, or if on a weekend, the latest friday
     if (!period_input) {
-      const day_of_week = dayjs(date).format("ddd");
+      const day_of_week = dayjs().format("ddd");
       const is_weekend = ["Sun", "Sat"].includes(day_of_week);
       if (is_weekend) {
         // if date lies on a weekend, get the most recent weekday instead
@@ -402,6 +471,7 @@ export const fetchTimeAndSales = async (period_input, series_input) => {
 
       const unsorted = await Update.find(mongoQuery);
 
+      // this sorts the trades starting from the most recent
       array = unsorted.sort((a, b) => {
         return b.time - a.time;
       });
@@ -411,8 +481,9 @@ export const fetchTimeAndSales = async (period_input, series_input) => {
       summary.trades = array.length;
 
       console.log("array[0]: ", array[0]);
-      summary.totalVol = getVWAP(array)?.totalVol;
+      summary.totalVol = getVWAP(array, { goodVolOnly: false })?.totalVol;
     } else {
+      // if a series was supplied
       const mongoQuery = {
         series,
         type: "last_dealt",
@@ -430,9 +501,9 @@ export const fetchTimeAndSales = async (period_input, series_input) => {
       const goodVolTrades = array.filter((el) => el.lastDealtVol >= 50);
 
       if (summary.trades > 0) {
-        summary.vwap = getVWAP(goodVolTrades)?.vwap;
-        summary.totalVol = getVWAP(array)?.totalVol;
-        const { open, high, low, close } = getOHLC(goodVolTrades);
+        summary.vwap = getVWAP(array, { goodVolOnly: false })?.vwap; //
+        summary.totalVol = getVWAP(array, { goodVolOnly: false })?.totalVol; //include all
+        const { open, high, low, close } = getOHLC(array); //only get the good vols for OHLC
         summary.open = open;
         summary.high = high;
         summary.low = low;
@@ -442,9 +513,9 @@ export const fetchTimeAndSales = async (period_input, series_input) => {
       const prev_day_trades = await getPrevDayTrades(series, day_beg);
 
       if (goodVolTrades.length > 0 && prev_day_trades.length > 0) {
-        const good_vol = prev_day_trades.filter((el) => el.lastDealtVol >= 50);
-        const { vwap, totalVol } = getVWAP(good_vol);
-        const { open, high, low, close } = getOHLC(good_vol);
+        // const good_vol = prev_day_trades.filter((el) => el.lastDealtVol >= 50);
+        const { vwap, totalVol } = getVWAP(prev_day_trades);
+        const { open, high, low, close } = getOHLC(prev_day_trades);
         console.log("summary.vwap: ", summary.vwap);
         console.log("prev vwap: ", vwap);
         console.log("summary.close: ", summary.close);
@@ -515,7 +586,7 @@ export const fetchSummary = async (period) => {
   );
 
   // add spreads
-  const comparable_security = getComparable();
+  // const comparable_security = getComparable();
 
   // const getSpread = (subj_series, ref_series) => {
   //   return subj_series.summary.tenor - ref_series.summary.tenor;
@@ -584,6 +655,38 @@ export const deleteLastDealts = async (date) => {
     });
 
     return deleted;
+  } catch (err) {
+    return err;
+  }
+};
+
+export const getAllTradeDates = async (isin) => {
+  try {
+    const validIsins = await getValidIsins();
+    if (!validIsins.includes(isin)) throw new Error("Not a valid ISIN.");
+
+    const allTrades = await Update.find({ isin, type: "last_dealt" });
+
+    let dates = [];
+    let utc_dates = [];
+
+    allTrades.forEach((trade) => {
+      const date = dayjs(trade.time).format("MM/DD/YYYY");
+      // const utc_date = dayjs(trade.time).startOf("day").toDate();
+      if (!dates.includes(date)) {
+        dates.push(date);
+        // utc_dates.push(utc_date);
+      }
+      return;
+    });
+
+    let sorted = dates.sort((a, b) => {
+      let first = dayjs(a, ["MM/DD/YYYY"]).valueOf();
+      let second = dayjs(b, ["MM/DD/YYYY"]).valueOf();
+      return first - second;
+    });
+
+    return sorted;
   } catch (err) {
     return err;
   }
