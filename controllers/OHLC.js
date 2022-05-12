@@ -66,7 +66,7 @@ const createOHLCBar = async (trades) => {
         ...data,
       });
 
-      ohlc = await new_ohlc.save();
+      ohlc = await new_ohlc.save().lean();
     }
 
     return ohlc;
@@ -105,6 +105,29 @@ export const mapAllOHLCsOfSecurity = async (isin) => {
     );
 
     return res;
+  } catch (err) {
+    return err;
+  }
+};
+
+export const getOHLCData = async (isin) => {
+  try {
+    const validIsins = await getValidIsins();
+    if (!validIsins.includes(isin)) throw new Error("Not a valid ISIN.");
+
+    let data = await OHLC.find({ isin }).lean();
+
+    data = data.sort((a, b) => a.time - b.time);
+
+    const formatted = data.map((ohlc) => {
+      let obj = { ...ohlc, time: dayjs(ohlc.date).format("YYYY-MM-DD") };
+      delete obj.date;
+      delete obj._id;
+      delete obj.__v;
+      return obj;
+    });
+
+    return formatted;
   } catch (err) {
     return err;
   }

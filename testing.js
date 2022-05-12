@@ -1,6 +1,9 @@
 import { fetchTrades, getAllTradeDates } from "./controllers/updates.js";
 import { getPeriod } from "./utils/updates.js";
-import { mapAllOHLCsOfSecurity } from "./controllers/OHLC.js";
+import {
+  mapAllOHLCsOfSecurity,
+  mapOHLCOfSecurity,
+} from "./controllers/OHLC.js";
 
 const testing = async () => {
   // getPeriod("mtd");

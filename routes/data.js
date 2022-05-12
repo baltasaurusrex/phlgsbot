@@ -7,13 +7,16 @@ dayjs.extend(RelativeTime);
 
 import {
   getSecurityList,
-  getHistogramData,
+  getHistogram,
+  getOHLC,
 } from "../controllers/chartingData.js";
 
 const router = express.Router();
 
 router.get("/securityList", getSecurityList);
 
-router.get("/histogram", getHistogramData);
+router.get("/ohlc", getOHLC);
+
+router.get("/histogram", getHistogram);
 
 export default router;
