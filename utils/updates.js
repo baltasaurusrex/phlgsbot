@@ -235,6 +235,7 @@ export const getOHLC = (array_input, options) => {
 };
 
 export const getPrevGoodVol = async (series, starting_date) => {
+  // get the previous trade w/ good volume
   try {
     const prev_good_vol = await Update.findOne({
       series,
@@ -254,6 +255,7 @@ export const getPrevGoodVol = async (series, starting_date) => {
 export const getPrevDayTrades = async (series, starting_date) => {
   // find the most recent good vol trade prior to the starting day
   console.log("in getPrevDayTrades: ");
+
   const prev_good_vol = await getPrevGoodVol(series, starting_date);
 
   let startOfDay = null;

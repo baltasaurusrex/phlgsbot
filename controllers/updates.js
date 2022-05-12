@@ -223,10 +223,12 @@ export const fetchHistoricalPrices = async (series_input, period_input) => {
       console.log("pointer_date: ", pointer_date);
       console.log("start_date: ", start_date);
       const day_of_week = dayjs(pointer_date).format("ddd");
+      const day_beg = dayjs(pointer_date).startOf("day").toDate();
       const day_end = dayjs(pointer_date).endOf("day").toDate();
       const is_weekend = ["Sun", "Sat"].includes(day_of_week);
       console.log("day_of_week: ", day_of_week);
       console.log("is_weekend: ", is_weekend);
+      console.log("day_beg: ", day_beg);
       console.log("day_end: ", day_end);
       if (is_weekend) continue;
 
@@ -235,18 +237,19 @@ export const fetchHistoricalPrices = async (series_input, period_input) => {
       const pointer_date_deals = await Update.find({
         series,
         type: "last_dealt",
-        lastDealtVol: { $gte: 50 },
         time: {
-          $gte: pointer_date,
+          $gte: day_beg,
           $lte: day_end,
         },
-      });
+      }).lean();
 
       const trades = pointer_date_deals.length;
 
       if (trades > 0) {
         all_trades.push(...pointer_date_deals);
-        const { vwap, totalVol } = getVWAP(pointer_date_deals);
+        const { totalVol, vwap } = getVWAP(pointer_date_deals, {
+          goodVolOnly: false,
+        });
         const { open, high, low, close } = getOHLC(pointer_date_deals);
 
         day_obj = {
@@ -277,10 +280,31 @@ export const fetchHistoricalPrices = async (series_input, period_input) => {
           vwap: null,
         };
 
-        // loop through the rest until you find an element with trades > 0
+        // if day_obj doesn't have a close or vwap
+        if (
+          isNaN(parseFloat(day_obj.close)) ||
+          isNaN(parseFloat(day_obj.vwap))
+        ) {
+          return {
+            ...day_obj,
+            change,
+          };
+        }
+
+        // if it does, then:
+
+        // look for something that's already in the array by looping through it
         for (let j = i + 1; j < array.length; j++) {
           let prev_day_obj = array[j];
-          if (prev_day_obj.trades > 0) {
+          // until you find an object where there is a close & a vwap
+          if (
+            isNaN(parseFloat(prev_day_obj.close)) ||
+            isNaN(parseFloat(prev_day_obj.vwap))
+          ) {
+            // if prev_day_obj's close or vwap is "No good vol", then just skip
+            continue;
+          } else {
+            // if prev_day_obj's close or vwap is a number, then calculate the change
             change = {
               close: (
                 parseFloat(day_obj.close) - parseFloat(prev_day_obj.close)
@@ -290,21 +314,26 @@ export const fetchHistoricalPrices = async (series_input, period_input) => {
               ).toFixed(4),
             };
             break;
-          } else {
-            continue;
           }
         }
 
         // if after that, it still has no change object, then just query it from mongodb
         if (day_obj.trades > 0 && !change.close && !change.vwap) {
           const start_date = dayjs(day_obj.date).startOf("day").toDate();
-          const prev_day_deals = await getPrevDayTrades(series, start_date);
+          const prev_day_deals = await getPrevDayTrades(series, start_date); // this is all vol (both good and bad)
 
-          const { vwap } = getVWAP(prev_day_deals);
-          const { close } = getOHLC(prev_day_deals);
+          let { close } = getOHLC(prev_day_deals);
+          let { vwap } = getVWAP(prev_day_deals, { goodVolOnly: false });
+          let prev_close = parseFloat(close);
+          let prev_vwap = parseFloat(vwap);
+
           change = {
-            close: (parseFloat(day_obj.close) - parseFloat(close)).toFixed(4),
-            vwap: (parseFloat(day_obj.vwap) - parseFloat(vwap)).toFixed(4),
+            close: isNaN(prev_close)
+              ? null
+              : parseFloat(day_obj.close) - prev_close.toFixed(4),
+            vwap: isNaN(prev_vwap)
+              ? null
+              : parseFloat(day_obj.vwap) - prev_vwap.toFixed(4),
           };
         }
 
@@ -320,17 +349,19 @@ export const fetchHistoricalPrices = async (series_input, period_input) => {
     summary.startOfPeriod = start_date;
 
     if (all_trades.length > 0) {
-      summary.vwap = getVWAP(all_trades).vwap;
-      summary.totalVol = getVWAP(all_trades, { goodVolOnly: false }).totalVol;
+      summary.vwap = getVWAP(all_trades, { goodVolOnly: false })?.vwap;
+      summary.totalVol = getVWAP(all_trades, { goodVolOnly: false })?.totalVol;
       summary.open = getOHLC(all_trades).open;
       summary.high = getOHLC(all_trades).high;
       summary.low = getOHLC(all_trades).low;
       summary.close = getOHLC(all_trades).close;
 
       const prev_day_trades = await getPrevDayTrades(series, start_date);
-      const good_vol = prev_day_trades.filter((el) => el.lastDealtVol >= 50);
-      const { vwap: vwap_prev } = getVWAP(good_vol);
-      const { close: close_prev } = getOHLC(good_vol);
+      // const good_vol = prev_day_trades.filter((el) => el.lastDealtVol >= 50);
+      const { vwap: vwap_prev } = getVWAP(prev_day_trades, {
+        goodVolOnly: false,
+      });
+      const { close: close_prev } = getOHLC(prev_day_trades);
 
       console.log("summary.close: ", summary.close);
       console.log("close_prev: ", close_prev);

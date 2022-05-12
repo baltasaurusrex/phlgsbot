@@ -480,22 +480,31 @@ export const fetchHistoricalPricesLogic = async (userProfile, match) => {
 
       console.log("day: ", day);
 
-      if (day.trades === 0) {
+      if (day.trades === 0 || isNaN(parseFloat(day.change.close))) {
         return `${dayOfWeek}, ${shortDate}: No trades w/ good vol\n\n`;
       } else {
         let change = {
-          close: parseFloat(day.change.close) * 100,
-          vwap: parseFloat(day.change.vwap) * 100,
+          close: !isNaN(day.change.close)
+            ? parseFloat(day.change.close) * 100
+            : "",
+          vwap: !isNaN(day.change.vwap)
+            ? parseFloat(day.change.vwap) * 100
+            : "",
         };
 
-        change.close =
-          change.close > 0
-            ? "+" + change.close.toFixed(2)
-            : change.close.toFixed(2);
-        change.vwap =
-          change.vwap > 0
-            ? "+" + change.vwap.toFixed(2)
-            : change.vwap.toFixed(2);
+        if (!isNaN(change.close)) {
+          change.close =
+            change.close > 0
+              ? "+" + change.close.toFixed(2)
+              : change.close.toFixed(2);
+        }
+
+        if (!isNaN(change.vwap)) {
+          change.vwap =
+            change.vwap > 0
+              ? "+" + change.vwap.toFixed(2)
+              : change.vwap.toFixed(2);
+        }
 
         return `${dayOfWeek}, ${shortDate}:\nOpen: ${day.open}\nHigh: ${day.high}\nLow: ${day.low}\nClose: ${day.close} (${change.close} bps)\nVWAP: ${day.vwap} (${change.vwap} bps)\nTotal vol: ${day.totalVol} Mn\nTrades: ${day.trades}\n\n`;
       }
