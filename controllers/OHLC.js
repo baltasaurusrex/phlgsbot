@@ -66,7 +66,7 @@ const createOHLCBar = async (trades) => {
         ...data,
       });
 
-      ohlc = await new_ohlc.save().lean();
+      ohlc = (await new_ohlc.save())._doc;
     }
 
     return ohlc;
@@ -75,10 +75,11 @@ const createOHLCBar = async (trades) => {
   }
 };
 
+// format = MM/DD/YYYY
 export const mapOHLCOfSecurity = async (isin, date) => {
   try {
     // get trades of that isin on that particular date
-    const trades = await fetchTrades(isin, date);
+    const trades = await fetchTrades(isin, date); // format = MM/DD/YYYY
 
     if (trades.length == 0)
       return `No trades of isin: ${isin} to map for date: ${date}`;

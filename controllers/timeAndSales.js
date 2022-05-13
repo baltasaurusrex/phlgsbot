@@ -9,6 +9,8 @@ dayjs.extend(CustomParseFormat);
 import { getBBAId } from "../utils/admin.js";
 import { getTotalVol } from "../utils/updates.js";
 import { getTimeAndSales } from "../api/PDSMarketPage.js";
+import { onlyUnique } from "../utils/tools.js";
+import { mapOHLCOfSecurity } from "./OHLC.js";
 
 const instance = axios.create({
   baseURL: "https://marketpage.pds.com.ph/",
@@ -161,7 +163,18 @@ export const uploadTimeAndSalesCSV = async (trade_array_input) => {
     // add total vol to this
     const spiel = `Time and sales updated as of:\n${time}, ${mmddyy_date}\n${uploaded_trades.length} deals added\nTotal vol: ${total_vol} Mn`;
 
-    return { spiel, uploaded_trades };
+    // upload OHLC bars
+    const isins_uploaded = uploaded_trades
+      .map((el) => el.isin)
+      .filter(onlyUnique);
+
+    const dateString = dayjs().format("MM/DD/YYYY");
+
+    const mappedOHLCs = await Promise.all(
+      isins_uploaded.map(async (isin) => mapOHLCOfSecurity(isin, dateString))
+    );
+
+    return { spiel, uploaded_trades, mappedOHLCs };
   } catch (err) {
     return err;
   }

@@ -32,3 +32,5 @@ const UpdateSchema = new mongoose.Schema(
 );
 
 export default mongoose.model("Update", UpdateSchema);
+
+// make a post middleware that creates (or updates) OHLC data when new data is uploaded (?)

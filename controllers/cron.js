@@ -5,6 +5,8 @@ import { getTimeAndSalesCSV, uploadTimeAndSalesCSV } from "./timeAndSales.js";
 import { settings as local_settings } from "../settings.js";
 import { fetch_settings, toggle_auto_upload } from "./settings.js";
 import axios from "axios";
+import { mapOHLCOfSecurity } from "./OHLC.js";
+import { onlyUnique } from "../utils/tools.js";
 
 export const test = new CronJob("*/15 * * * * *", async function () {
   console.log("in test CronJob");
@@ -44,7 +46,7 @@ const upload_function = async function () {
       updateAdmins(`Invalid isins: ${res.invalidIsins.join(", ")}`);
     } // but then continue to upload the rest
 
-    const { spiel, uploaded_trades } = await uploadTimeAndSalesCSV(
+    const { spiel, uploaded_trades, mappedOHLCs } = await uploadTimeAndSalesCSV(
       res.trades_with_series
     );
 
@@ -54,6 +56,8 @@ const upload_function = async function () {
     return;
   } catch (err) {
     console.log("error in time_and_sales job: ", err);
+    updateAdmins(`error in time_and_sales job: `);
+    updateAdmins(`${err}`);
   }
 };
 
