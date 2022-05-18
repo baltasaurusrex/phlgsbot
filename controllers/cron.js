@@ -90,7 +90,7 @@ export const get_job_status = async () => {
   console.log("intraday.running: ", intraday.running);
   console.log("end_of_session.running: ", end_of_session.running);
 
-  const mongo_settings = await fetch_mongo_settings();
+  const mongo_settings = await fetch_settings();
 
   console.log("mongo_settings: ", mongo_settings);
 
