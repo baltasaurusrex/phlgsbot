@@ -32,13 +32,20 @@ export const getTimeAndSalesCSV = async (trade_date) => {
 
     const PDSDateFormatRegex = getPDSDateFormat();
 
+    // if an argument was supplied and it doesnt meet the regex format
+    if (trade_date && !PDSDateFormatRegex.test(trade_date))
+      throw new Error("Improperly formatted date.");
+
+    // if an argument was supplied and it meets the date regex, include that date in the params
     if (PDSDateFormatRegex.test(trade_date)) params_obj.trade_date = trade_date;
 
     let res = {};
 
+    // and either fetch for that date
     if (params_obj.trade_date) {
       res = await getTimeAndSales(params_obj.trade_date);
     } else {
+      // or dont fetch for that date
       res = await getTimeAndSales();
     }
 
@@ -47,8 +54,6 @@ export const getTimeAndSalesCSV = async (trade_date) => {
     const data_string = res.data.match(PDSDataExtractionRegex)[1];
 
     const data = JSON.parse(data_string);
-
-    console.log("data: ", data);
 
     const { stats, items } = data;
 
@@ -68,14 +73,18 @@ export const getTimeAndSalesCSV = async (trade_date) => {
 
     // pull trade details
     const trades_no_series = items.map((item) => {
-      let time = null;
+      let date = null;
 
-      if (item.tradeDateTime) {
-        time = dayjs(item.tradeDateTime).format();
+      // if !trade_date, use today's date
+      if (!trade_date) {
+        date = dayjs().format("YYYY-MM-DD");
       } else {
-        const time_string = `${item.tradeDate} ${item.tradeTime}`;
-        time = dayjs(time_string, "YYYY-MM-DD H:mm:ss", true).format();
+        // else, use the provided trade_date
+        date = dayjs(trade_date).format("YYYY-MM-DD");
       }
+
+      const time_string = `${date} ${item.tradeTime}`;
+      const time = dayjs(time_string, "YYYY-MM-DD HH:mm:ss", true).format();
 
       const trade_obj = {
         isin: item.secCode, // this is where the isin gets included
