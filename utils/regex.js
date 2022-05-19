@@ -47,7 +47,7 @@ const period_shortcuts = [
   "mtd",
 ];
 
-const PDSDateFormat = `([0-9]{4})-(1[0-2]|0?[1-9])-(3[01]|[12][0-9]|0?[1-9])`;
+const PDSDateFormat = `^\\d{4}\\-(0[1-9]|1[012])\\-(0[1-9]|[12][0-9]|3[01])$`;
 export const getPDSDateFormat = () => new RegExp(PDSDateFormat, "gi");
 
 export const PDSDataExtraction = `angular.callbacks._j\\(([\\s\\S]+)\\)`;

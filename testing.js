@@ -15,6 +15,7 @@ import dayjs from "dayjs";
 import { onlyUnique } from "./utils/tools.js";
 import { getValidIsins } from "./controllers/isins.js";
 import { updateAdmins } from "./botlogic/broadcast.js";
+import { getUploadTimeAndSalesRegex } from "./utils/regex.js";
 
 const testing = async () => {};
 

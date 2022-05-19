@@ -125,8 +125,7 @@ const sandbox = async () => {
   console.log("res: ", res);
 };
 
-// YYYY-MM-DD
-// sandbox();
+if (settings.sandbox) sandbox();
 
 // gets called the first time a user opens the chat
 // use this as a way to register (if not already registered)

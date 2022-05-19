@@ -31,13 +31,15 @@ export const getTimeAndSalesCSV = async (trade_date) => {
     };
 
     const PDSDateFormatRegex = getPDSDateFormat();
+    const regex_met = PDSDateFormatRegex.test(trade_date);
 
     // if an argument was supplied and it doesnt meet the regex format
-    if (trade_date && !PDSDateFormatRegex.test(trade_date))
-      throw new Error("Improperly formatted date.");
+    if (trade_date && !regex_met) throw new Error("Improperly formatted date.");
 
     // if an argument was supplied and it meets the date regex, include that date in the params
-    if (PDSDateFormatRegex.test(trade_date)) params_obj.trade_date = trade_date;
+    if (regex_met) {
+      params_obj.trade_date = trade_date;
+    }
 
     let res = {};
 
