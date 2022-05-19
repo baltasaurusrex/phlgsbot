@@ -76,17 +76,25 @@ export const getTimeAndSalesCSV = async (trade_date) => {
     // pull trade details
     const trades_no_series = items.map((item) => {
       let date = null;
+      let time = null;
 
       // if !trade_date, use today's date
       if (!trade_date) {
         date = dayjs().format("YYYY-MM-DD");
+        time = dayjs(
+          `${date} ${item.tradeTime}`,
+          "YYYY-MM-DD HH:mm:ss",
+          true
+        ).toDate();
       } else {
         // else, use the provided trade_date
         date = dayjs(trade_date).format("YYYY-MM-DD");
+        time = dayjs(
+          `${date} ${item.tradeTime}`,
+          "YYYY-MM-DD H:mm:ss",
+          true
+        ).toDate();
       }
-
-      const time_string = `${date} ${item.tradeTime}`;
-      const time = dayjs(time_string, "YYYY-MM-DD H:mm:ss", true).toDate();
 
       const trade_obj = {
         isin: item.secCode, // this is where the isin gets included
@@ -164,12 +172,14 @@ export const uploadTimeAndSalesCSV = async (trade_array_input) => {
       })
     );
 
+    console.log("Uploaded trades: ", uploaded_trades.length);
+
     const last_uploaded_trade = uploaded_trades[0];
 
     const time = dayjs(last_uploaded_trade.time).format("h:mm A");
     const mmddyy_date = dayjs(last_uploaded_trade.time).format("MM/DD/YY");
 
-    const total_vol = getTotalVol(uploaded_trades.map((deal) => deal._doc));
+    const total_vol = getTotalVol(uploaded_trades);
 
     // add total vol to this
     const spiel = `Time and sales updated as of:\n${time}, ${mmddyy_date}\n${uploaded_trades.length} deals added\nTotal vol: ${total_vol} Mn`;
