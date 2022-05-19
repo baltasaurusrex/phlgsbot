@@ -10,7 +10,7 @@ import { getBBAId } from "../utils/admin.js";
 import { getTotalVol } from "../utils/updates.js";
 import { getTimeAndSales } from "../api/PDSMarketPage.js";
 import { onlyUnique } from "../utils/tools.js";
-import { mapOHLCOfSecurity } from "./OHLC.js";
+import { mapOHLCOfSecurity, deleteOHLCs } from "./OHLC.js";
 
 const instance = axios.create({
   baseURL: "https://marketpage.pds.com.ph/",
@@ -86,7 +86,7 @@ export const getTimeAndSalesCSV = async (trade_date) => {
       }
 
       const time_string = `${date} ${item.tradeTime}`;
-      const time = dayjs(time_string, "YYYY-MM-DD HH:mm:ss", true).format();
+      const time = dayjs(time_string, "YYYY-MM-DD H:mm:ss", true).toDate();
 
       const trade_obj = {
         isin: item.secCode, // this is where the isin gets included
@@ -179,7 +179,11 @@ export const uploadTimeAndSalesCSV = async (trade_array_input) => {
       .map((el) => el.isin)
       .filter(onlyUnique);
 
-    const dateString = dayjs().format("MM/DD/YYYY");
+    const dateString = dayjs(last_uploaded_trade.time).format("MM/DD/YYYY");
+
+    // gotta delete mapped OHLCs first
+    const deletedOHLCs = await deleteOHLCs(date);
+    console.log("deletedOHLCs: ", deletedOHLCs);
 
     const mappedOHLCs = await Promise.all(
       isins_uploaded.map(async (isin) => mapOHLCOfSecurity(isin, dateString))

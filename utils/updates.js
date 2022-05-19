@@ -158,8 +158,6 @@ export const getBestBidOffer = (updateArray) => {
 };
 
 export const getVWAP = (array_input, options) => {
-  console.log("in getVWAP: ");
-
   // default options
   let goodVolOnly = true;
 
@@ -192,8 +190,6 @@ export const getVWAP = (array_input, options) => {
 
 // Only get's OHLC of good vol trades
 export const getOHLC = (array_input, options) => {
-  console.log("in getOHLC: ");
-
   // default options
   let goodVolOnly = true;
 
@@ -297,7 +293,6 @@ export const getTotalVol = (array) => {
 };
 
 export const getPeriod = (period) => {
-  console.log("in getPeriod: ");
   // MM/DD/YYYY-MM/DD/YYYY
   try {
     const regex = getArbitraryDatesRegex();
@@ -399,5 +394,3 @@ export const sortByTime = (array) => {
     return err;
   }
 };
-
-

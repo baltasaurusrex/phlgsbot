@@ -39,8 +39,6 @@ const createOHLCBar = async (trades) => {
     // check if there's an existing OHLC, if there is, overwrite that
     let existing = await OHLC.findOne({ isin, date });
 
-    console.log("existing: ", existing);
-
     let data = {
       isin,
       series,
@@ -86,6 +84,8 @@ export const mapOHLCOfSecurity = async (isin, date) => {
     // feed to createOHLCBar function
     const OHLCBar = await createOHLCBar(trades);
 
+    console.log("OHLCBar: ", OHLCBar);
+
     return OHLCBar;
   } catch (err) {
     return err;
@@ -129,6 +129,24 @@ export const getOHLCData = async (isin) => {
     });
 
     return formatted;
+  } catch (err) {
+    return err;
+  }
+};
+
+export const deleteOHLCs = async (date) => {
+  try {
+    if (!date) return "no date supplied";
+
+    const startOfDay = dayjs(date).startOf("day").toDate();
+
+    const endOfDay = dayjs(date).endOf("day").toDate();
+
+    const deleted = await OHLC.deleteMany({
+      time: { $gte: startOfDay, $lt: endOfDay },
+    });
+
+    return deleted;
   } catch (err) {
     return err;
   }
