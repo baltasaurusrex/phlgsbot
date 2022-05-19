@@ -96,6 +96,15 @@ export const createDealtUpdate = async (data) => {
 
     const volume = volInput ? Number.parseFloat(volInput) : 50;
 
+    console.log(isin, series, price, volume);
+    console.log(time);
+    console.log(typeof time);
+
+    const timeformatted = new Date(time);
+
+    console.log(timeformatted);
+    console.log(typeof timeformatted);
+
     const newUpdate = new Update({
       type: "last_dealt",
       isin,
@@ -110,7 +119,9 @@ export const createDealtUpdate = async (data) => {
 
     const savedUpdate = await newUpdate.save();
 
-    return savedUpdate;
+    console.log("savedUpdate._doc: ", savedUpdate._doc);
+
+    return savedUpdate._doc;
   } catch (err) {
     console.log("createPricesUpdate err: ", err);
     return err;

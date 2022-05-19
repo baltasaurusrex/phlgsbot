@@ -18,7 +18,7 @@ import { updateAdmins } from "./botlogic/broadcast.js";
 import { getUploadTimeAndSalesRegex } from "./utils/regex.js";
 
 const testing = async () => {
-  const res = await getTimeAndSalesCSV("2022-05-17");
+  const res = await getTimeAndSalesCSV();
   if (!res.trades_with_series) {
     // if an error is returned
     updateAdmins(res);
@@ -35,6 +35,8 @@ const testing = async () => {
     // if there's an invalid isin, notify the admin
     updateAdmins(`Invalid isins: ${res.invalidIsins.join(", ")}`);
   } // but then continue to upload the rest
+
+  console.log("trades to upload: ", res.trades_with_series.length);
 
   const { spiel, uploaded_trades, mappedOHLCs } = await uploadTimeAndSalesCSV(
     res.trades_with_series
