@@ -1,8 +1,8 @@
 export const settings = {
-  online: false,
-  testing: true,
-  update_users: false,
+  online: true,
+  testing: false,
   sandbox: false,
+  update_users: false,
 };
 // online = true (if Heroku)
 // online = false (if Local)
