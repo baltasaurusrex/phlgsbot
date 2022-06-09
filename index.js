@@ -140,11 +140,20 @@ bot.onConversationStarted(
     if (!user) {
       // Step 1: if this is a user's first prompt, this will be a subtle way to register them and create their users
       console.log("user doesn't exist");
+
+      const spiel = new Message.Text(
+        `Hi, ${userProfile.name}! Nice to meet you. Please type "register" to register as a user.`
+      );
+
       onFinish(
         new Message.Text(
           `Hi, ${userProfile.name}! Nice to meet you. Please type "register" to register as a user.`
         )
       );
+
+      bot.sendMessage(userProfile, [spiel]);
+
+      return;
     } else {
       // if user already exists
       console.log("user exists");
