@@ -1,7 +1,7 @@
 export const settings = {
-  online: true,
-  testing: false,
-  sandbox: false,
+  online: false,
+  testing: true,
+  sandbox: true,
   update_users: false,
 };
 // online = true (if Heroku)

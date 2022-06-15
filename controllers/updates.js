@@ -1,5 +1,11 @@
 import Update from "../models/Update.js";
-import { getSeries, getAllIsins, getValidIsins, getTenor } from "./isins.js";
+import {
+  getSeries,
+  getAllIsins,
+  getValidIsins,
+  getTenor,
+  getISINWithSeries,
+} from "./isins.js";
 import dayjs from "dayjs";
 import CustomParseFormat from "dayjs/plugin/customParseFormat.js";
 dayjs.extend(CustomParseFormat);
@@ -60,10 +66,13 @@ export const createPricesUpdate = async (data, options) => {
     } else {
       const { series, user, bid, bid_vol, offer, offer_vol, broker } = data;
 
+      const isin = await getISINWithSeries(series);
+
       const newUpdate = new Update({
         series,
-        type: "bid_offer",
+        isin,
         creator: user,
+        type: "bid_offer",
         bid,
         bid_vol,
         offer,
